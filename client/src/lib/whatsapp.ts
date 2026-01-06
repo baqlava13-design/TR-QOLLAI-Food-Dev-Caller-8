@@ -1,0 +1,91 @@
+import type { CartItem } from "@shared/schema";
+
+const BUSINESS_PHONE = import.meta.env.VITE_WHATSAPP_PHONE || "905551234567";
+
+export function generateWhatsAppOrderLink(
+  items: CartItem[],
+  customerName: string,
+  customerPhone: string,
+  customerAddress: string,
+  paymentMethod: "cash" | "pos",
+  notes?: string
+): string {
+  const orderLines = items.map((item) => {
+    const upsellNames = item.selectedUpsells.map((u) => u.name).join(", ");
+    const upsellText = upsellNames ? ` (+ ${upsellNames})` : "";
+    return `${item.quantity}x ${item.menuItem.name}${upsellText} - ${(parseFloat(item.menuItem.price) * item.quantity).toFixed(2)} TL`;
+  });
+
+  const subtotal = items.reduce((sum, item) => {
+    const itemPrice = parseFloat(item.menuItem.price);
+    const upsellsPrice = item.selectedUpsells.reduce((u, upsell) => u + parseFloat(upsell.price), 0);
+    return sum + (itemPrice + upsellsPrice) * item.quantity;
+  }, 0);
+
+  const paymentText = paymentMethod === "cash" ? "Nakit" : "POS ile Kart";
+
+  const message = `
+*YENI SIPARIS*
+------------------------
+${orderLines.join("\n")}
+------------------------
+*Toplam: ${subtotal.toFixed(2)} TL*
+
+*Musteri Bilgileri:*
+Ad: ${customerName}
+Telefon: ${customerPhone}
+Adres: ${customerAddress}
+Odeme: ${paymentText}
+${notes ? `Not: ${notes}` : ""}
+------------------------
+Siparis zamani: ${new Date().toLocaleString("tr-TR")}
+`.trim();
+
+  const encodedMessage = encodeURIComponent(message);
+  return `https://wa.me/${BUSINESS_PHONE}?text=${encodedMessage}`;
+}
+
+export function generateCustomerConfirmationLink(
+  items: CartItem[],
+  customerName: string,
+  paymentMethod: "cash" | "pos"
+): string {
+  const orderLines = items.map((item) => {
+    return `${item.quantity}x ${item.menuItem.name}`;
+  });
+
+  const subtotal = items.reduce((sum, item) => {
+    const itemPrice = parseFloat(item.menuItem.price);
+    const upsellsPrice = item.selectedUpsells.reduce((u, upsell) => u + parseFloat(upsell.price), 0);
+    return sum + (itemPrice + upsellsPrice) * item.quantity;
+  }, 0);
+
+  const paymentText = paymentMethod === "cash" ? "Nakit" : "POS ile Kart";
+
+  const message = `
+Merhaba ${customerName}!
+
+Siparisini aldik:
+${orderLines.join("\n")}
+
+Toplam: ${subtotal.toFixed(2)} TL
+Odeme: ${paymentText}
+
+Siparisini hazirlamaya basladik! Teslimat suremiz 30-45 dakikadir.
+
+Lezzet Express
+`.trim();
+
+  const encodedMessage = encodeURIComponent(message);
+  return `https://wa.me/?text=${encodedMessage}`;
+}
+
+export function generateShareLink(text: string): string {
+  const shareMessage = `
+${text}
+
+Lezzet Express'ten siparis vermek cok kolay! WhatsApp ile hizli teslimat.
+`.trim();
+  const encodedMessage = encodeURIComponent(shareMessage);
+  return `https://wa.me/?text=${encodedMessage}`;
+}
