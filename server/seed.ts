@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { categories, menuItems, reviews, customers, orders, orderItems } from "@shared/schema";
+import { categories, menuItems, reviews, customers, orders, orderItems, siteProfile, socialLinks, whatsappSettings } from "@shared/schema";
 
 export async function seedDatabase() {
   console.log("Seeding database...");
@@ -133,6 +133,43 @@ export async function seedDatabase() {
 
   await db.insert(orderItems).values(orderItemData);
   console.log(`Inserted ${orderItemData.length} order items`);
+
+  // Seed site profile (CMS)
+  const siteProfileData = {
+    restaurantName: "Lezzet Express",
+    tagline: "Corlu'nun En Lezzetli Adresi",
+    aboutText: "Lezzet Express olarak, geleneksel Turk mutfaginin en guzel lezzetlerini evinize getiriyoruz. Taze malzemeler ve ozenle hazirlanan yemeklerimizle sizlere hizmet vermekten mutluluk duyuyoruz.",
+    heroTitle: "Ev Yapimi Lezzetler Kapiinizda",
+    heroSubtitle: "Taze malzemeler, ozenle hazirlanan yemekler. WhatsApp'tan kolay siparis verin.",
+    address: "Cumhuriyet Mah. Merkez Cad. No: 42, Corlu/Tekirdag",
+    phone: "0282 123 45 67",
+    email: "info@lezzetexpress.com",
+  };
+
+  await db.insert(siteProfile).values(siteProfileData);
+  console.log("Inserted site profile");
+
+  // Seed social links (CMS)
+  const socialLinksData = [
+    { platform: "instagram", url: "https://instagram.com/lezzetexpress", isVisible: true, sortOrder: 1 },
+    { platform: "facebook", url: "https://facebook.com/lezzetexpress", isVisible: true, sortOrder: 2 },
+    { platform: "twitter", url: "https://twitter.com/lezzetexpress", isVisible: false, sortOrder: 3 },
+    { platform: "youtube", url: "", isVisible: false, sortOrder: 4 },
+  ];
+
+  await db.insert(socialLinks).values(socialLinksData);
+  console.log(`Inserted ${socialLinksData.length} social links`);
+
+  // Seed WhatsApp settings (CMS)
+  const whatsappSettingsData = {
+    businessPhone: "905551234567",
+    defaultMessage: "Merhaba, Lezzet Express'ten siparis vermek istiyorum.",
+    orderConfirmationTemplate: "Sayin {customerName}, siparisini aldik! Siparis No: {orderId}. En kisa surede hazirlanip adresinize teslim edilecektir.",
+    isEnabled: true,
+  };
+
+  await db.insert(whatsappSettings).values(whatsappSettingsData);
+  console.log("Inserted WhatsApp settings");
 
   console.log("Database seeded successfully!");
 }

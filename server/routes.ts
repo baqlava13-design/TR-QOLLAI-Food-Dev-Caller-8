@@ -8,6 +8,9 @@ import {
   insertOrderSchema,
   insertOrderItemSchema,
   insertReviewSchema,
+  insertSiteProfileSchema,
+  insertSocialLinkSchema,
+  insertWhatsappSettingsSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -286,6 +289,140 @@ export async function registerRoutes(
       res.json(stats);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  // ==================== CMS ADMIN ENDPOINTS ====================
+
+  // Site Profile
+  app.get("/api/admin/site-profile", async (req, res) => {
+    try {
+      const profile = await storage.getSiteProfile();
+      res.json(profile || {});
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch site profile" });
+    }
+  });
+
+  app.put("/api/admin/site-profile", async (req, res) => {
+    try {
+      const partialSchema = insertSiteProfileSchema.partial();
+      const data = partialSchema.parse(req.body);
+      const profile = await storage.upsertSiteProfile(data);
+      res.json(profile);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update site profile" });
+      }
+    }
+  });
+
+  // Social Links
+  app.get("/api/admin/social-links", async (req, res) => {
+    try {
+      const links = await storage.getSocialLinks();
+      res.json(links);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch social links" });
+    }
+  });
+
+  app.post("/api/admin/social-links", async (req, res) => {
+    try {
+      const data = insertSocialLinkSchema.parse(req.body);
+      const link = await storage.upsertSocialLink(data);
+      res.status(201).json(link);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create social link" });
+      }
+    }
+  });
+
+  app.patch("/api/admin/social-links/:id", async (req, res) => {
+    try {
+      const partialSchema = insertSocialLinkSchema.partial();
+      const data = partialSchema.parse(req.body);
+      const link = await storage.updateSocialLink(req.params.id, data);
+      if (!link) {
+        return res.status(404).json({ error: "Social link not found" });
+      }
+      res.json(link);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update social link" });
+    }
+  });
+
+  app.delete("/api/admin/social-links/:id", async (req, res) => {
+    try {
+      await storage.deleteSocialLink(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete social link" });
+    }
+  });
+
+  // WhatsApp Settings
+  app.get("/api/admin/whatsapp-settings", async (req, res) => {
+    try {
+      const settings = await storage.getWhatsappSettings();
+      res.json(settings || {});
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch WhatsApp settings" });
+    }
+  });
+
+  app.put("/api/admin/whatsapp-settings", async (req, res) => {
+    try {
+      const partialSchema = insertWhatsappSettingsSchema.partial();
+      const data = partialSchema.parse(req.body);
+      const settings = await storage.upsertWhatsappSettings(data);
+      res.json(settings);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update WhatsApp settings" });
+      }
+    }
+  });
+
+  // Admin Reviews (all reviews, not just approved)
+  app.get("/api/admin/reviews", async (req, res) => {
+    try {
+      const reviews = await storage.getReviews();
+      res.json(reviews);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch reviews" });
+    }
+  });
+
+  app.patch("/api/admin/reviews/:id", async (req, res) => {
+    try {
+      const { isApproved } = req.body;
+      const review = await storage.updateReview(req.params.id, { isApproved });
+      if (!review) {
+        return res.status(404).json({ error: "Review not found" });
+      }
+      res.json(review);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update review" });
+    }
+  });
+
+  app.delete("/api/admin/reviews/:id", async (req, res) => {
+    try {
+      await storage.deleteReview(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete review" });
     }
   });
 
