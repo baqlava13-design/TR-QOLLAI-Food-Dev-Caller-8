@@ -209,6 +209,7 @@ export default function Admin() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/site-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/site-profile"] });
       toast({ title: "Kaydedildi", description: "Site ayarlari basariyla guncellendi." });
     },
     onError: () => {
@@ -222,6 +223,7 @@ export default function Admin() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/social-links"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social-links"] });
       toast({ title: "Kaydedildi", description: "Sosyal medya baglantisi guncellendi." });
     },
     onError: () => {
@@ -235,6 +237,7 @@ export default function Admin() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/whatsapp-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/whatsapp-settings"] });
       toast({ title: "Kaydedildi", description: "WhatsApp ayarlari basariyla guncellendi." });
     },
     onError: () => {
