@@ -1224,6 +1224,23 @@ ${itemsText}
                   </div>
                 </div>
 
+                <Separator />
+
+                <div className="space-y-2">
+                  <Label htmlFor="googleReviewsWidgetCode">Google Yorumlari Widget Kodu</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Elfsight, Tagembed veya benzeri servislerden aldiginiz embed kodunu buraya yapistirin.
+                  </p>
+                  <Textarea
+                    id="googleReviewsWidgetCode"
+                    value={profileForm.googleReviewsWidgetCode || siteProfile?.googleReviewsWidgetCode || ""}
+                    onChange={(e) => setProfileForm({ ...profileForm, googleReviewsWidgetCode: e.target.value })}
+                    placeholder='<script src="..." ></script> veya <div class="..." ></div>'
+                    rows={4}
+                    data-testid="input-google-widget"
+                  />
+                </div>
+
                 <div className="flex justify-end">
                   <Button
                     onClick={() => updateProfileMutation.mutate(profileForm)}

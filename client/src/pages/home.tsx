@@ -8,7 +8,7 @@ import { Reviews } from "@/components/reviews";
 import { OrderForm } from "@/components/order-form";
 import { SocialProof } from "@/components/social-proof";
 import { Footer } from "@/components/footer";
-import type { Category, MenuItem, Review } from "@shared/schema";
+import type { Category, MenuItem, Review, SiteProfile } from "@shared/schema";
 
 export default function Home() {
   const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
@@ -23,6 +23,10 @@ export default function Home() {
     queryKey: ["/api/reviews"],
   });
 
+  const { data: siteProfile } = useQuery<SiteProfile>({
+    queryKey: ["/api/site-profile"],
+  });
+
   return (
     <div className="min-h-screen bg-background" data-testid="page-home">
       <Header />
@@ -35,7 +39,11 @@ export default function Home() {
           isLoading={categoriesLoading || menuItemsLoading}
         />
         <HowItWorks />
-        <Reviews reviews={reviews} isLoading={reviewsLoading} />
+        <Reviews 
+          reviews={reviews} 
+          isLoading={reviewsLoading} 
+          googleWidgetCode={siteProfile?.googleReviewsWidgetCode}
+        />
         <SocialProof />
         <OrderForm />
       </main>

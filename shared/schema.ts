@@ -179,6 +179,7 @@ export const siteProfile = pgTable("site_profile", {
   address: text("address"),
   phone: text("phone"),
   email: text("email"),
+  googleReviewsWidgetCode: text("google_reviews_widget_code"),
 });
 
 // Social Links table

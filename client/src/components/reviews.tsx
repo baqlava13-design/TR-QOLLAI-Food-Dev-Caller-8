@@ -2,11 +2,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Star, Quote } from "lucide-react";
+import { SiGoogle } from "react-icons/si";
 import type { Review } from "@shared/schema";
 
 interface ReviewsProps {
   reviews?: Review[];
   isLoading?: boolean;
+  googleWidgetCode?: string | null;
 }
 
 const defaultReviews: Review[] = [
@@ -66,7 +68,7 @@ const defaultReviews: Review[] = [
   },
 ];
 
-export function Reviews({ reviews = defaultReviews, isLoading = false }: ReviewsProps) {
+export function Reviews({ reviews = defaultReviews, isLoading = false, googleWidgetCode }: ReviewsProps) {
   const displayReviews = reviews.length > 0 ? reviews : defaultReviews;
 
   if (isLoading) {
@@ -161,6 +163,22 @@ export function Reviews({ reviews = defaultReviews, isLoading = false }: Reviews
             </Card>
           ))}
         </div>
+
+        {googleWidgetCode && (
+          <div className="mt-12" data-testid="google-reviews-widget">
+            <div className="text-center mb-8">
+              <Badge className="mb-4 bg-blue-500/10 text-blue-600 dark:text-blue-400 border-none gap-2">
+                <SiGoogle className="h-3 w-3" />
+                Google Yorumlari
+              </Badge>
+              <h3 className="text-2xl font-bold">Google'da Bizi Degerlendirin</h3>
+            </div>
+            <div 
+              className="flex justify-center"
+              dangerouslySetInnerHTML={{ __html: googleWidgetCode }}
+            />
+          </div>
+        )}
       </div>
     </section>
   );
