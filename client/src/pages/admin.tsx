@@ -257,10 +257,23 @@ export default function Admin() {
     },
   });
 
+  // Helper to normalize menu item form data before submission
+  const normalizeMenuItemData = (form: Partial<MenuItem>) => {
+    return {
+      ...form,
+      price: form.price ? String(parseFloat(String(form.price))) : undefined,
+      salePrice: form.salePrice ? String(parseFloat(String(form.salePrice))) : null,
+      isAvailable: form.isAvailable !== false,
+      isPopular: form.isPopular === true,
+      isFeatured: form.isFeatured === true,
+    };
+  };
+
   // Menu Item mutations
   const createMenuItemMutation = useMutation({
     mutationFn: async (data: Partial<MenuItem>) => {
-      return apiRequest("POST", "/api/menu-items", data);
+      const normalized = normalizeMenuItemData(data);
+      return apiRequest("POST", "/api/menu-items", normalized);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/menu-items"] });
@@ -275,7 +288,8 @@ export default function Admin() {
 
   const updateMenuItemMutation = useMutation({
     mutationFn: async ({ id, ...data }: Partial<MenuItem> & { id: string }) => {
-      return apiRequest("PATCH", `/api/menu-items/${id}`, data);
+      const normalized = normalizeMenuItemData(data);
+      return apiRequest("PATCH", `/api/menu-items/${id}`, normalized);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/menu-items"] });
