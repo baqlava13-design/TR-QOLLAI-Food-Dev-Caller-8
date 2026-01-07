@@ -50,7 +50,16 @@ import { useTheme } from "@/lib/theme";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
-import type { Order, OrderItem, SiteProfile, SocialLink, WhatsappSettings, Review } from "@shared/schema";
+import type { Order, OrderItem, SiteProfile, SocialLink, WhatsappSettings, Review, MenuItem, Category, MediaAsset } from "@shared/schema";
+import { useUpload } from "@/hooks/use-upload";
+import { Image, Plus, Edit, UtensilsCrossed, Upload, ImageIcon } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface OrderWithItems extends Order {
   items?: OrderItem[];
@@ -129,9 +138,36 @@ export default function Admin() {
     queryKey: ["/api/admin/reviews"],
   });
 
+  // Menu & Media queries
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+  });
+
+  const { data: menuItems = [] } = useQuery<MenuItem[]>({
+    queryKey: ["/api/menu-items"],
+  });
+
+  const { data: mediaAssets = [] } = useQuery<MediaAsset[]>({
+    queryKey: ["/api/admin/media"],
+  });
+
   // Form states
   const [profileForm, setProfileForm] = useState<Partial<SiteProfile>>({});
   const [whatsappForm, setWhatsappForm] = useState<Partial<WhatsappSettings>>({});
+  const [editingMenuItem, setEditingMenuItem] = useState<MenuItem | null>(null);
+  const [menuItemForm, setMenuItemForm] = useState<Partial<MenuItem>>({});
+  const [showMenuDialog, setShowMenuDialog] = useState(false);
+  const [mediaFilter, setMediaFilter] = useState<string>("all");
+
+  // Upload hook
+  const { uploadFile, isUploading } = useUpload({
+    onSuccess: (response) => {
+      toast({ title: "Yuklendi", description: "Dosya basariyla yuklendi." });
+    },
+    onError: (error) => {
+      toast({ title: "Hata", description: "Dosya yuklenirken bir hata olustu.", variant: "destructive" });
+    },
+  });
 
   // Initialize forms when data loads
   useState(() => {
@@ -221,6 +257,94 @@ export default function Admin() {
     },
   });
 
+  // Menu Item mutations
+  const createMenuItemMutation = useMutation({
+    mutationFn: async (data: Partial<MenuItem>) => {
+      return apiRequest("POST", "/api/menu-items", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/menu-items"] });
+      setShowMenuDialog(false);
+      setMenuItemForm({});
+      toast({ title: "Kaydedildi", description: "Menu urunu eklendi." });
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Menu urunu eklenemedi.", variant: "destructive" });
+    },
+  });
+
+  const updateMenuItemMutation = useMutation({
+    mutationFn: async ({ id, ...data }: Partial<MenuItem> & { id: string }) => {
+      return apiRequest("PATCH", `/api/menu-items/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/menu-items"] });
+      setShowMenuDialog(false);
+      setEditingMenuItem(null);
+      setMenuItemForm({});
+      toast({ title: "Kaydedildi", description: "Menu urunu guncellendi." });
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Menu urunu guncellenemedi.", variant: "destructive" });
+    },
+  });
+
+  const deleteMenuItemMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/menu-items/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/menu-items"] });
+      toast({ title: "Silindi", description: "Menu urunu silindi." });
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Menu urunu silinemedi.", variant: "destructive" });
+    },
+  });
+
+  // Media mutations
+  const createMediaMutation = useMutation({
+    mutationFn: async (data: { objectPath: string; fileName: string; mimeType?: string; size?: number; type?: string; altText?: string }) => {
+      return apiRequest("POST", "/api/admin/media", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/media"] });
+      toast({ title: "Kaydedildi", description: "Medya dosyasi kaydedildi." });
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Medya dosyasi kaydedilemedi.", variant: "destructive" });
+    },
+  });
+
+  const deleteMediaMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/admin/media/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/media"] });
+      toast({ title: "Silindi", description: "Medya dosyasi silindi." });
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Medya dosyasi silinemedi.", variant: "destructive" });
+    },
+  });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const result = await uploadFile(file);
+    if (result) {
+      await createMediaMutation.mutateAsync({
+        objectPath: result.objectPath,
+        fileName: file.name,
+        mimeType: file.type,
+        size: file.size,
+        type: type,
+      });
+    }
+  };
+
   const filteredOrders = orders.filter((order) => {
     if (filterStatus === "all") return true;
     return order.status === filterStatus;
@@ -300,10 +424,18 @@ ${itemsText}
 
       <main className="max-w-7xl mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid" data-testid="tabs-admin">
+          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid" data-testid="tabs-admin">
             <TabsTrigger value="orders" className="gap-2" data-testid="tab-orders">
               <ShoppingBag className="h-4 w-4" />
               <span className="hidden sm:inline">Siparisler</span>
+            </TabsTrigger>
+            <TabsTrigger value="menu" className="gap-2" data-testid="tab-menu">
+              <UtensilsCrossed className="h-4 w-4" />
+              <span className="hidden sm:inline">Menu</span>
+            </TabsTrigger>
+            <TabsTrigger value="media" className="gap-2" data-testid="tab-media">
+              <ImageIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Medya</span>
             </TabsTrigger>
             <TabsTrigger value="site" className="gap-2" data-testid="tab-site">
               <Settings className="h-4 w-4" />
@@ -551,6 +683,423 @@ ${itemsText}
                     </Table>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Menu Management Tab */}
+          <TabsContent value="menu" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <UtensilsCrossed className="h-5 w-5" />
+                    Menu Yonetimi
+                  </div>
+                  <Dialog open={showMenuDialog} onOpenChange={setShowMenuDialog}>
+                    <DialogTrigger asChild>
+                      <Button 
+                        size="sm" 
+                        className="gap-2"
+                        onClick={() => {
+                          setEditingMenuItem(null);
+                          setMenuItemForm({});
+                        }}
+                        data-testid="button-add-menu-item"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Yeni Urun
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>{editingMenuItem ? "Urunu Duzenle" : "Yeni Urun Ekle"}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="menuItemName">Urun Adi</Label>
+                            <Input
+                              id="menuItemName"
+                              value={menuItemForm.name || ""}
+                              onChange={(e) => setMenuItemForm({ ...menuItemForm, name: e.target.value })}
+                              placeholder="Urun adi"
+                              data-testid="input-menu-item-name"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="menuItemCategory">Kategori</Label>
+                            <Select
+                              value={menuItemForm.categoryId || ""}
+                              onValueChange={(value) => setMenuItemForm({ ...menuItemForm, categoryId: value })}
+                            >
+                              <SelectTrigger data-testid="select-menu-category">
+                                <SelectValue placeholder="Kategori secin" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {categories.map((cat) => (
+                                  <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="menuItemDesc">Aciklama</Label>
+                          <Textarea
+                            id="menuItemDesc"
+                            value={menuItemForm.description || ""}
+                            onChange={(e) => setMenuItemForm({ ...menuItemForm, description: e.target.value })}
+                            placeholder="Urun aciklamasi"
+                            data-testid="input-menu-item-description"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="menuItemIngredients">Malzemeler</Label>
+                          <Input
+                            id="menuItemIngredients"
+                            value={menuItemForm.ingredients || ""}
+                            onChange={(e) => setMenuItemForm({ ...menuItemForm, ingredients: e.target.value })}
+                            placeholder="Malzeme listesi (virgul ile ayirin)"
+                            data-testid="input-menu-item-ingredients"
+                          />
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="menuItemPrice">Fiyat (TL)</Label>
+                            <Input
+                              id="menuItemPrice"
+                              type="number"
+                              step="0.01"
+                              value={menuItemForm.price || ""}
+                              onChange={(e) => setMenuItemForm({ ...menuItemForm, price: e.target.value })}
+                              placeholder="0.00"
+                              data-testid="input-menu-item-price"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="menuItemSalePrice">Indirimli Fiyat (TL)</Label>
+                            <Input
+                              id="menuItemSalePrice"
+                              type="number"
+                              step="0.01"
+                              value={menuItemForm.salePrice || ""}
+                              onChange={(e) => setMenuItemForm({ ...menuItemForm, salePrice: e.target.value || null })}
+                              placeholder="Bos birakin indirim yoksa"
+                              data-testid="input-menu-item-sale-price"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="menuItemImage">Gorsel URL</Label>
+                          <Input
+                            id="menuItemImage"
+                            value={menuItemForm.image || ""}
+                            onChange={(e) => setMenuItemForm({ ...menuItemForm, image: e.target.value })}
+                            placeholder="Gorsel URL veya medyadan secin"
+                            data-testid="input-menu-item-image"
+                          />
+                        </div>
+                        <div className="flex items-center gap-6">
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="menuItemAvailable"
+                              checked={menuItemForm.isAvailable !== false}
+                              onCheckedChange={(checked) => setMenuItemForm({ ...menuItemForm, isAvailable: checked })}
+                            />
+                            <Label htmlFor="menuItemAvailable">Mevcut</Label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="menuItemPopular"
+                              checked={menuItemForm.isPopular === true}
+                              onCheckedChange={(checked) => setMenuItemForm({ ...menuItemForm, isPopular: checked })}
+                            />
+                            <Label htmlFor="menuItemPopular">Populer</Label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="menuItemFeatured"
+                              checked={menuItemForm.isFeatured === true}
+                              onCheckedChange={(checked) => setMenuItemForm({ ...menuItemForm, isFeatured: checked })}
+                            />
+                            <Label htmlFor="menuItemFeatured">One Cikan</Label>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 pt-4">
+                          <Button
+                            className="flex-1"
+                            onClick={() => {
+                              if (editingMenuItem) {
+                                updateMenuItemMutation.mutate({ id: editingMenuItem.id, ...menuItemForm });
+                              } else {
+                                createMenuItemMutation.mutate(menuItemForm);
+                              }
+                            }}
+                            disabled={createMenuItemMutation.isPending || updateMenuItemMutation.isPending}
+                            data-testid="button-save-menu-item"
+                          >
+                            <Save className="h-4 w-4 mr-2" />
+                            {editingMenuItem ? "Guncelle" : "Kaydet"}
+                          </Button>
+                          <Button variant="outline" onClick={() => setShowMenuDialog(false)}>
+                            Iptal
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Gorsel</TableHead>
+                        <TableHead>Urun</TableHead>
+                        <TableHead>Kategori</TableHead>
+                        <TableHead>Fiyat</TableHead>
+                        <TableHead>Indirim</TableHead>
+                        <TableHead>Durum</TableHead>
+                        <TableHead className="text-right">Islemler</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {menuItems.map((item) => (
+                        <TableRow key={item.id} data-testid={`row-menu-item-${item.id}`}>
+                          <TableCell>
+                            {item.image ? (
+                              <img 
+                                src={item.image} 
+                                alt={item.name} 
+                                className="w-12 h-12 object-cover rounded-md"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center">
+                                <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{item.name}</p>
+                              {item.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-1">{item.description}</p>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {categories.find(c => c.id === item.categoryId)?.name || "-"}
+                          </TableCell>
+                          <TableCell>{parseFloat(item.price).toFixed(2)} TL</TableCell>
+                          <TableCell>
+                            {item.salePrice ? (
+                              <Badge variant="secondary" className="text-green-600">
+                                {parseFloat(item.salePrice).toFixed(2)} TL
+                              </Badge>
+                            ) : "-"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={item.isAvailable ? "default" : "secondary"}>
+                              {item.isAvailable ? "Mevcut" : "Yok"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingMenuItem(item);
+                                  setMenuItemForm(item);
+                                  setShowMenuDialog(true);
+                                }}
+                                data-testid={`button-edit-menu-${item.id}`}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="text-destructive"
+                                onClick={() => deleteMenuItemMutation.mutate(item.id)}
+                                data-testid={`button-delete-menu-${item.id}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Media Management Tab */}
+          <TabsContent value="media" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="h-5 w-5" />
+                    Medya Yonetimi
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select value={mediaFilter} onValueChange={setMediaFilter}>
+                      <SelectTrigger className="w-40" data-testid="select-media-filter">
+                        <SelectValue placeholder="Tur filtrele" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tumu</SelectItem>
+                        <SelectItem value="logo">Logo</SelectItem>
+                        <SelectItem value="hero">Hero</SelectItem>
+                        <SelectItem value="menu_item">Menu Gorseli</SelectItem>
+                        <SelectItem value="gallery">Galeri</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Label htmlFor="uploadMedia" className="cursor-pointer">
+                      <Button size="sm" className="gap-2" asChild disabled={isUploading}>
+                        <span>
+                          <Upload className="h-4 w-4" />
+                          {isUploading ? "Yukleniyor..." : "Gorsel Yukle"}
+                        </span>
+                      </Button>
+                    </Label>
+                    <input
+                      type="file"
+                      id="uploadMedia"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleFileUpload(e, "gallery")}
+                      data-testid="input-upload-media"
+                    />
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Quick Upload Sections */}
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <Card className="bg-muted/50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <ImageIcon className="h-4 w-4" />
+                          <span className="font-medium">Logo</span>
+                        </div>
+                        <Label htmlFor="uploadLogo" className="cursor-pointer">
+                          <div className="border-2 border-dashed rounded-md p-4 text-center hover-elevate">
+                            <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                            <p className="text-sm text-muted-foreground">Logo yukle</p>
+                          </div>
+                        </Label>
+                        <input
+                          type="file"
+                          id="uploadLogo"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFileUpload(e, "logo")}
+                        />
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-muted/50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <ImageIcon className="h-4 w-4" />
+                          <span className="font-medium">Hero Gorseli</span>
+                        </div>
+                        <Label htmlFor="uploadHero" className="cursor-pointer">
+                          <div className="border-2 border-dashed rounded-md p-4 text-center hover-elevate">
+                            <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                            <p className="text-sm text-muted-foreground">Hero gorseli yukle</p>
+                          </div>
+                        </Label>
+                        <input
+                          type="file"
+                          id="uploadHero"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFileUpload(e, "hero")}
+                        />
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-muted/50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <ImageIcon className="h-4 w-4" />
+                          <span className="font-medium">Menu Gorseli</span>
+                        </div>
+                        <Label htmlFor="uploadMenuItem" className="cursor-pointer">
+                          <div className="border-2 border-dashed rounded-md p-4 text-center hover-elevate">
+                            <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                            <p className="text-sm text-muted-foreground">Menu gorseli yukle</p>
+                          </div>
+                        </Label>
+                        <input
+                          type="file"
+                          id="uploadMenuItem"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFileUpload(e, "menu_item")}
+                        />
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <Separator />
+
+                  {/* Media Gallery */}
+                  <div>
+                    <h3 className="font-semibold mb-4">Yuklenen Gorseller</h3>
+                    {mediaAssets.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <ImageIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Henuz gorsel yuklenmemis</p>
+                        <p className="text-sm">Yukaridaki butonlari kullanarak gorsel yukleyebilirsiniz</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {mediaAssets
+                          .filter(a => mediaFilter === "all" || a.type === mediaFilter)
+                          .map((asset) => (
+                          <div 
+                            key={asset.id} 
+                            className="relative group rounded-md overflow-hidden border"
+                            data-testid={`media-item-${asset.id}`}
+                          >
+                            <img
+                              src={asset.objectPath}
+                              alt={asset.altText || asset.fileName}
+                              className="w-full aspect-square object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Button
+                                size="icon"
+                                variant="destructive"
+                                onClick={() => deleteMediaMutation.mutate(asset.id)}
+                                data-testid={`button-delete-media-${asset.id}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-1 text-xs text-white truncate">
+                              {asset.fileName}
+                            </div>
+                            <Badge 
+                              variant="secondary" 
+                              className="absolute top-1 left-1 text-xs"
+                            >
+                              {asset.type}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
