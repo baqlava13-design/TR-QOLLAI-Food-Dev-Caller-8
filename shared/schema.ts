@@ -6,6 +6,19 @@ import { z } from "zod";
 // Enums
 export const orderStatusEnum = pgEnum("order_status", ["pending", "confirmed", "preparing", "delivered", "cancelled"]);
 export const paymentMethodEnum = pgEnum("payment_method", ["cash", "pos"]);
+export const mediaTypeEnum = pgEnum("media_type", ["logo", "hero", "menu_item", "category", "gallery"]);
+
+// Media Assets table
+export const mediaAssets = pgTable("media_assets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  objectPath: text("object_path").notNull(),
+  fileName: text("file_name").notNull(),
+  mimeType: text("mime_type"),
+  size: integer("size"),
+  type: mediaTypeEnum("type").default("gallery"),
+  altText: text("alt_text"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 // Categories table (with self-referencing for subcategories)
 export const categories = pgTable("categories", {
@@ -34,10 +47,15 @@ export const menuItems = pgTable("menu_items", {
   name: text("name").notNull(),
   description: text("description"),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  salePrice: decimal("sale_price", { precision: 10, scale: 2 }),
+  saleStartDate: timestamp("sale_start_date"),
+  saleEndDate: timestamp("sale_end_date"),
   image: text("image"),
+  ingredients: text("ingredients"),
   categoryId: varchar("category_id").references(() => categories.id),
   isAvailable: boolean("is_available").default(true),
   isPopular: boolean("is_popular").default(false),
+  isFeatured: boolean("is_featured").default(false),
   sortOrder: integer("sort_order").default(0),
 });
 
@@ -182,6 +200,7 @@ export const whatsappSettings = pgTable("whatsapp_settings", {
 });
 
 // Insert schemas
+export const insertMediaAssetSchema = createInsertSchema(mediaAssets).omit({ id: true, createdAt: true });
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertMenuItemSchema = createInsertSchema(menuItems).omit({ id: true });
 export const insertUpsellOptionSchema = createInsertSchema(upsellOptions).omit({ id: true });
@@ -195,6 +214,9 @@ export const insertSocialLinkSchema = createInsertSchema(socialLinks).omit({ id:
 export const insertWhatsappSettingsSchema = createInsertSchema(whatsappSettings).omit({ id: true });
 
 // Types
+export type MediaAsset = typeof mediaAssets.$inferSelect;
+export type InsertMediaAsset = z.infer<typeof insertMediaAssetSchema>;
+
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 

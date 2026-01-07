@@ -11,8 +11,10 @@ import {
   insertSiteProfileSchema,
   insertSocialLinkSchema,
   insertWhatsappSettingsSchema,
+  insertMediaAssetSchema,
 } from "@shared/schema";
 import { z } from "zod";
+import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -423,6 +425,74 @@ export async function registerRoutes(
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete review" });
+    }
+  });
+
+  // ==================== MEDIA ASSETS ENDPOINTS ====================
+  
+  // Register object storage routes for file uploads
+  registerObjectStorageRoutes(app);
+
+  // Media Assets CRUD
+  app.get("/api/admin/media", async (req, res) => {
+    try {
+      const type = req.query.type as string | undefined;
+      const assets = await storage.getMediaAssets(type);
+      res.json(assets);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch media assets" });
+    }
+  });
+
+  app.get("/api/admin/media/:id", async (req, res) => {
+    try {
+      const asset = await storage.getMediaAssetById(req.params.id);
+      if (!asset) {
+        return res.status(404).json({ error: "Media asset not found" });
+      }
+      res.json(asset);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch media asset" });
+    }
+  });
+
+  app.post("/api/admin/media", async (req, res) => {
+    try {
+      const data = insertMediaAssetSchema.parse(req.body);
+      const asset = await storage.createMediaAsset(data);
+      res.status(201).json(asset);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create media asset" });
+      }
+    }
+  });
+
+  app.patch("/api/admin/media/:id", async (req, res) => {
+    try {
+      const partialSchema = insertMediaAssetSchema.partial();
+      const data = partialSchema.parse(req.body);
+      const asset = await storage.updateMediaAsset(req.params.id, data);
+      if (!asset) {
+        return res.status(404).json({ error: "Media asset not found" });
+      }
+      res.json(asset);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update media asset" });
+    }
+  });
+
+  app.delete("/api/admin/media/:id", async (req, res) => {
+    try {
+      await storage.deleteMediaAsset(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete media asset" });
     }
   });
 

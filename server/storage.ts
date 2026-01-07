@@ -10,6 +10,7 @@ import {
   siteProfile,
   socialLinks,
   whatsappSettings,
+  mediaAssets,
   type Category,
   type InsertCategory,
   type MenuItem,
@@ -32,6 +33,8 @@ import {
   type InsertSocialLink,
   type WhatsappSettings,
   type InsertWhatsappSettings,
+  type MediaAsset,
+  type InsertMediaAsset,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, gte, and, sql } from "drizzle-orm";
@@ -113,6 +116,13 @@ export interface IStorage {
     monthRevenue: number;
     totalCustomers: number;
   }>;
+
+  // Media Assets
+  getMediaAssets(type?: string): Promise<MediaAsset[]>;
+  getMediaAssetById(id: string): Promise<MediaAsset | undefined>;
+  createMediaAsset(asset: InsertMediaAsset): Promise<MediaAsset>;
+  updateMediaAsset(id: string, asset: Partial<InsertMediaAsset>): Promise<MediaAsset | undefined>;
+  deleteMediaAsset(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -387,6 +397,34 @@ export class DatabaseStorage implements IStorage {
       monthRevenue,
       totalCustomers: allCustomers.length,
     };
+  }
+
+  // Media Assets
+  async getMediaAssets(type?: string): Promise<MediaAsset[]> {
+    if (type) {
+      return db.select().from(mediaAssets).where(eq(mediaAssets.type, type as any)).orderBy(desc(mediaAssets.createdAt));
+    }
+    return db.select().from(mediaAssets).orderBy(desc(mediaAssets.createdAt));
+  }
+
+  async getMediaAssetById(id: string): Promise<MediaAsset | undefined> {
+    const [asset] = await db.select().from(mediaAssets).where(eq(mediaAssets.id, id));
+    return asset || undefined;
+  }
+
+  async createMediaAsset(asset: InsertMediaAsset): Promise<MediaAsset> {
+    const [created] = await db.insert(mediaAssets).values(asset).returning();
+    return created;
+  }
+
+  async updateMediaAsset(id: string, asset: Partial<InsertMediaAsset>): Promise<MediaAsset | undefined> {
+    const [updated] = await db.update(mediaAssets).set(asset).where(eq(mediaAssets.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteMediaAsset(id: string): Promise<boolean> {
+    await db.delete(mediaAssets).where(eq(mediaAssets.id, id));
+    return true;
   }
 }
 
