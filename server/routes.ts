@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import {
@@ -16,11 +16,76 @@ import {
 import { z } from "zod";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
+const loginSchema = z.object({
+  username: z.string().min(1),
+  password: z.string().min(1),
+});
+
+function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
+  if (req.session?.user) {
+    return next();
+  }
+  res.status(401).json({ error: "Yetkisiz erisim" });
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Categories
+  // Auth routes
+  app.post("/api/auth/login", (req, res) => {
+    try {
+      const { username, password } = loginSchema.parse(req.body);
+      
+      const adminUsername = process.env.ADMIN_USERNAME || "admin";
+      const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+      
+      if (username === adminUsername && password === adminPassword) {
+        req.session.user = { username };
+        res.json({ success: true, user: { username } });
+      } else {
+        res.status(401).json({ error: "Gecersiz kullanici adi veya sifre" });
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Gecersiz giris bilgileri" });
+      } else {
+        res.status(500).json({ error: "Giris basarisiz" });
+      }
+    }
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        res.status(500).json({ error: "Cikis basarisiz" });
+      } else {
+        res.json({ success: true });
+      }
+    });
+  });
+
+  app.get("/api/auth/session", (req, res) => {
+    if (req.session?.user) {
+      res.json({ authenticated: true, user: req.session.user });
+    } else {
+      res.json({ authenticated: false });
+    }
+  });
+
+  // Protected admin routes middleware - apply to /api/admin/* endpoints
+  app.use("/api/admin", ensureAuthenticated);
+  
+  // Protect all mutation endpoints for admin-only actions
+  app.post("/api/categories", ensureAuthenticated);
+  app.patch("/api/categories/:id", ensureAuthenticated);
+  app.delete("/api/categories/:id", ensureAuthenticated);
+  app.post("/api/menu-items", ensureAuthenticated);
+  app.patch("/api/menu-items/:id", ensureAuthenticated);
+  app.delete("/api/menu-items/:id", ensureAuthenticated);
+  app.patch("/api/orders/:id/status", ensureAuthenticated);
+  
+  // Categories (GET is public for customers to view menu)
   app.get("/api/categories", async (req, res) => {
     try {
       const categories = await storage.getCategories();

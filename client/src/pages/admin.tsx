@@ -44,12 +44,13 @@ import {
   Trash2,
   Check,
   X,
+  LogOut,
 } from "lucide-react";
 import { SiWhatsapp, SiInstagram, SiFacebook, SiYoutube, SiX } from "react-icons/si";
 import { useTheme } from "@/lib/theme";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import type { Order, OrderItem, SiteProfile, SocialLink, WhatsappSettings, Review, MenuItem, Category, MediaAsset } from "@shared/schema";
 import { useUpload } from "@/hooks/use-upload";
 import { Image, Plus, Edit, UtensilsCrossed, Upload, ImageIcon } from "lucide-react";
@@ -108,9 +109,21 @@ const platformLabels: Record<string, string> = {
 export default function Admin() {
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [activeTab, setActiveTab] = useState("orders");
+
+  const handleLogout = async () => {
+    try {
+      await apiRequest("POST", "/api/auth/logout");
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/session"] });
+      toast({ title: "Cikis yapildi", description: "Basariyla cikis yapildi." });
+      setLocation("/giris");
+    } catch (error) {
+      toast({ title: "Hata", description: "Cikis yapilamadi.", variant: "destructive" });
+    }
+  };
 
   // Orders queries
   const { data: stats } = useQuery<DashboardStats>({
@@ -430,9 +443,21 @@ ${itemsText}
               <span className="font-bold text-lg">Yonetim Paneli</span>
             </div>
           </div>
-          <Button size="icon" variant="ghost" onClick={toggleTheme} data-testid="button-admin-theme-toggle">
-            {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="icon" variant="ghost" onClick={toggleTheme} data-testid="button-admin-theme-toggle">
+              {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleLogout}
+              className="gap-2"
+              data-testid="button-logout"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Cikis</span>
+            </Button>
+          </div>
         </div>
       </header>
 
