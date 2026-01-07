@@ -375,9 +375,12 @@ export async function registerRoutes(
     try {
       const partialSchema = insertSiteProfileSchema.partial();
       const data = partialSchema.parse(req.body);
+      console.log("Updating site profile with data:", JSON.stringify(data));
       const profile = await storage.upsertSiteProfile(data);
+      console.log("Site profile updated successfully:", profile?.id);
       res.json(profile);
     } catch (error) {
+      console.error("Site profile update error:", error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: error.errors });
       } else {
