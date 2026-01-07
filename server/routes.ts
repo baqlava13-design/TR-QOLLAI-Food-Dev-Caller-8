@@ -40,10 +40,15 @@ export async function registerRoutes(
       const adminUsername = process.env.ADMIN_USERNAME || "admin";
       const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
       
+      console.log(`[AUTH] Login attempt - username: "${username}", expected: "${adminUsername}"`);
+      console.log(`[AUTH] Password match: ${password === adminPassword}`);
+      
       if (username === adminUsername && password === adminPassword) {
         req.session.user = { username };
+        console.log(`[AUTH] Login successful for user: ${username}`);
         res.json({ success: true, user: { username } });
       } else {
+        console.log(`[AUTH] Login failed - credentials mismatch`);
         res.status(401).json({ error: "Gecersiz kullanici adi veya sifre" });
       }
     } catch (error) {
