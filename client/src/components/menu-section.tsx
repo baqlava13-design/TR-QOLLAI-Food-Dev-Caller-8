@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,8 +38,14 @@ const defaultMenuItems: MenuItem[] = [
 ];
 
 export function MenuSection({ categories = defaultCategories, menuItems = defaultMenuItems, isLoading = false }: MenuSectionProps) {
-  const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "1");
+  const [activeCategory, setActiveCategory] = useState<string>("");
   const { addItem } = useCart();
+
+  useEffect(() => {
+    if (categories.length > 0 && !categories.find(c => c.id === activeCategory)) {
+      setActiveCategory(categories[0].id);
+    }
+  }, [categories, activeCategory]);
 
   const filteredItems = menuItems.filter((item) => item.categoryId === activeCategory && item.isAvailable);
 
