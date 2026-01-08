@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChefHat, Heart, Leaf, Award } from "lucide-react";
+import type { SiteProfile } from "@shared/schema";
 
 const features = [
   {
@@ -25,7 +26,11 @@ const features = [
   },
 ];
 
-export function BrandStory() {
+interface BrandStoryProps {
+  siteProfile?: SiteProfile;
+}
+
+export function BrandStory({ siteProfile }: BrandStoryProps) {
   return (
     <section
       id="about"
@@ -37,8 +42,8 @@ export function BrandStory() {
           <div className="relative">
             <div className="aspect-[4/3] rounded-xl overflow-hidden">
               <img
-                src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80"
-                alt="Lezzet Express Restoran"
+                src={siteProfile?.brandImageUrl || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80"}
+                alt={siteProfile?.restaurantName || "Restoran"}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -64,16 +69,8 @@ export function BrandStory() {
               <br />
               <span className="text-primary">Lezzet Tutkunlari</span>
             </h2>
-            <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
-              2010 yilindan beri Corlu'da hizmet veren Lezzet Express olarak,
-              geleneksel Turk mutfagini modern dokunuslarla harmanliyoruz.
-              Taze malzemeler, ozenli hazirlama ve sicak servis anlayisimizla
-              her gun yuzlerce aileye lezzet ulastiriyoruz.
-            </p>
             <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
-              Ister evde, ister is yerinde veya restoranmizda... Her yemekte
-              ayni kalite ve lezzeti sunuyoruz. WhatsApp ile kolayca siparis
-              verin, biz kapiniza getirelim!
+              {siteProfile?.aboutText || "2010 yilindan beri Corlu'da hizmet veren restoranmiz olarak, geleneksel Turk mutfagini modern dokunuslarla harmanliyoruz. Taze malzemeler, ozenli hazirlama ve sicak servis anlayisimizla her gun yuzlerce aileye lezzet ulastiriyoruz. Ister evde, ister is yerinde veya restoranmizda... Her yemekte ayni kalite ve lezzeti sunuyoruz. WhatsApp ile kolayca siparis verin, biz kapiniza getirelim!"}
             </p>
 
             <div className="grid grid-cols-2 gap-4">

@@ -8,7 +8,7 @@ import { Reviews } from "@/components/reviews";
 import { OrderForm } from "@/components/order-form";
 import { SocialProof } from "@/components/social-proof";
 import { Footer } from "@/components/footer";
-import type { Category, MenuItem, Review, SiteProfile } from "@shared/schema";
+import type { Category, MenuItem, Review, SiteProfile, SocialLink } from "@shared/schema";
 
 export default function Home() {
   const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
@@ -27,12 +27,16 @@ export default function Home() {
     queryKey: ["/api/site-profile"],
   });
 
+  const { data: socialLinks = [] } = useQuery<SocialLink[]>({
+    queryKey: ["/api/social-links"],
+  });
+
   return (
     <div className="min-h-screen bg-background" data-testid="page-home">
-      <Header />
+      <Header siteProfile={siteProfile} />
       <main>
-        <Hero />
-        <BrandStory />
+        <Hero siteProfile={siteProfile} />
+        <BrandStory siteProfile={siteProfile} />
         <MenuSection
           categories={categories}
           menuItems={menuItems}
@@ -47,7 +51,7 @@ export default function Home() {
         <SocialProof />
         <OrderForm />
       </main>
-      <Footer />
+      <Footer siteProfile={siteProfile} socialLinks={socialLinks} />
     </div>
   );
 }
