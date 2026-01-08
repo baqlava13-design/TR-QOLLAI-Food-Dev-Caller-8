@@ -370,6 +370,28 @@ export async function registerRoutes(
     }
   });
 
+  // ==================== PUBLIC CMS ENDPOINTS ====================
+  
+  // Public Site Profile (for frontend display)
+  app.get("/api/site-profile", async (req, res) => {
+    try {
+      const profile = await storage.getSiteProfile();
+      res.json(profile || {});
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch site profile" });
+    }
+  });
+
+  // Public Social Links (for frontend display)
+  app.get("/api/social-links", async (req, res) => {
+    try {
+      const links = await storage.getSocialLinks();
+      res.json(links);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch social links" });
+    }
+  });
+
   // ==================== CMS ADMIN ENDPOINTS ====================
 
   // Site Profile
