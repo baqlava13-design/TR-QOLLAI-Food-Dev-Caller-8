@@ -36,10 +36,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "development-secret-change-in-production",
-    resave: false,
+    resave: true,
     saveUninitialized: false,
     cookie: {
-      secure: "auto",
+      secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000,

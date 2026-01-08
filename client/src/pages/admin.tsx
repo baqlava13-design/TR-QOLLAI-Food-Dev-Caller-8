@@ -1372,6 +1372,33 @@ ${itemsText}
 
                 <Separator />
 
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Hakkimizda Bolumu</h3>
+                  <div className="space-y-2">
+                    <Label htmlFor="brandTitle">Baslik</Label>
+                    <Input
+                      id="brandTitle"
+                      value={profileForm.brandTitle || siteProfile?.brandTitle || ""}
+                      onChange={(e) => setProfileForm({ ...profileForm, brandTitle: e.target.value })}
+                      placeholder="Hikayemiz"
+                      data-testid="input-brand-title"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="brandDescription">Aciklama</Label>
+                    <Textarea
+                      id="brandDescription"
+                      value={profileForm.brandDescription || siteProfile?.brandDescription || ""}
+                      onChange={(e) => setProfileForm({ ...profileForm, brandDescription: e.target.value })}
+                      placeholder="Restoran hakkinda aciklama metni..."
+                      rows={4}
+                      data-testid="input-brand-description"
+                    />
+                  </div>
+                </div>
+
+                <Separator />
+
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="address">Adres</Label>
