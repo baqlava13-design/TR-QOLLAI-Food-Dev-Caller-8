@@ -1221,6 +1221,79 @@ ${itemsText}
 
                 <Separator />
 
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Gorseller</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Resim URL'lerini girin veya asagiya resim URL'si yapistirin.
+                  </p>
+                  
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="logoUrl">Logo URL</Label>
+                      <Input
+                        id="logoUrl"
+                        value={profileForm.logoUrl || siteProfile?.logoUrl || ""}
+                        onChange={(e) => setProfileForm({ ...profileForm, logoUrl: e.target.value })}
+                        placeholder="https://example.com/logo.png"
+                        data-testid="input-logo-url"
+                      />
+                      {(profileForm.logoUrl || siteProfile?.logoUrl) && (
+                        <div className="mt-2 p-2 border rounded-md">
+                          <img 
+                            src={profileForm.logoUrl || siteProfile?.logoUrl || ""} 
+                            alt="Logo Preview" 
+                            className="h-16 w-16 object-contain"
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="heroImageUrl">Hero Arka Plan Resmi URL</Label>
+                      <Input
+                        id="heroImageUrl"
+                        value={profileForm.heroImageUrl || siteProfile?.heroImageUrl || ""}
+                        onChange={(e) => setProfileForm({ ...profileForm, heroImageUrl: e.target.value })}
+                        placeholder="https://example.com/hero.jpg"
+                        data-testid="input-hero-image-url"
+                      />
+                      {(profileForm.heroImageUrl || siteProfile?.heroImageUrl) && (
+                        <div className="mt-2 p-2 border rounded-md">
+                          <img 
+                            src={profileForm.heroImageUrl || siteProfile?.heroImageUrl || ""} 
+                            alt="Hero Preview" 
+                            className="h-24 w-full object-cover rounded"
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="brandImageUrl">Hakkimizda Bolumu Resmi URL</Label>
+                    <Input
+                      id="brandImageUrl"
+                      value={profileForm.brandImageUrl || siteProfile?.brandImageUrl || ""}
+                      onChange={(e) => setProfileForm({ ...profileForm, brandImageUrl: e.target.value })}
+                      placeholder="https://example.com/brand.jpg"
+                      data-testid="input-brand-image-url"
+                    />
+                    {(profileForm.brandImageUrl || siteProfile?.brandImageUrl) && (
+                      <div className="mt-2 p-2 border rounded-md">
+                        <img 
+                          src={profileForm.brandImageUrl || siteProfile?.brandImageUrl || ""} 
+                          alt="Brand Preview" 
+                          className="h-32 w-full object-cover rounded"
+                          onError={(e) => (e.currentTarget.style.display = 'none')}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <Separator />
+
                 <div className="grid md:grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="address">Adres</Label>
