@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Star, Users, Truck } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
-import type { SiteProfile } from "@shared/schema";
 
 const trustIndicators = [
   { icon: Clock, label: "30 dk Teslimat", value: "" },
@@ -11,11 +10,7 @@ const trustIndicators = [
   { icon: Truck, label: "Ucretsiz Teslimat", value: "" },
 ];
 
-interface HeroProps {
-  siteProfile?: SiteProfile;
-}
-
-export function Hero({ siteProfile }: HeroProps) {
+export function Hero() {
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
     if (element) {
@@ -23,57 +18,55 @@ export function Hero({ siteProfile }: HeroProps) {
     }
   };
 
-  const heroImage = siteProfile?.heroImageUrl || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1920&q=80';
-  const primaryButtonText = siteProfile?.heroPrimaryButtonText || "WhatsApp ile Siparis Ver";
-  const primaryButtonLink = siteProfile?.heroPrimaryButtonLink || "#order";
-  const secondaryButtonText = siteProfile?.heroSecondaryButtonText || "Menuyu Incele";
-  const secondaryButtonLink = siteProfile?.heroSecondaryButtonLink || "#menu";
-
   return (
     <section
       id="hero"
       className="relative min-h-screen flex items-center justify-center overflow-hidden"
       data-testid="section-hero"
     >
-      <img
-        src={heroImage}
-        alt="Hero background"
-        className="absolute inset-0 w-full h-full object-cover"
-        data-testid="img-hero-background"
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1920&q=80')`,
+        }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-32 text-center">
         <Badge className="mb-6 bg-primary/90 text-primary-foreground border-none px-4 py-1.5">
-          {siteProfile?.tagline || "Corlu'nun En Lezzetli Yemekleri"}
+          Corlu'nun En Lezzetli Yemekleri
         </Badge>
 
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
-          {siteProfile?.heroTitle || "Taze Lezzetler, Kapiniza Gelsin"}
+          Taze Lezzetler,
+          <br />
+          <span className="text-primary">Kapiniza Gelsin</span>
         </h1>
 
         <p className="text-lg sm:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-          {siteProfile?.heroSubtitle || "Ev yapimi lezzetler, ozenle hazirlanan menuler. WhatsApp ile kolay siparis verin, sicak sicak kapiniza getirelim!"}
+          Ev yapimi lezzetler, ozenle hazirlanan menuler. WhatsApp ile kolay
+          siparis verin, sicak sicak kapiniza getirelim veya restoranmizda
+          yerinde tadini cikarin!
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
           <Button
             size="lg"
-            onClick={() => scrollToSection(primaryButtonLink)}
+            onClick={() => scrollToSection("#order")}
             className="bg-whatsapp text-white text-lg px-8 py-6 rounded-lg shadow-lg flex items-center gap-3"
             data-testid="button-hero-order"
           >
             <SiWhatsapp className="h-6 w-6" />
-            {primaryButtonText}
+            WhatsApp ile Siparis Ver
           </Button>
           <Button
             size="lg"
             variant="outline"
-            onClick={() => scrollToSection(secondaryButtonLink)}
+            onClick={() => scrollToSection("#menu")}
             className="text-white border-white/50 bg-white/10 backdrop-blur-sm text-lg px-8 py-6 rounded-lg"
             data-testid="button-hero-menu"
           >
-            {secondaryButtonText}
+            Menuyu Incele
           </Button>
         </div>
 

@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { MapPin, Phone, Clock, Mail, CreditCard, Banknote } from "lucide-react";
 import { SiWhatsapp, SiInstagram, SiFacebook } from "react-icons/si";
-import type { SiteProfile, SocialLink } from "@shared/schema";
 
 const quickLinks = [
   { label: "Menu", href: "#menu" },
@@ -11,22 +10,18 @@ const quickLinks = [
   { label: "Siparis Ver", href: "#order" },
 ];
 
+const contactInfo = [
+  { icon: MapPin, text: "Corlu Merkez, Tekirdag", href: "#" },
+  { icon: Phone, text: "0555 123 4567", href: "tel:+905551234567" },
+  { icon: Mail, text: "info@lezzetexpress.com", href: "mailto:info@lezzetexpress.com" },
+];
+
 const hours = [
   { day: "Pazartesi - Cuma", time: "10:00 - 22:00" },
   { day: "Cumartesi - Pazar", time: "11:00 - 23:00" },
 ];
 
-interface FooterProps {
-  siteProfile?: SiteProfile;
-  socialLinks?: SocialLink[];
-}
-
-export function Footer({ siteProfile, socialLinks = [] }: FooterProps) {
-  const contactInfo = [
-    { icon: MapPin, text: siteProfile?.address || "Corlu Merkez, Tekirdag", href: "#" },
-    { icon: Phone, text: siteProfile?.phone || "0555 123 4567", href: `tel:${siteProfile?.phone?.replace(/\s/g, '') || '+905551234567'}` },
-    { icon: Mail, text: siteProfile?.email || "info@lezzetexpress.com", href: `mailto:${siteProfile?.email || 'info@lezzetexpress.com'}` },
-  ];
+export function Footer() {
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
     if (element) {
@@ -40,50 +35,38 @@ export function Footer({ siteProfile, socialLinks = [] }: FooterProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              {siteProfile?.logoUrl ? (
-                <img src={siteProfile.logoUrl} alt={siteProfile.restaurantName || "Restaurant"} className="w-10 h-10 rounded-full object-cover" />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-lg">{(siteProfile?.restaurantName || "LE").substring(0, 2).toUpperCase()}</span>
-                </div>
-              )}
-              <span className="font-bold text-xl">{siteProfile?.restaurantName || "Lezzet Express"}</span>
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-lg">LE</span>
+              </div>
+              <span className="font-bold text-xl">Lezzet Express</span>
             </div>
             <p className="text-background/70 mb-4">
-              {siteProfile?.tagline || "Corlu'nun en lezzetli yemekleri, WhatsApp ile kolay siparis. Taze, sicak ve hizli teslimat."}
+              Corlu'nun en lezzetli yemekleri, WhatsApp ile kolay siparis.
+              Taze, sicak ve hizli teslimat.
             </p>
             <div className="flex gap-2">
-              {socialLinks.filter(s => s.isVisible && s.platform === "instagram" && s.url).map((link) => (
-                <Button
-                  key={link.id}
-                  size="icon"
-                  variant="outline"
-                  className="border-background/20 text-background bg-transparent"
-                  onClick={() => link.url && window.open(link.url, "_blank")}
-                  data-testid="button-instagram"
-                >
-                  <SiInstagram className="h-5 w-5" />
-                </Button>
-              ))}
-              {socialLinks.filter(s => s.isVisible && s.platform === "facebook" && s.url).map((link) => (
-                <Button
-                  key={link.id}
-                  size="icon"
-                  variant="outline"
-                  className="border-background/20 text-background bg-transparent"
-                  onClick={() => link.url && window.open(link.url, "_blank")}
-                  data-testid="button-facebook"
-                >
-                  <SiFacebook className="h-5 w-5" />
-                </Button>
-              ))}
+              <Button
+                size="icon"
+                variant="outline"
+                className="border-background/20 text-background bg-transparent"
+                onClick={() => window.open("https://instagram.com", "_blank")}
+                data-testid="button-instagram"
+              >
+                <SiInstagram className="h-5 w-5" />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                className="border-background/20 text-background bg-transparent"
+                onClick={() => window.open("https://facebook.com", "_blank")}
+                data-testid="button-facebook"
+              >
+                <SiFacebook className="h-5 w-5" />
+              </Button>
               <Button
                 size="icon"
                 className="bg-whatsapp text-white"
-                onClick={() => {
-                  const phone = siteProfile?.phone?.replace(/\D/g, '') || "905551234567";
-                  window.open(`https://wa.me/${phone}`, "_blank");
-                }}
+                onClick={() => window.open("https://wa.me/905551234567", "_blank")}
                 data-testid="button-whatsapp"
               >
                 <SiWhatsapp className="h-5 w-5" />
@@ -157,7 +140,7 @@ export function Footer({ siteProfile, socialLinks = [] }: FooterProps) {
         <Separator className="bg-background/10 mb-8" />
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-background/50">
-          <p>© {new Date().getFullYear()} {siteProfile?.restaurantName || "Lezzet Express"}. Tum haklari saklidir.</p>
+          <p>© 2024 Lezzet Express. Tum haklari saklidir.</p>
           <div className="flex gap-4">
             <a href="#" className="hover:text-background transition-colors">
               Gizlilik Politikasi

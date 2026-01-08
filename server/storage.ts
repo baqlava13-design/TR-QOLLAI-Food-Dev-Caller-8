@@ -11,7 +11,6 @@ import {
   socialLinks,
   whatsappSettings,
   mediaAssets,
-  galleryMedia,
   type Category,
   type InsertCategory,
   type MenuItem,
@@ -36,8 +35,6 @@ import {
   type InsertWhatsappSettings,
   type MediaAsset,
   type InsertMediaAsset,
-  type GalleryMedia,
-  type InsertGalleryMedia,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, gte, and, sql } from "drizzle-orm";
@@ -126,16 +123,6 @@ export interface IStorage {
   createMediaAsset(asset: InsertMediaAsset): Promise<MediaAsset>;
   updateMediaAsset(id: string, asset: Partial<InsertMediaAsset>): Promise<MediaAsset | undefined>;
   deleteMediaAsset(id: string): Promise<boolean>;
-
-  // Gallery Media
-  getGalleryMedia(section?: string): Promise<GalleryMedia[]>;
-  getGalleryMediaAdmin(): Promise<GalleryMedia[]>;
-  createGalleryMedia(media: InsertGalleryMedia): Promise<GalleryMedia>;
-  updateGalleryMedia(id: string, media: Partial<InsertGalleryMedia>): Promise<GalleryMedia | undefined>;
-  deleteGalleryMedia(id: string): Promise<boolean>;
-
-  // Reviews - full CRUD
-  createReviewAdmin(review: InsertReview): Promise<Review>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -438,44 +425,6 @@ export class DatabaseStorage implements IStorage {
   async deleteMediaAsset(id: string): Promise<boolean> {
     await db.delete(mediaAssets).where(eq(mediaAssets.id, id));
     return true;
-  }
-
-  // Gallery Media - public (only visible items)
-  async getGalleryMedia(section?: string): Promise<GalleryMedia[]> {
-    if (section) {
-      return db.select().from(galleryMedia)
-        .where(and(eq(galleryMedia.section, section), eq(galleryMedia.isVisible, true)))
-        .orderBy(galleryMedia.sortOrder);
-    }
-    return db.select().from(galleryMedia)
-      .where(eq(galleryMedia.isVisible, true))
-      .orderBy(galleryMedia.sortOrder);
-  }
-
-  // Gallery Media - admin (all items including hidden)
-  async getGalleryMediaAdmin(): Promise<GalleryMedia[]> {
-    return db.select().from(galleryMedia).orderBy(galleryMedia.sortOrder);
-  }
-
-  async createGalleryMedia(media: InsertGalleryMedia): Promise<GalleryMedia> {
-    const [created] = await db.insert(galleryMedia).values(media).returning();
-    return created;
-  }
-
-  async updateGalleryMedia(id: string, media: Partial<InsertGalleryMedia>): Promise<GalleryMedia | undefined> {
-    const [updated] = await db.update(galleryMedia).set(media).where(eq(galleryMedia.id, id)).returning();
-    return updated || undefined;
-  }
-
-  async deleteGalleryMedia(id: string): Promise<boolean> {
-    await db.delete(galleryMedia).where(eq(galleryMedia.id, id));
-    return true;
-  }
-
-  // Reviews - Admin create
-  async createReviewAdmin(review: InsertReview): Promise<Review> {
-    const [created] = await db.insert(reviews).values(review).returning();
-    return created;
   }
 }
 

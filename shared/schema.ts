@@ -153,11 +153,7 @@ export const reviews = pgTable("reviews", {
   rating: integer("rating").notNull(),
   comment: text("comment"),
   menuItemName: text("menu_item_name"),
-  avatarUrl: text("avatar_url"),
-  sourceLabel: text("source_label").default("Google"),
-  isHighlighted: boolean("is_highlighted").default(false),
   isApproved: boolean("is_approved").default(true),
-  sortOrder: integer("sort_order").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -178,37 +174,12 @@ export const siteProfile = pgTable("site_profile", {
   heroTitle: text("hero_title").default("Ev Yapimi Lezzetler Kapiinizda"),
   heroSubtitle: text("hero_subtitle").default("Taze malzemeler, ozenle hazirlanan yemekler"),
   heroImageUrl: text("hero_image_url"),
-  heroImageUrl2: text("hero_image_url_2"),
-  heroPrimaryButtonText: text("hero_primary_button_text").default("Siparis Ver"),
-  heroPrimaryButtonLink: text("hero_primary_button_link").default("#menu"),
-  heroSecondaryButtonText: text("hero_secondary_button_text").default("Bizi Arayin"),
-  heroSecondaryButtonLink: text("hero_secondary_button_link"),
-  heroHighlightBadge: text("hero_highlight_badge").default("Ucretsiz Teslimat"),
   brandImageUrl: text("brand_image_url"),
-  brandTitle: text("brand_title").default("Hikayemiz"),
-  brandDescription: text("brand_description"),
   footerText: text("footer_text"),
-  footerCtaText: text("footer_cta_text").default("Hemen Siparis Ver"),
-  footerCtaLink: text("footer_cta_link").default("#menu"),
   address: text("address"),
   phone: text("phone"),
   email: text("email"),
-  workingHours: text("working_hours").default("Her gun 10:00 - 22:00"),
   googleReviewsWidgetCode: text("google_reviews_widget_code"),
-  metaTitle: text("meta_title"),
-  metaDescription: text("meta_description"),
-});
-
-// Gallery Media table
-export const galleryMedia = pgTable("gallery_media", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  imageUrl: text("image_url").notNull(),
-  caption: text("caption"),
-  altText: text("alt_text"),
-  section: text("section").default("gallery"),
-  sortOrder: integer("sort_order").default(0),
-  isVisible: boolean("is_visible").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Social Links table
@@ -242,7 +213,6 @@ export const insertSiteSettingSchema = createInsertSchema(siteSettings).omit({ i
 export const insertSiteProfileSchema = createInsertSchema(siteProfile).omit({ id: true });
 export const insertSocialLinkSchema = createInsertSchema(socialLinks).omit({ id: true });
 export const insertWhatsappSettingsSchema = createInsertSchema(whatsappSettings).omit({ id: true });
-export const insertGalleryMediaSchema = createInsertSchema(galleryMedia).omit({ id: true, createdAt: true });
 
 // Types
 export type MediaAsset = typeof mediaAssets.$inferSelect;
@@ -280,9 +250,6 @@ export type InsertSocialLink = z.infer<typeof insertSocialLinkSchema>;
 
 export type WhatsappSettings = typeof whatsappSettings.$inferSelect;
 export type InsertWhatsappSettings = z.infer<typeof insertWhatsappSettingsSchema>;
-
-export type GalleryMedia = typeof galleryMedia.$inferSelect;
-export type InsertGalleryMedia = z.infer<typeof insertGalleryMediaSchema>;
 
 // Legacy user support (keeping for compatibility)
 export const users = pgTable("users", {

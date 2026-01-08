@@ -14,9 +14,6 @@ declare module "express-session" {
 const app = express();
 const httpServer = createServer(app);
 
-// Trust proxy for secure cookies behind Replit's proxy
-app.set("trust proxy", 1);
-
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
@@ -36,7 +33,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "development-secret-change-in-production",
-    resave: true,
+    resave: false,
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === "production",

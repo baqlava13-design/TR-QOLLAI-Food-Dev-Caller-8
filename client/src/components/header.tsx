@@ -6,7 +6,6 @@ import { Menu, ShoppingCart, Sun, Moon, Phone } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useCart } from "@/lib/cart";
 import { useTheme } from "@/lib/theme";
-import type { SiteProfile } from "@shared/schema";
 
 const navItems = [
   { label: "Menu", href: "#menu" },
@@ -15,11 +14,7 @@ const navItems = [
   { label: "Iletisim", href: "#contact" },
 ];
 
-interface HeaderProps {
-  siteProfile?: SiteProfile;
-}
-
-export function Header({ siteProfile }: HeaderProps) {
+export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { getItemCount } = useCart();
@@ -61,15 +56,11 @@ export function Header({ siteProfile }: HeaderProps) {
           }}
           data-testid="link-logo"
         >
-          {siteProfile?.logoUrl ? (
-            <img src={siteProfile.logoUrl} alt={siteProfile.restaurantName || "Restaurant"} className="w-10 h-10 rounded-full object-cover" />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">{(siteProfile?.restaurantName || "LE").substring(0, 2).toUpperCase()}</span>
-            </div>
-          )}
+          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-lg">LE</span>
+          </div>
           <span className={`font-bold text-xl ${isScrolled ? "text-foreground" : "text-white"}`}>
-            {siteProfile?.restaurantName || "Lezzet Express"}
+            Lezzet Express
           </span>
         </a>
 
@@ -158,7 +149,7 @@ export function Header({ siteProfile }: HeaderProps) {
                 </Button>
                 <div className="flex items-center gap-2 text-muted-foreground mt-4">
                   <Phone className="h-4 w-4" />
-                  <span>{siteProfile?.phone || "0555 123 4567"}</span>
+                  <span>0555 123 4567</span>
                 </div>
               </nav>
             </SheetContent>
