@@ -1219,6 +1219,63 @@ ${itemsText}
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="heroHighlightBadge">Hero Etiket (Badge)</Label>
+                  <Input
+                    id="heroHighlightBadge"
+                    value={profileForm.heroHighlightBadge || siteProfile?.heroHighlightBadge || ""}
+                    onChange={(e) => setProfileForm({ ...profileForm, heroHighlightBadge: e.target.value })}
+                    placeholder="Ucretsiz Teslimat"
+                    data-testid="input-hero-badge"
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="heroPrimaryButtonText">Ana Buton Metni</Label>
+                    <Input
+                      id="heroPrimaryButtonText"
+                      value={profileForm.heroPrimaryButtonText || siteProfile?.heroPrimaryButtonText || ""}
+                      onChange={(e) => setProfileForm({ ...profileForm, heroPrimaryButtonText: e.target.value })}
+                      placeholder="Siparis Ver"
+                      data-testid="input-hero-primary-btn"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="heroPrimaryButtonLink">Ana Buton Linki</Label>
+                    <Input
+                      id="heroPrimaryButtonLink"
+                      value={profileForm.heroPrimaryButtonLink || siteProfile?.heroPrimaryButtonLink || ""}
+                      onChange={(e) => setProfileForm({ ...profileForm, heroPrimaryButtonLink: e.target.value })}
+                      placeholder="#menu"
+                      data-testid="input-hero-primary-link"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="heroSecondaryButtonText">Ikincil Buton Metni</Label>
+                    <Input
+                      id="heroSecondaryButtonText"
+                      value={profileForm.heroSecondaryButtonText || siteProfile?.heroSecondaryButtonText || ""}
+                      onChange={(e) => setProfileForm({ ...profileForm, heroSecondaryButtonText: e.target.value })}
+                      placeholder="Bizi Arayin"
+                      data-testid="input-hero-secondary-btn"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="heroSecondaryButtonLink">Ikincil Buton Linki</Label>
+                    <Input
+                      id="heroSecondaryButtonLink"
+                      value={profileForm.heroSecondaryButtonLink || siteProfile?.heroSecondaryButtonLink || ""}
+                      onChange={(e) => setProfileForm({ ...profileForm, heroSecondaryButtonLink: e.target.value })}
+                      placeholder="tel:+905551234567"
+                      data-testid="input-hero-secondary-link"
+                    />
+                  </div>
+                </div>
+
                 <Separator />
 
                 <div className="space-y-4">
@@ -1249,7 +1306,7 @@ ${itemsText}
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="heroImageUrl">Hero Arka Plan Resmi URL</Label>
+                      <Label htmlFor="heroImageUrl">Hero Arka Plan Resmi 1 URL</Label>
                       <Input
                         id="heroImageUrl"
                         value={profileForm.heroImageUrl || siteProfile?.heroImageUrl || ""}
@@ -1268,6 +1325,27 @@ ${itemsText}
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="heroImageUrl2">Hero Arka Plan Resmi 2 URL (Slider icin)</Label>
+                    <Input
+                      id="heroImageUrl2"
+                      value={profileForm.heroImageUrl2 || siteProfile?.heroImageUrl2 || ""}
+                      onChange={(e) => setProfileForm({ ...profileForm, heroImageUrl2: e.target.value })}
+                      placeholder="https://example.com/hero2.jpg"
+                      data-testid="input-hero-image-url-2"
+                    />
+                    {(profileForm.heroImageUrl2 || siteProfile?.heroImageUrl2) && (
+                      <div className="mt-2 p-2 border rounded-md">
+                        <img 
+                          src={profileForm.heroImageUrl2 || siteProfile?.heroImageUrl2 || ""} 
+                          alt="Hero 2 Preview" 
+                          className="h-24 w-full object-cover rounded"
+                          onError={(e) => (e.currentTarget.style.display = 'none')}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -1294,7 +1372,7 @@ ${itemsText}
 
                 <Separator />
 
-                <div className="grid md:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="address">Adres</Label>
                     <Input
@@ -1315,6 +1393,9 @@ ${itemsText}
                       data-testid="input-phone"
                     />
                   </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="email">E-posta</Label>
                     <Input
@@ -1324,6 +1405,81 @@ ${itemsText}
                       onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
                       placeholder="info@lezzetexpress.com"
                       data-testid="input-email"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="workingHours">Calisma Saatleri</Label>
+                    <Input
+                      id="workingHours"
+                      value={profileForm.workingHours || siteProfile?.workingHours || ""}
+                      onChange={(e) => setProfileForm({ ...profileForm, workingHours: e.target.value })}
+                      placeholder="Her gun 10:00 - 22:00"
+                      data-testid="input-working-hours"
+                    />
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Footer Ayarlari</h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="footerCtaText">Footer Buton Metni</Label>
+                      <Input
+                        id="footerCtaText"
+                        value={profileForm.footerCtaText || siteProfile?.footerCtaText || ""}
+                        onChange={(e) => setProfileForm({ ...profileForm, footerCtaText: e.target.value })}
+                        placeholder="Hemen Siparis Ver"
+                        data-testid="input-footer-cta-text"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="footerCtaLink">Footer Buton Linki</Label>
+                      <Input
+                        id="footerCtaLink"
+                        value={profileForm.footerCtaLink || siteProfile?.footerCtaLink || ""}
+                        onChange={(e) => setProfileForm({ ...profileForm, footerCtaLink: e.target.value })}
+                        placeholder="#menu"
+                        data-testid="input-footer-cta-link"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="footerText">Footer Alt Metni</Label>
+                    <Input
+                      id="footerText"
+                      value={profileForm.footerText || siteProfile?.footerText || ""}
+                      onChange={(e) => setProfileForm({ ...profileForm, footerText: e.target.value })}
+                      placeholder="Tum haklar saklidir."
+                      data-testid="input-footer-text"
+                    />
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">SEO Ayarlari</h3>
+                  <div className="space-y-2">
+                    <Label htmlFor="metaTitle">Sayfa Basligi (Meta Title)</Label>
+                    <Input
+                      id="metaTitle"
+                      value={profileForm.metaTitle || siteProfile?.metaTitle || ""}
+                      onChange={(e) => setProfileForm({ ...profileForm, metaTitle: e.target.value })}
+                      placeholder="Lezzet Express - Corlu'nun En Lezzetli Adresi"
+                      data-testid="input-meta-title"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="metaDescription">Sayfa Aciklamasi (Meta Description)</Label>
+                    <Textarea
+                      id="metaDescription"
+                      value={profileForm.metaDescription || siteProfile?.metaDescription || ""}
+                      onChange={(e) => setProfileForm({ ...profileForm, metaDescription: e.target.value })}
+                      placeholder="Corlu'da en lezzetli yemekler, hizli teslimat. Simdi siparis verin!"
+                      rows={2}
+                      data-testid="input-meta-description"
                     />
                   </div>
                 </div>

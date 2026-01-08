@@ -12,6 +12,7 @@ import {
   insertSocialLinkSchema,
   insertWhatsappSettingsSchema,
   insertMediaAssetSchema,
+  insertGalleryMediaSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
@@ -594,6 +595,84 @@ export async function registerRoutes(
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete media asset" });
+    }
+  });
+
+  // ==================== GALLERY MEDIA ENDPOINTS ====================
+  
+  // Public gallery endpoint
+  app.get("/api/gallery", async (req, res) => {
+    try {
+      const section = req.query.section as string | undefined;
+      const gallery = await storage.getGalleryMedia(section);
+      res.json(gallery);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch gallery" });
+    }
+  });
+
+  // Admin gallery endpoints (includes hidden items)
+  app.get("/api/admin/gallery", async (req, res) => {
+    try {
+      const gallery = await storage.getGalleryMediaAdmin();
+      res.json(gallery);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch gallery" });
+    }
+  });
+
+  app.post("/api/admin/gallery", async (req, res) => {
+    try {
+      const data = insertGalleryMediaSchema.parse(req.body);
+      const item = await storage.createGalleryMedia(data);
+      res.status(201).json(item);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create gallery item" });
+      }
+    }
+  });
+
+  app.patch("/api/admin/gallery/:id", async (req, res) => {
+    try {
+      const partialSchema = insertGalleryMediaSchema.partial();
+      const data = partialSchema.parse(req.body);
+      const item = await storage.updateGalleryMedia(req.params.id, data);
+      if (!item) {
+        return res.status(404).json({ error: "Gallery item not found" });
+      }
+      res.json(item);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update gallery item" });
+    }
+  });
+
+  app.delete("/api/admin/gallery/:id", async (req, res) => {
+    try {
+      await storage.deleteGalleryMedia(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete gallery item" });
+    }
+  });
+
+  // Admin create review
+  app.post("/api/admin/reviews", async (req, res) => {
+    try {
+      const data = insertReviewSchema.parse(req.body);
+      const review = await storage.createReviewAdmin(data);
+      res.status(201).json(review);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create review" });
+      }
     }
   });
 
