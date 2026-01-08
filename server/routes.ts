@@ -52,8 +52,15 @@ export async function registerRoutes(
       
       if (isValidCredentials) {
         req.session.user = { username };
-        console.log(`[AUTH] Login successful for user: ${username}`);
-        res.json({ success: true, user: { username } });
+        req.session.save((err) => {
+          if (err) {
+            console.log(`[AUTH] Session save error: ${err}`);
+            res.status(500).json({ error: "Oturum kaydedilemedi" });
+          } else {
+            console.log(`[AUTH] Login successful for user: ${username}`);
+            res.json({ success: true, user: { username } });
+          }
+        });
       } else {
         console.log(`[AUTH] Login failed - credentials mismatch`);
         res.status(401).json({ error: "Gecersiz kullanici adi veya sifre" });
