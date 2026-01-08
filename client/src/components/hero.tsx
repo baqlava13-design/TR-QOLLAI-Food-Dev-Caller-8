@@ -23,17 +23,23 @@ export function Hero({ siteProfile }: HeroProps) {
     }
   };
 
+  const heroImage = siteProfile?.heroImageUrl || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1920&q=80';
+  const primaryButtonText = siteProfile?.heroPrimaryButtonText || "WhatsApp ile Siparis Ver";
+  const primaryButtonLink = siteProfile?.heroPrimaryButtonLink || "#order";
+  const secondaryButtonText = siteProfile?.heroSecondaryButtonText || "Menuyu Incele";
+  const secondaryButtonLink = siteProfile?.heroSecondaryButtonLink || "#menu";
+
   return (
     <section
       id="hero"
       className="relative min-h-screen flex items-center justify-center overflow-hidden"
       data-testid="section-hero"
     >
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('${siteProfile?.heroImageUrl || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1920&q=80'}')`,
-        }}
+      <img
+        src={heroImage}
+        alt="Hero background"
+        className="absolute inset-0 w-full h-full object-cover"
+        data-testid="img-hero-background"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
 
@@ -53,21 +59,21 @@ export function Hero({ siteProfile }: HeroProps) {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
           <Button
             size="lg"
-            onClick={() => scrollToSection("#order")}
+            onClick={() => scrollToSection(primaryButtonLink)}
             className="bg-whatsapp text-white text-lg px-8 py-6 rounded-lg shadow-lg flex items-center gap-3"
             data-testid="button-hero-order"
           >
             <SiWhatsapp className="h-6 w-6" />
-            WhatsApp ile Siparis Ver
+            {primaryButtonText}
           </Button>
           <Button
             size="lg"
             variant="outline"
-            onClick={() => scrollToSection("#menu")}
+            onClick={() => scrollToSection(secondaryButtonLink)}
             className="text-white border-white/50 bg-white/10 backdrop-blur-sm text-lg px-8 py-6 rounded-lg"
             data-testid="button-hero-menu"
           >
-            Menuyu Incele
+            {secondaryButtonText}
           </Button>
         </div>
 
