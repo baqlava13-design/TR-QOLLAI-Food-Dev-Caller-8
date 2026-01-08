@@ -1289,15 +1289,15 @@ ${itemsText}
                       <Label htmlFor="logoUrl">Logo URL</Label>
                       <Input
                         id="logoUrl"
-                        value={profileForm.logoUrl || siteProfile?.logoUrl || ""}
+                        value={profileForm.logoUrl ?? ""}
                         onChange={(e) => setProfileForm({ ...profileForm, logoUrl: e.target.value })}
                         placeholder="https://example.com/logo.png"
                         data-testid="input-logo-url"
                       />
-                      {(profileForm.logoUrl || siteProfile?.logoUrl) && (
+                      {profileForm.logoUrl && (
                         <div className="mt-2 p-2 border rounded-md">
                           <img 
-                            src={profileForm.logoUrl || siteProfile?.logoUrl || ""} 
+                            src={profileForm.logoUrl} 
                             alt="Logo Preview" 
                             className="h-16 w-16 object-contain"
                             onError={(e) => (e.currentTarget.style.display = 'none')}
@@ -1309,15 +1309,15 @@ ${itemsText}
                       <Label htmlFor="heroImageUrl">Hero Arka Plan Resmi 1 URL</Label>
                       <Input
                         id="heroImageUrl"
-                        value={profileForm.heroImageUrl || siteProfile?.heroImageUrl || ""}
+                        value={profileForm.heroImageUrl ?? ""}
                         onChange={(e) => setProfileForm({ ...profileForm, heroImageUrl: e.target.value })}
                         placeholder="https://example.com/hero.jpg"
                         data-testid="input-hero-image-url"
                       />
-                      {(profileForm.heroImageUrl || siteProfile?.heroImageUrl) && (
+                      {profileForm.heroImageUrl && (
                         <div className="mt-2 p-2 border rounded-md">
                           <img 
-                            src={profileForm.heroImageUrl || siteProfile?.heroImageUrl || ""} 
+                            src={profileForm.heroImageUrl} 
                             alt="Hero Preview" 
                             className="h-24 w-full object-cover rounded"
                             onError={(e) => (e.currentTarget.style.display = 'none')}
@@ -1331,15 +1331,15 @@ ${itemsText}
                     <Label htmlFor="heroImageUrl2">Hero Arka Plan Resmi 2 URL (Slider icin)</Label>
                     <Input
                       id="heroImageUrl2"
-                      value={profileForm.heroImageUrl2 || siteProfile?.heroImageUrl2 || ""}
+                      value={profileForm.heroImageUrl2 ?? ""}
                       onChange={(e) => setProfileForm({ ...profileForm, heroImageUrl2: e.target.value })}
                       placeholder="https://example.com/hero2.jpg"
                       data-testid="input-hero-image-url-2"
                     />
-                    {(profileForm.heroImageUrl2 || siteProfile?.heroImageUrl2) && (
+                    {profileForm.heroImageUrl2 && (
                       <div className="mt-2 p-2 border rounded-md">
                         <img 
-                          src={profileForm.heroImageUrl2 || siteProfile?.heroImageUrl2 || ""} 
+                          src={profileForm.heroImageUrl2} 
                           alt="Hero 2 Preview" 
                           className="h-24 w-full object-cover rounded"
                           onError={(e) => (e.currentTarget.style.display = 'none')}
@@ -1352,15 +1352,15 @@ ${itemsText}
                     <Label htmlFor="brandImageUrl">Hakkimizda Bolumu Resmi URL</Label>
                     <Input
                       id="brandImageUrl"
-                      value={profileForm.brandImageUrl || siteProfile?.brandImageUrl || ""}
+                      value={profileForm.brandImageUrl ?? ""}
                       onChange={(e) => setProfileForm({ ...profileForm, brandImageUrl: e.target.value })}
                       placeholder="https://example.com/brand.jpg"
                       data-testid="input-brand-image-url"
                     />
-                    {(profileForm.brandImageUrl || siteProfile?.brandImageUrl) && (
+                    {profileForm.brandImageUrl && (
                       <div className="mt-2 p-2 border rounded-md">
                         <img 
-                          src={profileForm.brandImageUrl || siteProfile?.brandImageUrl || ""} 
+                          src={profileForm.brandImageUrl} 
                           alt="Brand Preview" 
                           className="h-32 w-full object-cover rounded"
                           onError={(e) => (e.currentTarget.style.display = 'none')}
