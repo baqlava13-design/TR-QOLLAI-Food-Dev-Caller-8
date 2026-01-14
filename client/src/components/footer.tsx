@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { MapPin, Phone, Clock, Mail, CreditCard, Banknote } from "lucide-react";
 import { SiWhatsapp, SiInstagram, SiFacebook } from "react-icons/si";
+import { useQuery } from "@tanstack/react-query";
 
 const quickLinks = [
   { label: "Menü", href: "#menu" },
@@ -13,7 +14,7 @@ const quickLinks = [
 const contactInfo = [
   { icon: MapPin, text: "Çorlu Merkez, Tekirdağ", href: "#" },
   { icon: Phone, text: "0555 123 4567", href: "tel:+905551234567" },
-  { icon: Mail, text: "info@lezzetexpress.com", href: "mailto:info@lezzetexpress.com" },
+  { icon: Mail, text: "info@destanpide.com", href: "mailto:info@destanpide.com" },
 ];
 
 const hours = [
@@ -22,12 +23,24 @@ const hours = [
 ];
 
 export function Footer() {
+  const { data: settings = {} } = useQuery<Record<string, string>>({
+    queryKey: ["/api/settings"],
+  });
+
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  const getWhatsAppUrl = () => {
+    const phone = settings.whatsapp_number || "905551234567";
+    return `https://wa.me/${phone}`;
+  };
+
+  const getInstagramUrl = () => settings.instagram_url || "https://instagram.com";
+  const getFacebookUrl = () => settings.facebook_url || "https://facebook.com";
 
   return (
     <footer id="contact" className="bg-foreground text-background py-16" data-testid="footer">
@@ -49,7 +62,7 @@ export function Footer() {
                 size="icon"
                 variant="outline"
                 className="border-background/20 text-background bg-transparent"
-                onClick={() => window.open("https://instagram.com", "_blank")}
+                onClick={() => window.open(getInstagramUrl(), "_blank")}
                 data-testid="button-instagram"
               >
                 <SiInstagram className="h-5 w-5" />
@@ -58,7 +71,7 @@ export function Footer() {
                 size="icon"
                 variant="outline"
                 className="border-background/20 text-background bg-transparent"
-                onClick={() => window.open("https://facebook.com", "_blank")}
+                onClick={() => window.open(getFacebookUrl(), "_blank")}
                 data-testid="button-facebook"
               >
                 <SiFacebook className="h-5 w-5" />
@@ -66,7 +79,7 @@ export function Footer() {
               <Button
                 size="icon"
                 className="bg-whatsapp text-white"
-                onClick={() => window.open("https://wa.me/905551234567", "_blank")}
+                onClick={() => window.open(getWhatsAppUrl(), "_blank")}
                 data-testid="button-whatsapp"
               >
                 <SiWhatsapp className="h-5 w-5" />
