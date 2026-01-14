@@ -38,6 +38,8 @@ export const menuItems = pgTable("menu_items", {
   categoryId: varchar("category_id").references(() => categories.id),
   isAvailable: boolean("is_available").default(true),
   isPopular: boolean("is_popular").default(false),
+  isKampanya: boolean("is_kampanya").default(false),
+  kampanyaTag: text("kampanya_tag"),
   sortOrder: integer("sort_order").default(0),
 });
 
@@ -180,6 +182,20 @@ export type InsertReview = z.infer<typeof insertReviewSchema>;
 
 export type SiteSetting = typeof siteSettings.$inferSelect;
 export type InsertSiteSetting = z.infer<typeof insertSiteSettingSchema>;
+
+// Admin Users table
+export const adminUsers = pgTable("admin_users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastLogin: timestamp("last_login"),
+});
+
+export const insertAdminUserSchema = createInsertSchema(adminUsers).omit({ id: true, createdAt: true, lastLogin: true });
+export type AdminUser = typeof adminUsers.$inferSelect;
+export type InsertAdminUser = z.infer<typeof insertAdminUserSchema>;
 
 // Legacy user support (keeping for compatibility)
 export const users = pgTable("users", {

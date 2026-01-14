@@ -7,6 +7,7 @@ import {
   orderItems,
   reviews,
   siteSettings,
+  adminUsers,
   type Category,
   type InsertCategory,
   type MenuItem,
@@ -23,6 +24,8 @@ import {
   type InsertReview,
   type SiteSetting,
   type InsertSiteSetting,
+  type AdminUser,
+  type InsertAdminUser,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, gte, and, sql } from "drizzle-orm";
@@ -74,7 +77,18 @@ export interface IStorage {
 
   // Site Settings
   getSetting(key: string): Promise<SiteSetting | undefined>;
+  getAllSettings(): Promise<SiteSetting[]>;
   setSetting(key: string, value: string): Promise<SiteSetting>;
+
+  // Admin Users
+  getAdminByUsername(username: string): Promise<AdminUser | undefined>;
+  createAdminUser(admin: InsertAdminUser): Promise<AdminUser>;
+  updateAdminLastLogin(id: string): Promise<void>;
+
+  // Reviews - Admin
+  updateReview(id: string, data: Partial<InsertReview>): Promise<Review | undefined>;
+  deleteReview(id: string): Promise<boolean>;
+  getAllReviews(): Promise<Review[]>;
 
   // Dashboard Stats
   getDashboardStats(): Promise<{
@@ -246,6 +260,10 @@ export class DatabaseStorage implements IStorage {
     return setting || undefined;
   }
 
+  async getAllSettings(): Promise<SiteSetting[]> {
+    return db.select().from(siteSettings);
+  }
+
   async setSetting(key: string, value: string): Promise<SiteSetting> {
     const existing = await this.getSetting(key);
     if (existing) {
@@ -254,6 +272,36 @@ export class DatabaseStorage implements IStorage {
     }
     const [created] = await db.insert(siteSettings).values({ key, value }).returning();
     return created;
+  }
+
+  // Admin Users
+  async getAdminByUsername(username: string): Promise<AdminUser | undefined> {
+    const [admin] = await db.select().from(adminUsers).where(eq(adminUsers.username, username));
+    return admin || undefined;
+  }
+
+  async createAdminUser(admin: InsertAdminUser): Promise<AdminUser> {
+    const [created] = await db.insert(adminUsers).values(admin).returning();
+    return created;
+  }
+
+  async updateAdminLastLogin(id: string): Promise<void> {
+    await db.update(adminUsers).set({ lastLogin: new Date() }).where(eq(adminUsers.id, id));
+  }
+
+  // Reviews - Admin
+  async getAllReviews(): Promise<Review[]> {
+    return db.select().from(reviews).orderBy(desc(reviews.createdAt));
+  }
+
+  async updateReview(id: string, data: Partial<InsertReview>): Promise<Review | undefined> {
+    const [updated] = await db.update(reviews).set(data).where(eq(reviews.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteReview(id: string): Promise<boolean> {
+    await db.delete(reviews).where(eq(reviews.id, id));
+    return true;
   }
 
   // Dashboard Stats

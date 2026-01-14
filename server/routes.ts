@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import {
@@ -10,6 +10,21 @@ import {
   insertReviewSchema,
 } from "@shared/schema";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
+
+declare module "express-session" {
+  interface SessionData {
+    adminId?: string;
+    adminUsername?: string;
+  }
+}
+
+const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.session?.adminId) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  next();
+};
 
 export async function registerRoutes(
   httpServer: Server,
@@ -286,6 +301,208 @@ export async function registerRoutes(
       res.json(stats);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  // Site Settings (public)
+  app.get("/api/settings", async (req, res) => {
+    try {
+      const settings = await storage.getAllSettings();
+      const settingsMap: Record<string, string> = {};
+      settings.forEach(s => {
+        if (s.value) settingsMap[s.key] = s.value;
+      });
+      res.json(settingsMap);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch settings" });
+    }
+  });
+
+  // ==================== ADMIN ROUTES ====================
+
+  // Admin Auth
+  app.post("/api/admin/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      if (!username || !password) {
+        return res.status(400).json({ error: "Username and password required" });
+      }
+
+      const admin = await storage.getAdminByUsername(username);
+      if (!admin) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      const isValidPassword = await bcrypt.compare(password, admin.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      if (!admin.isActive) {
+        return res.status(401).json({ error: "Account disabled" });
+      }
+
+      req.session.adminId = admin.id;
+      req.session.adminUsername = admin.username;
+      await storage.updateAdminLastLogin(admin.id);
+
+      res.json({ success: true, username: admin.username });
+    } catch (error) {
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  app.post("/api/admin/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ error: "Logout failed" });
+      }
+      res.json({ success: true });
+    });
+  });
+
+  app.get("/api/admin/me", requireAdmin, (req, res) => {
+    res.json({ username: req.session.adminUsername });
+  });
+
+  // Admin Settings
+  app.get("/api/admin/settings", requireAdmin, async (req, res) => {
+    try {
+      const settings = await storage.getAllSettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch settings" });
+    }
+  });
+
+  app.post("/api/admin/settings", requireAdmin, async (req, res) => {
+    try {
+      const { key, value } = req.body;
+      if (!key) {
+        return res.status(400).json({ error: "Key is required" });
+      }
+      const setting = await storage.setSetting(key, value || "");
+      res.json(setting);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to save setting" });
+    }
+  });
+
+  // Admin Reviews
+  app.get("/api/admin/reviews", requireAdmin, async (req, res) => {
+    try {
+      const reviews = await storage.getAllReviews();
+      res.json(reviews);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch reviews" });
+    }
+  });
+
+  app.patch("/api/admin/reviews/:id", requireAdmin, async (req, res) => {
+    try {
+      const partialSchema = insertReviewSchema.partial();
+      const data = partialSchema.parse(req.body);
+      const review = await storage.updateReview(req.params.id, data);
+      if (!review) {
+        return res.status(404).json({ error: "Review not found" });
+      }
+      res.json(review);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update review" });
+    }
+  });
+
+  app.delete("/api/admin/reviews/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteReview(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete review" });
+    }
+  });
+
+  // Admin Categories (protected versions)
+  app.post("/api/admin/categories", requireAdmin, async (req, res) => {
+    try {
+      const data = insertCategorySchema.parse(req.body);
+      const category = await storage.createCategory(data);
+      res.status(201).json(category);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create category" });
+      }
+    }
+  });
+
+  app.patch("/api/admin/categories/:id", requireAdmin, async (req, res) => {
+    try {
+      const partialSchema = insertCategorySchema.partial();
+      const data = partialSchema.parse(req.body);
+      const category = await storage.updateCategory(req.params.id, data);
+      if (!category) {
+        return res.status(404).json({ error: "Category not found" });
+      }
+      res.json(category);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update category" });
+    }
+  });
+
+  app.delete("/api/admin/categories/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteCategory(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete category" });
+    }
+  });
+
+  // Admin Menu Items (protected versions)
+  app.post("/api/admin/menu-items", requireAdmin, async (req, res) => {
+    try {
+      const data = insertMenuItemSchema.parse(req.body);
+      const menuItem = await storage.createMenuItem(data);
+      res.status(201).json(menuItem);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create menu item" });
+      }
+    }
+  });
+
+  app.patch("/api/admin/menu-items/:id", requireAdmin, async (req, res) => {
+    try {
+      const partialSchema = insertMenuItemSchema.partial();
+      const data = partialSchema.parse(req.body);
+      const menuItem = await storage.updateMenuItem(req.params.id, data);
+      if (!menuItem) {
+        return res.status(404).json({ error: "Menu item not found" });
+      }
+      res.json(menuItem);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update menu item" });
+    }
+  });
+
+  app.delete("/api/admin/menu-items/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteMenuItem(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete menu item" });
     }
   });
 
