@@ -202,6 +202,17 @@ function OrdersTab() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      return apiRequest("DELETE", `/api/admin/orders/${orderId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      toast({ title: "Sipariş silindi" });
+    },
+  });
+
   const filteredOrders = orders.filter((order) => {
     if (filterStatus === "all") return true;
     return order.status === filterStatus;
@@ -380,11 +391,14 @@ ${order.notes ? `Not: ${order.notes}` : ""}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => setSelectedOrder(order)}>
+                          <Button size="icon" variant="ghost" onClick={() => setSelectedOrder(order)} data-testid={`button-view-order-${order.id}`}>
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button size="icon" variant="ghost" onClick={() => handlePrint(order)}>
+                          <Button size="icon" variant="ghost" onClick={() => handlePrint(order)} data-testid={`button-print-order-${order.id}`}>
                             <Printer className="h-4 w-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteMutation.mutate(order.id)} data-testid={`button-delete-order-${order.id}`}>
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>

@@ -325,6 +325,18 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/admin/orders/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteOrder(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete order" });
+    }
+  });
+
   // Reviews
   app.get("/api/reviews", async (req, res) => {
     try {

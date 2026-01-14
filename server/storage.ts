@@ -67,6 +67,7 @@ export interface IStorage {
   getOrdersByStatus(status: string): Promise<Order[]>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+  deleteOrder(id: string): Promise<boolean>;
 
   // Order Items
   getOrderItems(orderId: string): Promise<OrderItem[]>;
@@ -253,6 +254,12 @@ export class DatabaseStorage implements IStorage {
     }
     const [updated] = await db.update(orders).set(updateData).where(eq(orders.id, id)).returning();
     return updated || undefined;
+  }
+
+  async deleteOrder(id: string): Promise<boolean> {
+    await db.delete(orderItems).where(eq(orderItems.orderId, id));
+    const result = await db.delete(orders).where(eq(orders.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Order Items
