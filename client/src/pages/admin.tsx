@@ -35,7 +35,6 @@ import {
   ShoppingBag,
   CheckCircle,
   Truck,
-  DollarSign,
   Users,
   TrendingUp,
   Printer,
@@ -288,7 +287,7 @@ ${order.notes ? `Not: ${order.notes}` : ""}
                 <p className="text-sm text-muted-foreground">Bugun Ciro</p>
                 <p className="text-2xl font-bold">{displayStats.todayRevenue.toFixed(0)} TL</p>
               </div>
-              <DollarSign className="h-8 w-8 text-primary opacity-50" />
+              <span className="h-8 w-8 flex items-center justify-center text-xl font-bold text-primary opacity-50">₺</span>
             </div>
           </CardContent>
         </Card>
@@ -302,7 +301,7 @@ ${order.notes ? `Not: ${order.notes}` : ""}
                 <p className="text-sm text-muted-foreground">Haftalik Ciro</p>
                 <p className="text-2xl font-bold text-blue-600">{displayStats.weekRevenue.toFixed(0)} TL</p>
               </div>
-              <DollarSign className="h-8 w-8 text-blue-500 opacity-50" />
+              <span className="h-8 w-8 flex items-center justify-center text-xl font-bold text-blue-500 opacity-50">₺</span>
             </div>
           </CardContent>
         </Card>
@@ -313,7 +312,7 @@ ${order.notes ? `Not: ${order.notes}` : ""}
                 <p className="text-sm text-muted-foreground">Aylik Ciro</p>
                 <p className="text-2xl font-bold text-green-600">{displayStats.monthRevenue.toFixed(0)} TL</p>
               </div>
-              <DollarSign className="h-8 w-8 text-green-500 opacity-50" />
+              <span className="h-8 w-8 flex items-center justify-center text-xl font-bold text-green-500 opacity-50">₺</span>
             </div>
           </CardContent>
         </Card>
