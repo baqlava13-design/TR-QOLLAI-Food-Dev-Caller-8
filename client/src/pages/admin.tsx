@@ -116,6 +116,11 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
         throw new Error(data.error || "Giris basarisiz");
       }
 
+      // Save token to localStorage for subsequent requests
+      if (data.token) {
+        localStorage.setItem("adminToken", data.token);
+      }
+
       onLogin();
     } catch (err: any) {
       setError(err.message || "Giris basarisiz");
@@ -1058,7 +1063,13 @@ export default function Admin() {
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
-    fetch("/api/admin/me", { credentials: "include" })
+    const token = localStorage.getItem("adminToken");
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    
+    fetch("/api/admin/me", { credentials: "include", headers })
       .then((res) => {
         if (res.ok) setIsLoggedIn(true);
       })
@@ -1066,6 +1077,7 @@ export default function Admin() {
   }, []);
 
   const handleLogout = async () => {
+    localStorage.removeItem("adminToken");
     await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
     setIsLoggedIn(false);
   };

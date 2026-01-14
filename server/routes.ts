@@ -19,11 +19,30 @@ declare module "express-session" {
   }
 }
 
+// Simple token store (in production, use Redis or database)
+const adminTokens = new Map<string, { adminId: string; username: string; expiresAt: number }>();
+
+const generateToken = () => {
+  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+};
+
 const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
-  if (!req.session?.adminId) {
-    return res.status(401).json({ error: "Unauthorized" });
+  // Check Authorization header first
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.slice(7);
+    const tokenData = adminTokens.get(token);
+    if (tokenData && tokenData.expiresAt > Date.now()) {
+      return next();
+    }
   }
-  next();
+  
+  // Fallback to session
+  if (req.session?.adminId) {
+    return next();
+  }
+  
+  return res.status(401).json({ error: "Unauthorized" });
 };
 
 export async function registerRoutes(
@@ -346,12 +365,20 @@ export async function registerRoutes(
       req.session.adminUsername = admin.username;
       await storage.updateAdminLastLogin(admin.id);
 
+      // Generate token for Authorization header auth (works in iframes)
+      const token = generateToken();
+      adminTokens.set(token, {
+        adminId: admin.id,
+        username: admin.username,
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+      });
+
       // Ensure session is saved before responding
       req.session.save((err) => {
         if (err) {
           return res.status(500).json({ error: "Session save failed" });
         }
-        res.json({ success: true, username: admin.username });
+        res.json({ success: true, username: admin.username, token });
       });
     } catch (error) {
       res.status(500).json({ error: "Login failed" });
