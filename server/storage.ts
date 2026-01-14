@@ -8,6 +8,7 @@ import {
   reviews,
   siteSettings,
   adminUsers,
+  adminTokens,
   type Category,
   type InsertCategory,
   type MenuItem,
@@ -28,7 +29,7 @@ import {
   type InsertAdminUser,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, gte, and, sql } from "drizzle-orm";
+import { eq, desc, gte, and, sql, lt } from "drizzle-orm";
 
 export interface IStorage {
   // Categories
@@ -87,6 +88,12 @@ export interface IStorage {
   getAdminByUsername(username: string): Promise<AdminUser | undefined>;
   createAdminUser(admin: InsertAdminUser): Promise<AdminUser>;
   updateAdminLastLogin(id: string): Promise<void>;
+
+  // Admin Tokens
+  getAdminToken(token: string): Promise<{ adminId: string; username: string; expiresAt: Date } | undefined>;
+  createAdminToken(token: string, adminId: string, username: string, expiresAt: Date): Promise<void>;
+  deleteAdminToken(token: string): Promise<void>;
+  cleanupExpiredTokens(): Promise<void>;
 
   // Reviews - Admin
   updateReview(id: string, data: Partial<InsertReview>): Promise<Review | undefined>;
@@ -327,6 +334,29 @@ export class DatabaseStorage implements IStorage {
 
   async updateAdminLastLogin(id: string): Promise<void> {
     await db.update(adminUsers).set({ lastLogin: new Date() }).where(eq(adminUsers.id, id));
+  }
+
+  // Admin Tokens
+  async getAdminToken(token: string): Promise<{ adminId: string; username: string; expiresAt: Date } | undefined> {
+    const [tokenData] = await db.select().from(adminTokens).where(eq(adminTokens.token, token));
+    if (!tokenData) return undefined;
+    return {
+      adminId: tokenData.adminId,
+      username: tokenData.username,
+      expiresAt: tokenData.expiresAt,
+    };
+  }
+
+  async createAdminToken(token: string, adminId: string, username: string, expiresAt: Date): Promise<void> {
+    await db.insert(adminTokens).values({ token, adminId, username, expiresAt });
+  }
+
+  async deleteAdminToken(token: string): Promise<void> {
+    await db.delete(adminTokens).where(eq(adminTokens.token, token));
+  }
+
+  async cleanupExpiredTokens(): Promise<void> {
+    await db.delete(adminTokens).where(lt(adminTokens.expiresAt, new Date()));
   }
 
   // Reviews - Admin

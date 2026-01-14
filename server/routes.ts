@@ -19,21 +19,22 @@ declare module "express-session" {
   }
 }
 
-// Simple token store (in production, use Redis or database)
-const adminTokens = new Map<string, { adminId: string; username: string; expiresAt: number }>();
-
 const generateToken = () => {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
 };
 
-const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
+const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
   // Check Authorization header first
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
-    const tokenData = adminTokens.get(token);
-    if (tokenData && tokenData.expiresAt > Date.now()) {
-      return next();
+    try {
+      const tokenData = await storage.getAdminToken(token);
+      if (tokenData && new Date(tokenData.expiresAt) > new Date()) {
+        return next();
+      }
+    } catch (error) {
+      // Token not found or expired
     }
   }
   
@@ -415,11 +416,11 @@ export async function registerRoutes(
 
       // Generate token for Authorization header auth (works in iframes)
       const token = generateToken();
-      adminTokens.set(token, {
-        adminId: admin.id,
-        username: admin.username,
-        expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
-      });
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      await storage.createAdminToken(token, admin.id, admin.username, expiresAt);
+      
+      // Cleanup expired tokens periodically
+      await storage.cleanupExpiredTokens();
 
       // Ensure session is saved before responding
       req.session.save((err) => {

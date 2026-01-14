@@ -203,6 +203,17 @@ export const insertAdminUserSchema = createInsertSchema(adminUsers).omit({ id: t
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type InsertAdminUser = z.infer<typeof insertAdminUserSchema>;
 
+// Admin Tokens table for persistent session storage
+export const adminTokens = pgTable("admin_tokens", {
+  token: varchar("token").primaryKey(),
+  adminId: varchar("admin_id").notNull().references(() => adminUsers.id, { onDelete: "cascade" }),
+  username: text("username").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type AdminToken = typeof adminTokens.$inferSelect;
+
 // Legacy user support (keeping for compatibility)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
