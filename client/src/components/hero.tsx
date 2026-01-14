@@ -1,22 +1,7 @@
-import { Button } from "@/components/ui/button";
 import { SiWhatsapp } from "react-icons/si";
 import heroImage from "@assets/destan_pide_1768375586706.jpeg";
 
 export function Hero() {
-  const scrollToMenu = () => {
-    const element = document.querySelector("#menu");
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
-  const whatsappNumber = import.meta.env.VITE_WHATSAPP_PHONE || "905551234567";
-
-  const openWhatsApp = () => {
-    const message = encodeURIComponent("Merhaba, siparis vermek istiyorum.");
-    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, "_blank");
-  };
-
   return (
     <section
       id="hero"
@@ -31,33 +16,16 @@ export function Hero() {
 
       <div className="relative z-10 w-full max-w-4xl mx-auto px-4 py-16 text-center">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
-          Lezzet Express
+          Destan Pide
         </h1>
         
-        <p className="text-lg text-white/90 mb-8 max-w-xl mx-auto">
-          Corlu'nun en lezzetli pizzalari, WhatsApp ile kolay siparis
+        <p className="text-lg text-white/90 mb-6 max-w-xl mx-auto">
+          Corlu'nun en lezzetli pideleri
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button
-            size="lg"
-            onClick={openWhatsApp}
-            className="bg-whatsapp text-white px-8 py-6 text-lg flex items-center gap-3"
-            data-testid="button-hero-whatsapp"
-          >
-            <SiWhatsapp className="h-6 w-6" />
-            WhatsApp ile Siparis Ver
-          </Button>
-          
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={scrollToMenu}
-            className="text-white border-white/50 bg-white/10 backdrop-blur-sm px-8 py-6 text-lg"
-            data-testid="button-hero-menu"
-          >
-            Menuyu Gor
-          </Button>
+        <div className="inline-flex items-center gap-3 bg-whatsapp/20 border border-whatsapp/50 rounded-lg px-6 py-3" data-testid="text-hero-whatsapp">
+          <SiWhatsapp className="h-6 w-6 text-whatsapp" />
+          <span className="text-white text-lg">WhatsApp ile Siparis</span>
         </div>
       </div>
     </section>
