@@ -19,13 +19,12 @@ export function OrderForm() {
   const { items, updateQuantity, removeItem, getSubtotal, getTotal, clearCart } = useCart();
   const { toast } = useToast();
   
-  const { data: settingsData = [] } = useQuery<{ key: string; value: string }[]>({
+  const { data: settingsData = {} } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
   });
   
   const getWhatsAppNumber = () => {
-    const setting = settingsData.find(s => s.key === "whatsapp_number");
-    return setting?.value || "";
+    return settingsData.whatsapp_number || "";
   };
   
   const [formData, setFormData] = useState({
