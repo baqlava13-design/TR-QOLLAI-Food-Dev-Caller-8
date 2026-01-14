@@ -124,9 +124,12 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
                   loading="lazy"
                 />
                 {Boolean(item.isKampanya) && (
-                  <Badge className="absolute top-3 left-3 z-10 bg-red-600 text-white font-bold shadow-lg border-2 border-white">
+                  <span 
+                    className="absolute top-3 left-3 z-50 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-md shadow-lg border-2 border-white"
+                    data-testid={`badge-kampanya-${item.id}`}
+                  >
                     {item.kampanyaTag || "Kampanya"}
-                  </Badge>
+                  </span>
                 )}
                 {item.isPopular && !Boolean(item.isKampanya) && (
                   <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground gap-1">
