@@ -99,7 +99,6 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login attempt:", { username });
     setLoading(true);
     setError("");
 
@@ -111,9 +110,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
         credentials: "include",
       });
 
-      console.log("Login response status:", response.status);
       const data = await response.json();
-      console.log("Login response data:", data);
 
       if (!response.ok) {
         throw new Error(data.error || "Giris basarisiz");
@@ -121,7 +118,6 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
 
       onLogin();
     } catch (err: any) {
-      console.error("Login error:", err);
       setError(err.message || "Giris basarisiz");
     } finally {
       setLoading(false);
