@@ -74,7 +74,13 @@ export const customers = pgTable("customers", {
   name: text("name").notNull(),
   phone: text("phone").notNull(),
   address: text("address"),
+  mahalle: text("mahalle"),
+  sokak: text("sokak"),
+  binaNo: text("bina_no"),
+  daireNo: text("daire_no"),
   notes: text("notes"),
+  orderCount: integer("order_count").default(0),
+  lastOrderDate: timestamp("last_order_date"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -152,7 +158,7 @@ export const siteSettings = pgTable("site_settings", {
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertMenuItemSchema = createInsertSchema(menuItems).omit({ id: true });
 export const insertUpsellOptionSchema = createInsertSchema(upsellOptions).omit({ id: true });
-export const insertCustomerSchema = createInsertSchema(customers).omit({ id: true, createdAt: true });
+export const insertCustomerSchema = createInsertSchema(customers).omit({ id: true, createdAt: true, orderCount: true, lastOrderDate: true });
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, confirmedAt: true, deliveredAt: true });
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
 export const insertReviewSchema = createInsertSchema(reviews).omit({ id: true, createdAt: true });

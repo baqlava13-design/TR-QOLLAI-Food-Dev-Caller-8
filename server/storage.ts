@@ -57,6 +57,8 @@ export interface IStorage {
   getCustomerByPhone(phone: string): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
+  deleteCustomer(id: string): Promise<boolean>;
+  getCustomersWithStats(): Promise<(Customer & { orderCount: number; lastOrderDate: Date | null })[]>;
 
   // Orders
   getOrders(): Promise<Order[]>;
@@ -194,6 +196,29 @@ export class DatabaseStorage implements IStorage {
   async updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined> {
     const [updated] = await db.update(customers).set(customer).where(eq(customers.id, id)).returning();
     return updated || undefined;
+  }
+
+  async deleteCustomer(id: string): Promise<boolean> {
+    await db.delete(customers).where(eq(customers.id, id));
+    return true;
+  }
+
+  async getCustomersWithStats(): Promise<(Customer & { orderCount: number; lastOrderDate: Date | null })[]> {
+    const allCustomers = await db.select().from(customers).orderBy(desc(customers.createdAt));
+    const allOrders = await db.select().from(orders);
+    
+    return allCustomers.map(customer => {
+      const customerOrders = allOrders.filter(o => o.customerId === customer.id);
+      const lastOrder = customerOrders.sort((a, b) => 
+        (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0)
+      )[0];
+      
+      return {
+        ...customer,
+        orderCount: customerOrders.length,
+        lastOrderDate: lastOrder?.createdAt || null,
+      };
+    });
   }
 
   // Orders

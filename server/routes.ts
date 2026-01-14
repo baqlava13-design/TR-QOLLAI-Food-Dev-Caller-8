@@ -197,6 +197,42 @@ export async function registerRoutes(
     }
   });
 
+  // Admin Customer Management
+  app.get("/api/admin/customers", requireAdmin, async (req, res) => {
+    try {
+      const customers = await storage.getCustomersWithStats();
+      res.json(customers);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch customers" });
+    }
+  });
+
+  app.patch("/api/admin/customers/:id", requireAdmin, async (req, res) => {
+    try {
+      const partialSchema = insertCustomerSchema.partial();
+      const data = partialSchema.parse(req.body);
+      const customer = await storage.updateCustomer(req.params.id, data);
+      if (!customer) {
+        return res.status(404).json({ error: "Customer not found" });
+      }
+      res.json(customer);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update customer" });
+    }
+  });
+
+  app.delete("/api/admin/customers/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteCustomer(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete customer" });
+    }
+  });
+
   // Orders
   app.get("/api/orders", async (req, res) => {
     try {
