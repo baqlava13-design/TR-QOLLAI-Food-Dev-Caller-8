@@ -23,9 +23,19 @@ export function Hero() {
           Corlu'nun en lezzetli pideleri
         </p>
 
-        <div className="inline-flex items-center gap-3 bg-whatsapp/20 border border-whatsapp/50 rounded-lg px-6 py-3" data-testid="text-hero-whatsapp">
-          <SiWhatsapp className="h-6 w-6 text-whatsapp" />
-          <span className="text-white text-lg">WhatsApp ile Siparis</span>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a
+            href="#menu"
+            className="inline-flex items-center gap-2 bg-primary text-white rounded-lg px-8 py-3 text-lg font-medium hover:bg-primary/90 transition-colors"
+            data-testid="link-hero-menu"
+          >
+            Menuyu Gor
+          </a>
+          
+          <div className="inline-flex items-center gap-3 bg-whatsapp/20 border border-whatsapp/50 rounded-lg px-6 py-3" data-testid="text-hero-whatsapp">
+            <SiWhatsapp className="h-6 w-6 text-whatsapp" />
+            <span className="text-white text-lg">WhatsApp ile Siparis</span>
+          </div>
         </div>
       </div>
     </section>
