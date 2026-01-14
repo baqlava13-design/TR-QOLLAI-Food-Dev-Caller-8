@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { SiWhatsapp } from "react-icons/si";
-import pizzaImage from "@assets/Pizza-3007395_1768374714340.jpg";
+import heroImage from "@assets/destan_pide_1768375586706.jpeg";
 
 export function Hero() {
   const scrollToMenu = () => {
@@ -25,7 +25,7 @@ export function Hero() {
     >
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${pizzaImage})` }}
+        style={{ backgroundImage: `url(${heroImage})` }}
       />
       <div className="absolute inset-0 bg-black/60" />
 
