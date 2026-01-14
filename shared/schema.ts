@@ -6,19 +6,6 @@ import { z } from "zod";
 // Enums
 export const orderStatusEnum = pgEnum("order_status", ["pending", "confirmed", "preparing", "delivered", "cancelled"]);
 export const paymentMethodEnum = pgEnum("payment_method", ["cash", "pos"]);
-export const mediaTypeEnum = pgEnum("media_type", ["logo", "hero", "menu_item", "category", "gallery"]);
-
-// Media Assets table
-export const mediaAssets = pgTable("media_assets", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  objectPath: text("object_path").notNull(),
-  fileName: text("file_name").notNull(),
-  mimeType: text("mime_type"),
-  size: integer("size"),
-  type: mediaTypeEnum("type").default("gallery"),
-  altText: text("alt_text"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
 
 // Categories table (with self-referencing for subcategories)
 export const categories = pgTable("categories", {
@@ -47,15 +34,10 @@ export const menuItems = pgTable("menu_items", {
   name: text("name").notNull(),
   description: text("description"),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  salePrice: decimal("sale_price", { precision: 10, scale: 2 }),
-  saleStartDate: timestamp("sale_start_date"),
-  saleEndDate: timestamp("sale_end_date"),
   image: text("image"),
-  ingredients: text("ingredients"),
   categoryId: varchar("category_id").references(() => categories.id),
   isAvailable: boolean("is_available").default(true),
   isPopular: boolean("is_popular").default(false),
-  isFeatured: boolean("is_featured").default(false),
   sortOrder: integer("sort_order").default(0),
 });
 
@@ -164,44 +146,7 @@ export const siteSettings = pgTable("site_settings", {
   value: text("value"),
 });
 
-// Site Profile table (single row for main site info)
-export const siteProfile = pgTable("site_profile", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  restaurantName: text("restaurant_name").notNull().default("Lezzet Express"),
-  tagline: text("tagline").default("Corlu'nun En Lezzetli Adresi"),
-  aboutText: text("about_text"),
-  logoUrl: text("logo_url"),
-  heroTitle: text("hero_title").default("Ev Yapimi Lezzetler Kapiinizda"),
-  heroSubtitle: text("hero_subtitle").default("Taze malzemeler, ozenle hazirlanan yemekler"),
-  heroImageUrl: text("hero_image_url"),
-  brandImageUrl: text("brand_image_url"),
-  footerText: text("footer_text"),
-  address: text("address"),
-  phone: text("phone"),
-  email: text("email"),
-  googleReviewsWidgetCode: text("google_reviews_widget_code"),
-});
-
-// Social Links table
-export const socialLinks = pgTable("social_links", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  platform: text("platform").notNull(),
-  url: text("url"),
-  isVisible: boolean("is_visible").default(true),
-  sortOrder: integer("sort_order").default(0),
-});
-
-// WhatsApp Settings table
-export const whatsappSettings = pgTable("whatsapp_settings", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  businessPhone: text("business_phone").notNull().default("905551234567"),
-  defaultMessage: text("default_message"),
-  orderConfirmationTemplate: text("order_confirmation_template"),
-  isEnabled: boolean("is_enabled").default(true),
-});
-
 // Insert schemas
-export const insertMediaAssetSchema = createInsertSchema(mediaAssets).omit({ id: true, createdAt: true });
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertMenuItemSchema = createInsertSchema(menuItems).omit({ id: true });
 export const insertUpsellOptionSchema = createInsertSchema(upsellOptions).omit({ id: true });
@@ -210,14 +155,8 @@ export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, cre
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
 export const insertReviewSchema = createInsertSchema(reviews).omit({ id: true, createdAt: true });
 export const insertSiteSettingSchema = createInsertSchema(siteSettings).omit({ id: true });
-export const insertSiteProfileSchema = createInsertSchema(siteProfile).omit({ id: true });
-export const insertSocialLinkSchema = createInsertSchema(socialLinks).omit({ id: true });
-export const insertWhatsappSettingsSchema = createInsertSchema(whatsappSettings).omit({ id: true });
 
 // Types
-export type MediaAsset = typeof mediaAssets.$inferSelect;
-export type InsertMediaAsset = z.infer<typeof insertMediaAssetSchema>;
-
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
@@ -241,15 +180,6 @@ export type InsertReview = z.infer<typeof insertReviewSchema>;
 
 export type SiteSetting = typeof siteSettings.$inferSelect;
 export type InsertSiteSetting = z.infer<typeof insertSiteSettingSchema>;
-
-export type SiteProfile = typeof siteProfile.$inferSelect;
-export type InsertSiteProfile = z.infer<typeof insertSiteProfileSchema>;
-
-export type SocialLink = typeof socialLinks.$inferSelect;
-export type InsertSocialLink = z.infer<typeof insertSocialLinkSchema>;
-
-export type WhatsappSettings = typeof whatsappSettings.$inferSelect;
-export type InsertWhatsappSettings = z.infer<typeof insertWhatsappSettingsSchema>;
 
 // Legacy user support (keeping for compatibility)
 export const users = pgTable("users", {

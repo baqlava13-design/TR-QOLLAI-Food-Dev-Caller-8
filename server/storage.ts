@@ -7,10 +7,6 @@ import {
   orderItems,
   reviews,
   siteSettings,
-  siteProfile,
-  socialLinks,
-  whatsappSettings,
-  mediaAssets,
   type Category,
   type InsertCategory,
   type MenuItem,
@@ -27,14 +23,6 @@ import {
   type InsertReview,
   type SiteSetting,
   type InsertSiteSetting,
-  type SiteProfile,
-  type InsertSiteProfile,
-  type SocialLink,
-  type InsertSocialLink,
-  type WhatsappSettings,
-  type InsertWhatsappSettings,
-  type MediaAsset,
-  type InsertMediaAsset,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, gte, and, sql } from "drizzle-orm";
@@ -88,24 +76,6 @@ export interface IStorage {
   getSetting(key: string): Promise<SiteSetting | undefined>;
   setSetting(key: string, value: string): Promise<SiteSetting>;
 
-  // Site Profile (CMS)
-  getSiteProfile(): Promise<SiteProfile | undefined>;
-  upsertSiteProfile(profile: Partial<InsertSiteProfile>): Promise<SiteProfile>;
-
-  // Social Links (CMS)
-  getSocialLinks(): Promise<SocialLink[]>;
-  upsertSocialLink(link: InsertSocialLink): Promise<SocialLink>;
-  updateSocialLink(id: string, link: Partial<InsertSocialLink>): Promise<SocialLink | undefined>;
-  deleteSocialLink(id: string): Promise<boolean>;
-
-  // WhatsApp Settings (CMS)
-  getWhatsappSettings(): Promise<WhatsappSettings | undefined>;
-  upsertWhatsappSettings(settings: Partial<InsertWhatsappSettings>): Promise<WhatsappSettings>;
-
-  // Reviews (Admin)
-  updateReview(id: string, review: Partial<InsertReview>): Promise<Review | undefined>;
-  deleteReview(id: string): Promise<boolean>;
-
   // Dashboard Stats
   getDashboardStats(): Promise<{
     todayOrders: number;
@@ -116,13 +86,6 @@ export interface IStorage {
     monthRevenue: number;
     totalCustomers: number;
   }>;
-
-  // Media Assets
-  getMediaAssets(type?: string): Promise<MediaAsset[]>;
-  getMediaAssetById(id: string): Promise<MediaAsset | undefined>;
-  createMediaAsset(asset: InsertMediaAsset): Promise<MediaAsset>;
-  updateMediaAsset(id: string, asset: Partial<InsertMediaAsset>): Promise<MediaAsset | undefined>;
-  deleteMediaAsset(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -293,69 +256,6 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  // Site Profile (CMS)
-  async getSiteProfile(): Promise<SiteProfile | undefined> {
-    const [profile] = await db.select().from(siteProfile).limit(1);
-    return profile || undefined;
-  }
-
-  async upsertSiteProfile(profile: Partial<InsertSiteProfile>): Promise<SiteProfile> {
-    const existing = await this.getSiteProfile();
-    if (existing) {
-      const [updated] = await db.update(siteProfile).set(profile).where(eq(siteProfile.id, existing.id)).returning();
-      return updated;
-    }
-    const [created] = await db.insert(siteProfile).values(profile as InsertSiteProfile).returning();
-    return created;
-  }
-
-  // Social Links (CMS)
-  async getSocialLinks(): Promise<SocialLink[]> {
-    return db.select().from(socialLinks).orderBy(socialLinks.sortOrder);
-  }
-
-  async upsertSocialLink(link: InsertSocialLink): Promise<SocialLink> {
-    const [created] = await db.insert(socialLinks).values(link).returning();
-    return created;
-  }
-
-  async updateSocialLink(id: string, link: Partial<InsertSocialLink>): Promise<SocialLink | undefined> {
-    const [updated] = await db.update(socialLinks).set(link).where(eq(socialLinks.id, id)).returning();
-    return updated || undefined;
-  }
-
-  async deleteSocialLink(id: string): Promise<boolean> {
-    await db.delete(socialLinks).where(eq(socialLinks.id, id));
-    return true;
-  }
-
-  // WhatsApp Settings (CMS)
-  async getWhatsappSettings(): Promise<WhatsappSettings | undefined> {
-    const [settings] = await db.select().from(whatsappSettings).limit(1);
-    return settings || undefined;
-  }
-
-  async upsertWhatsappSettings(settings: Partial<InsertWhatsappSettings>): Promise<WhatsappSettings> {
-    const existing = await this.getWhatsappSettings();
-    if (existing) {
-      const [updated] = await db.update(whatsappSettings).set(settings).where(eq(whatsappSettings.id, existing.id)).returning();
-      return updated;
-    }
-    const [created] = await db.insert(whatsappSettings).values(settings as InsertWhatsappSettings).returning();
-    return created;
-  }
-
-  // Reviews (Admin)
-  async updateReview(id: string, review: Partial<InsertReview>): Promise<Review | undefined> {
-    const [updated] = await db.update(reviews).set(review).where(eq(reviews.id, id)).returning();
-    return updated || undefined;
-  }
-
-  async deleteReview(id: string): Promise<boolean> {
-    await db.delete(reviews).where(eq(reviews.id, id));
-    return true;
-  }
-
   // Dashboard Stats
   async getDashboardStats(): Promise<{
     todayOrders: number;
@@ -397,34 +297,6 @@ export class DatabaseStorage implements IStorage {
       monthRevenue,
       totalCustomers: allCustomers.length,
     };
-  }
-
-  // Media Assets
-  async getMediaAssets(type?: string): Promise<MediaAsset[]> {
-    if (type) {
-      return db.select().from(mediaAssets).where(eq(mediaAssets.type, type as any)).orderBy(desc(mediaAssets.createdAt));
-    }
-    return db.select().from(mediaAssets).orderBy(desc(mediaAssets.createdAt));
-  }
-
-  async getMediaAssetById(id: string): Promise<MediaAsset | undefined> {
-    const [asset] = await db.select().from(mediaAssets).where(eq(mediaAssets.id, id));
-    return asset || undefined;
-  }
-
-  async createMediaAsset(asset: InsertMediaAsset): Promise<MediaAsset> {
-    const [created] = await db.insert(mediaAssets).values(asset).returning();
-    return created;
-  }
-
-  async updateMediaAsset(id: string, asset: Partial<InsertMediaAsset>): Promise<MediaAsset | undefined> {
-    const [updated] = await db.update(mediaAssets).set(asset).where(eq(mediaAssets.id, id)).returning();
-    return updated || undefined;
-  }
-
-  async deleteMediaAsset(id: string): Promise<boolean> {
-    await db.delete(mediaAssets).where(eq(mediaAssets.id, id));
-    return true;
   }
 }
 
