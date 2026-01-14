@@ -123,12 +123,12 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   loading="lazy"
                 />
-                {item.isKampanya === true && (
-                  <Badge className="absolute top-3 left-3 z-10 bg-red-600 text-white font-bold shadow-lg">
+                {Boolean(item.isKampanya) && (
+                  <Badge className="absolute top-3 left-3 z-10 bg-red-600 text-white font-bold shadow-lg border-2 border-white">
                     {item.kampanyaTag || "Kampanya"}
                   </Badge>
                 )}
-                {item.isPopular && !item.isKampanya && (
+                {item.isPopular && !Boolean(item.isKampanya) && (
                   <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground gap-1">
                     <Flame className="h-3 w-3" />
                     Populer
