@@ -345,6 +345,7 @@ ${order.notes ? `Not: ${order.notes}` : ""}
                 <TableHeader>
                   <TableRow>
                     <TableHead>No</TableHead>
+                    <TableHead>Tarih / Saat</TableHead>
                     <TableHead>Müşteri</TableHead>
                     <TableHead>Toplam</TableHead>
                     <TableHead>Durum</TableHead>
@@ -355,6 +356,9 @@ ${order.notes ? `Not: ${order.notes}` : ""}
                   {filteredOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-mono">#{order.id.slice(0, 8)}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                        {order.createdAt ? `${new Date(order.createdAt).toLocaleDateString("tr-TR")} ${new Date(order.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}` : "-"}
+                      </TableCell>
                       <TableCell>{order.customerName}</TableCell>
                       <TableCell className="font-bold">{parseFloat(order.total).toFixed(2)} TL</TableCell>
                       <TableCell>
