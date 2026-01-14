@@ -9,7 +9,6 @@ import { useTheme } from "@/lib/theme";
 
 const navItems = [
   { label: "Menu", href: "#menu" },
-  { label: "Hakkimizda", href: "#about" },
   { label: "Yorumlar", href: "#reviews" },
   { label: "Iletisim", href: "#contact" },
 ];

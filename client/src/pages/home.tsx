@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
-import { BrandStory } from "@/components/brand-story";
 import { MenuSection } from "@/components/menu-section";
 import { HowItWorks } from "@/components/how-it-works";
 import { Reviews } from "@/components/reviews";
@@ -28,7 +27,6 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
-        <BrandStory />
         <MenuSection
           categories={categories}
           menuItems={menuItems}
