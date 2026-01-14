@@ -19,12 +19,27 @@ export function OrderForm() {
   const { items, updateQuantity, removeItem, getSubtotal, getTotal, clearCart } = useCart();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
-    customerName: "",
+    firstName: "",
+    lastName: "",
     customerPhone: "",
-    customerAddress: "",
+    mahalle: "",
+    sokak: "",
+    binaNo: "",
+    daireNo: "",
     paymentMethod: "cash" as "cash" | "pos",
     notes: "",
   });
+
+  const getFullName = () => `${formData.firstName} ${formData.lastName}`.trim();
+  const getFullAddress = () => {
+    const parts = [
+      formData.mahalle,
+      formData.sokak,
+      formData.binaNo ? `Bina No: ${formData.binaNo}` : "",
+      formData.daireNo ? `Daire No: ${formData.daireNo}` : "",
+    ].filter(Boolean);
+    return parts.join(", ");
+  };
 
   const createOrderMutation = useMutation({
     mutationFn: async (data: typeof formData & { items: typeof items }) => {
@@ -38,9 +53,9 @@ export function OrderForm() {
       }));
 
       const order = {
-        customerName: data.customerName,
+        customerName: getFullName(),
         customerPhone: data.customerPhone,
-        customerAddress: data.customerAddress,
+        customerAddress: getFullAddress(),
         paymentMethod: data.paymentMethod,
         notes: data.notes || null,
         subtotal: getSubtotal().toFixed(2),
@@ -53,18 +68,22 @@ export function OrderForm() {
     onSuccess: () => {
       const whatsappLink = generateWhatsAppOrderLink(
         items,
-        formData.customerName,
+        getFullName(),
         formData.customerPhone,
-        formData.customerAddress,
+        getFullAddress(),
         formData.paymentMethod,
         formData.notes
       );
       window.open(whatsappLink, "_blank");
       clearCart();
       setFormData({
-        customerName: "",
+        firstName: "",
+        lastName: "",
         customerPhone: "",
-        customerAddress: "",
+        mahalle: "",
+        sokak: "",
+        binaNo: "",
+        daireNo: "",
         paymentMethod: "cash",
         notes: "",
       });
@@ -94,7 +113,7 @@ export function OrderForm() {
       return;
     }
 
-    if (!formData.customerName || !formData.customerPhone || !formData.customerAddress) {
+    if (!formData.firstName || !formData.lastName || !formData.customerPhone || !formData.mahalle || !formData.sokak || !formData.binaNo) {
       toast({
         title: "Eksik bilgi",
         description: "Lutfen tum zorunlu alanlari doldurun.",
@@ -116,7 +135,7 @@ export function OrderForm() {
       return;
     }
 
-    if (!formData.customerName || !formData.customerPhone || !formData.customerAddress) {
+    if (!formData.firstName || !formData.lastName || !formData.customerPhone || !formData.mahalle || !formData.sokak || !formData.binaNo) {
       toast({
         title: "Eksik bilgi",
         description: "Lutfen tum zorunlu alanlari doldurun.",
@@ -127,9 +146,9 @@ export function OrderForm() {
 
     const whatsappLink = generateWhatsAppOrderLink(
       items,
-      formData.customerName,
+      getFullName(),
       formData.customerPhone,
-      formData.customerAddress,
+      getFullAddress(),
       formData.paymentMethod,
       formData.notes
     );
@@ -252,16 +271,29 @@ export function OrderForm() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="customerName">Ad Soyad *</Label>
-                  <Input
-                    id="customerName"
-                    placeholder="Adinizi girin"
-                    value={formData.customerName}
-                    onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                    required
-                    data-testid="input-customer-name"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">Ad *</Label>
+                    <Input
+                      id="firstName"
+                      placeholder="Adiniz"
+                      value={formData.firstName}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                      required
+                      data-testid="input-first-name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Soyad *</Label>
+                    <Input
+                      id="lastName"
+                      placeholder="Soyadiniz"
+                      value={formData.lastName}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      required
+                      data-testid="input-last-name"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -277,17 +309,39 @@ export function OrderForm() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="customerAddress">Teslimat Adresi *</Label>
-                  <Textarea
-                    id="customerAddress"
-                    placeholder="Tam adresinizi girin (mahalle, sokak, bina no, daire)"
-                    value={formData.customerAddress}
-                    onChange={(e) => setFormData({ ...formData, customerAddress: e.target.value })}
-                    required
-                    className="min-h-[80px]"
-                    data-testid="input-customer-address"
-                  />
+                <div className="space-y-3">
+                  <Label>Teslimat Adresi *</Label>
+                  <div className="space-y-3">
+                    <Input
+                      placeholder="Mahalle"
+                      value={formData.mahalle}
+                      onChange={(e) => setFormData({ ...formData, mahalle: e.target.value })}
+                      required
+                      data-testid="input-mahalle"
+                    />
+                    <Input
+                      placeholder="Sokak / Cadde"
+                      value={formData.sokak}
+                      onChange={(e) => setFormData({ ...formData, sokak: e.target.value })}
+                      required
+                      data-testid="input-sokak"
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        placeholder="Bina No"
+                        value={formData.binaNo}
+                        onChange={(e) => setFormData({ ...formData, binaNo: e.target.value })}
+                        required
+                        data-testid="input-bina-no"
+                      />
+                      <Input
+                        placeholder="Daire No"
+                        value={formData.daireNo}
+                        onChange={(e) => setFormData({ ...formData, daireNo: e.target.value })}
+                        data-testid="input-daire-no"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-3">
