@@ -12,12 +12,22 @@ import { SiWhatsapp } from "react-icons/si";
 import { useCart } from "@/lib/cart";
 import { generateWhatsAppOrderLink } from "@/lib/whatsapp";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export function OrderForm() {
   const { items, updateQuantity, removeItem, getSubtotal, getTotal, clearCart } = useCart();
   const { toast } = useToast();
+  
+  const { data: settingsData = [] } = useQuery<{ key: string; value: string }[]>({
+    queryKey: ["/api/settings"],
+  });
+  
+  const getWhatsAppNumber = () => {
+    const setting = settingsData.find(s => s.key === "whatsapp_number");
+    return setting?.value || "";
+  };
+  
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -72,7 +82,8 @@ export function OrderForm() {
         formData.customerPhone,
         getFullAddress(),
         formData.paymentMethod,
-        formData.notes
+        formData.notes,
+        getWhatsAppNumber()
       );
       window.open(whatsappLink, "_blank");
       clearCart();

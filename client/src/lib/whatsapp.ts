@@ -1,6 +1,6 @@
 import type { CartItem } from "@shared/schema";
 
-const BUSINESS_PHONE = import.meta.env.VITE_WHATSAPP_PHONE || "905551234567";
+const DEFAULT_PHONE = import.meta.env.VITE_WHATSAPP_PHONE || "905551234567";
 
 export function generateWhatsAppOrderLink(
   items: CartItem[],
@@ -8,8 +8,10 @@ export function generateWhatsAppOrderLink(
   customerPhone: string,
   customerAddress: string,
   paymentMethod: "cash" | "pos",
-  notes?: string
+  notes?: string,
+  businessPhone?: string
 ): string {
+  const phoneNumber = businessPhone || DEFAULT_PHONE;
   const orderLines = items.map((item) => {
     const upsellNames = item.selectedUpsells.map((u) => u.name).join(", ");
     const upsellText = upsellNames ? ` (+ ${upsellNames})` : "";
@@ -42,7 +44,7 @@ Siparis zamani: ${new Date().toLocaleString("tr-TR")}
 `.trim();
 
   const encodedMessage = encodeURIComponent(message);
-  return `https://wa.me/${BUSINESS_PHONE}?text=${encodedMessage}`;
+  return `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 }
 
 export function generateCustomerConfirmationLink(
