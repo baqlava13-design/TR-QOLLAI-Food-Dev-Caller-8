@@ -87,8 +87,8 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
           </p>
         </div>
 
-        <div className="mb-8 -mx-4 px-4 overflow-x-auto">
-          <div className="flex justify-start sm:justify-center gap-2 bg-muted/50 p-2 rounded-lg min-w-max sm:min-w-0 sm:flex-wrap">
+        <div className="mb-8">
+          <div className="flex flex-wrap justify-center gap-2 bg-muted/50 p-2 rounded-lg">
             <Button
               variant={activeCategory === "all" ? "default" : "ghost"}
               onClick={() => setActiveCategory("all")}

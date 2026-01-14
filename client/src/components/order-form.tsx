@@ -224,36 +224,34 @@ export function OrderForm() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center justify-between sm:justify-end gap-2 pl-0 sm:pl-2">
-                        <div className="flex items-center gap-1">
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                            onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
-                            data-testid={`button-decrease-${item.menuItem.id}`}
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="w-8 text-center font-medium text-sm">{item.quantity}</span>
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                            onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
-                            data-testid={`button-increase-${item.menuItem.id}`}
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                        </div>
+                      <div className="flex items-center justify-end gap-1 min-w-0">
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="h-7 w-7 flex-shrink-0"
+                          onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
+                          data-testid={`button-decrease-${item.menuItem.id}`}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-6 text-center font-medium text-sm flex-shrink-0">{item.quantity}</span>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="h-7 w-7 flex-shrink-0"
+                          onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
+                          data-testid={`button-increase-${item.menuItem.id}`}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8 text-destructive"
+                          className="h-7 w-7 text-destructive flex-shrink-0"
                           onClick={() => removeItem(item.menuItem.id)}
                           data-testid={`button-remove-${item.menuItem.id}`}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
@@ -287,7 +285,7 @@ export function OrderForm() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">Ad *</Label>
                     <Input
@@ -342,7 +340,7 @@ export function OrderForm() {
                       required
                       data-testid="input-sokak"
                     />
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <Input
                         placeholder="Bina No"
                         value={formData.binaNo}
@@ -365,7 +363,7 @@ export function OrderForm() {
                   <RadioGroup
                     value={formData.paymentMethod}
                     onValueChange={(value: "cash" | "pos") => setFormData({ ...formData, paymentMethod: value })}
-                    className="grid grid-cols-2 gap-4"
+                    className="grid grid-cols-2 gap-2 sm:gap-4"
                   >
                     <div>
                       <RadioGroupItem
@@ -375,11 +373,11 @@ export function OrderForm() {
                       />
                       <Label
                         htmlFor="cash"
-                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer hover-elevate"
+                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-3 sm:p-4 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer hover-elevate"
                         data-testid="radio-payment-cash"
                       >
-                        <Banknote className="mb-3 h-6 w-6" />
-                        <span className="font-medium">Nakit</span>
+                        <Banknote className="mb-2 sm:mb-3 h-5 w-5 sm:h-6 sm:w-6" />
+                        <span className="font-medium text-sm sm:text-base">Nakit</span>
                       </Label>
                     </div>
                     <div>
@@ -390,11 +388,11 @@ export function OrderForm() {
                       />
                       <Label
                         htmlFor="pos"
-                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer hover-elevate"
+                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-3 sm:p-4 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer hover-elevate"
                         data-testid="radio-payment-pos"
                       >
-                        <CreditCard className="mb-3 h-6 w-6" />
-                        <span className="font-medium">POS (Kart)</span>
+                        <CreditCard className="mb-2 sm:mb-3 h-5 w-5 sm:h-6 sm:w-6" />
+                        <span className="font-medium text-sm sm:text-base">POS</span>
                       </Label>
                     </div>
                   </RadioGroup>
