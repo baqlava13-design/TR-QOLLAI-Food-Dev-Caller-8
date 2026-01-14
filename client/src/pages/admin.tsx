@@ -289,6 +289,31 @@ ${order.notes ? `Not: ${order.notes}` : ""}
         </Card>
       </div>
 
+      <div className="grid grid-cols-2 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Haftalik Ciro</p>
+                <p className="text-2xl font-bold text-blue-600">{displayStats.weekRevenue.toFixed(0)} TL</p>
+              </div>
+              <DollarSign className="h-8 w-8 text-blue-500 opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Aylik Ciro</p>
+                <p className="text-2xl font-bold text-green-600">{displayStats.monthRevenue.toFixed(0)} TL</p>
+              </div>
+              <DollarSign className="h-8 w-8 text-green-500 opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
           <CardTitle>Siparisler</CardTitle>
