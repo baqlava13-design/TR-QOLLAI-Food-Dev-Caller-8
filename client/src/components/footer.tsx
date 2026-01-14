@@ -12,7 +12,7 @@ const quickLinks = [
 ];
 
 const contactInfo = [
-  { icon: MapPin, text: "Çorlu Merkez, Tekirdağ", href: "#" },
+  { icon: MapPin, text: "Kılıçoğlu Vizyon Konutları, Esentepe, Çorlu", href: "#" },
   { icon: Phone, text: "0555 123 4567", href: "tel:+905551234567" },
   { icon: Mail, text: "info@destanpide.com", href: "mailto:info@destanpide.com" },
 ];
