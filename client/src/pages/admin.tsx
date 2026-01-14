@@ -182,6 +182,8 @@ function OrdersTab() {
   const { toast } = useToast();
   const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
 
   const { data: stats } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
@@ -214,9 +216,34 @@ function OrdersTab() {
   });
 
   const filteredOrders = orders.filter((order) => {
-    if (filterStatus === "all") return true;
-    return order.status === filterStatus;
+    // Status filter
+    if (filterStatus !== "all" && order.status !== filterStatus) return false;
+    
+    // Date range filter
+    if (startDate || endDate) {
+      const orderDate = order.createdAt ? new Date(order.createdAt) : null;
+      if (!orderDate) return false;
+      
+      if (startDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        if (orderDate < start) return false;
+      }
+      
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        if (orderDate > end) return false;
+      }
+    }
+    
+    return true;
   });
+
+  const clearDateFilters = () => {
+    setStartDate("");
+    setEndDate("");
+  };
 
   const handlePrint = (order: OrderWithItems) => {
     const itemsText = order.items?.map(item => 
@@ -330,20 +357,49 @@ ${order.notes ? `Not: ${order.notes}` : ""}
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
-          <CardTitle>Siparişler</CardTitle>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrele" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tümü</SelectItem>
-              <SelectItem value="pending">Beklemede</SelectItem>
-              <SelectItem value="confirmed">Onaylandı</SelectItem>
-              <SelectItem value="preparing">Hazırlanıyor</SelectItem>
-              <SelectItem value="delivered">Teslim Edildi</SelectItem>
-            </SelectContent>
-          </Select>
+        <CardHeader className="space-y-4">
+          <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
+            <CardTitle>Siparişler</CardTitle>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrele" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tümü</SelectItem>
+                <SelectItem value="pending">Beklemede</SelectItem>
+                <SelectItem value="confirmed">Onaylandı</SelectItem>
+                <SelectItem value="preparing">Hazırlanıyor</SelectItem>
+                <SelectItem value="delivered">Teslim Edildi</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Label className="text-sm whitespace-nowrap">Başlangıç:</Label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-[150px]"
+                data-testid="input-start-date"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="text-sm whitespace-nowrap">Bitiş:</Label>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-[150px]"
+                data-testid="input-end-date"
+              />
+            </div>
+            {(startDate || endDate) && (
+              <Button variant="outline" size="sm" onClick={clearDateFilters} data-testid="button-clear-date-filter">
+                Temizle
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
