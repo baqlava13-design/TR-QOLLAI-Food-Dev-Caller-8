@@ -22,7 +22,7 @@ export default function Home() {
   });
 
   return (
-    <div className="min-h-screen bg-background" data-testid="page-home">
+    <div className="min-h-screen bg-background overflow-x-hidden" data-testid="page-home">
       <Header />
       <main>
         <Hero />

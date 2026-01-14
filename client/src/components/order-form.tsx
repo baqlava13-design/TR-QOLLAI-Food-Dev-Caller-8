@@ -203,48 +203,54 @@ export function OrderForm() {
                   {items.map((item) => (
                     <div
                       key={item.menuItem.id}
-                      className="flex items-center gap-4 p-3 rounded-lg bg-background"
+                      className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg bg-background"
                       data-testid={`cart-item-${item.menuItem.id}`}
                     >
-                      <img
-                        src={item.menuItem.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=80&q=80"}
-                        alt={item.menuItem.name}
-                        className="w-16 h-16 rounded-lg object-cover"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium truncate">{item.menuItem.name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {parseFloat(item.menuItem.price).toFixed(2)} TL
-                        </p>
-                        {item.selectedUpsells.length > 0 && (
-                          <p className="text-xs text-primary">
-                            + {item.selectedUpsells.map(u => u.name).join(", ")}
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <img
+                          src={item.menuItem.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=80&q=80"}
+                          alt={item.menuItem.name}
+                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium truncate text-sm sm:text-base">{item.menuItem.name}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {parseFloat(item.menuItem.price).toFixed(2)} TL
                           </p>
-                        )}
+                          {item.selectedUpsells.length > 0 && (
+                            <p className="text-xs text-primary truncate">
+                              + {item.selectedUpsells.map(u => u.name).join(", ")}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
-                          data-testid={`button-decrease-${item.menuItem.id}`}
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="w-8 text-center font-medium">{item.quantity}</span>
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
-                          data-testid={`button-increase-${item.menuItem.id}`}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
+                      <div className="flex items-center justify-between sm:justify-end gap-2 pl-0 sm:pl-2">
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
+                            data-testid={`button-decrease-${item.menuItem.id}`}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-8 text-center font-medium text-sm">{item.quantity}</span>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
+                            data-testid={`button-increase-${item.menuItem.id}`}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
                         <Button
                           size="icon"
                           variant="ghost"
+                          className="h-8 w-8 text-destructive"
                           onClick={() => removeItem(item.menuItem.id)}
-                          className="text-destructive"
                           data-testid={`button-remove-${item.menuItem.id}`}
                         >
                           <Trash2 className="h-4 w-4" />

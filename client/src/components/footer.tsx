@@ -36,12 +36,12 @@ export function Footer() {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">LE</span>
+                <span className="text-primary-foreground font-bold text-lg">DP</span>
               </div>
-              <span className="font-bold text-xl">Lezzet Express</span>
+              <span className="font-bold text-xl">Destan Pide</span>
             </div>
             <p className="text-background/70 mb-4">
-              Çorlu'nun en lezzetli yemekleri, WhatsApp ile kolay sipariş.
+              Çorlu'nun en lezzetli pideleri, WhatsApp ile kolay sipariş.
               Taze, sıcak ve hızlı teslimat.
             </p>
             <div className="flex gap-2">

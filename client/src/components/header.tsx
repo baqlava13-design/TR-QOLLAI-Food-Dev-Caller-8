@@ -35,18 +35,18 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between gap-4">
         <a
           href="#"
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 min-w-0"
           onClick={(e) => {
             e.preventDefault();
             window.scrollTo({ top: 0, behavior: "smooth" });
           }}
           data-testid="link-logo"
         >
-          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-lg">LE</span>
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+            <span className="text-primary-foreground font-bold text-base sm:text-lg">DP</span>
           </div>
-          <span className="font-bold text-xl text-foreground">
-            Lezzet Express
+          <span className="font-bold text-lg sm:text-xl text-foreground truncate">
+            Destan Pide
           </span>
         </a>
 
