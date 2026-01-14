@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -14,19 +14,10 @@ const navItems = [
 ];
 
 export function Header() {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { getItemCount } = useCart();
   const { theme, toggleTheme } = useTheme();
   const itemCount = getItemCount();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
@@ -38,11 +29,7 @@ export function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? "bg-background/95 backdrop-blur-md shadow-sm py-2"
-          : "bg-transparent py-4"
-      }`}
+      className="fixed top-0 left-0 right-0 z-50 bg-background shadow-sm py-3"
       data-testid="header"
     >
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between gap-4">
@@ -58,7 +45,7 @@ export function Header() {
           <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-lg">LE</span>
           </div>
-          <span className={`font-bold text-xl ${isScrolled ? "text-foreground" : "text-white"}`}>
+          <span className="font-bold text-xl text-foreground">
             Lezzet Express
           </span>
         </a>
@@ -68,9 +55,7 @@ export function Header() {
             <button
               key={item.href}
               onClick={() => scrollToSection(item.href)}
-              className={`font-medium transition-colors hover-elevate active-elevate-2 px-3 py-2 rounded-md ${
-                isScrolled ? "text-foreground" : "text-white"
-              }`}
+              className="font-medium transition-colors hover-elevate active-elevate-2 px-3 py-2 rounded-md text-foreground"
               data-testid={`link-nav-${item.label.toLowerCase()}`}
             >
               {item.label}
@@ -83,7 +68,6 @@ export function Header() {
             size="icon"
             variant="ghost"
             onClick={toggleTheme}
-            className={isScrolled ? "" : "text-white"}
             data-testid="button-theme-toggle"
           >
             {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
@@ -93,7 +77,7 @@ export function Header() {
             size="icon"
             variant="ghost"
             onClick={() => scrollToSection("#order")}
-            className={`relative ${isScrolled ? "" : "text-white"}`}
+            className="relative"
             data-testid="button-cart"
           >
             <ShoppingCart className="h-5 w-5" />
@@ -120,7 +104,7 @@ export function Header() {
               <Button
                 size="icon"
                 variant="ghost"
-                className={`md:hidden ${isScrolled ? "" : "text-white"}`}
+                className="md:hidden"
                 data-testid="button-mobile-menu"
               >
                 <Menu className="h-6 w-6" />
