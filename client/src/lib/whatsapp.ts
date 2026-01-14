@@ -50,6 +50,7 @@ Siparis zamani: ${new Date().toLocaleString("tr-TR")}
 export function generateCustomerConfirmationLink(
   items: CartItem[],
   customerName: string,
+  customerPhone: string,
   paymentMethod: "cash" | "pos"
 ): string {
   const orderLines = items.map((item) => {
@@ -64,6 +65,14 @@ export function generateCustomerConfirmationLink(
 
   const paymentText = paymentMethod === "cash" ? "Nakit" : "POS ile Kart";
 
+  // Format phone number - ensure it has country code
+  let formattedPhone = customerPhone.replace(/\D/g, "");
+  if (formattedPhone.startsWith("0")) {
+    formattedPhone = "90" + formattedPhone.substring(1);
+  } else if (!formattedPhone.startsWith("90")) {
+    formattedPhone = "90" + formattedPhone;
+  }
+
   const message = `
 Merhaba ${customerName}!
 
@@ -75,11 +84,11 @@ Odeme: ${paymentText}
 
 Siparisini hazirlamaya basladik! Teslimat suremiz 30-45 dakikadir.
 
-Lezzet Express
+Destan Pide
 `.trim();
 
   const encodedMessage = encodeURIComponent(message);
-  return `https://wa.me/?text=${encodedMessage}`;
+  return `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
 }
 
 export function generateShareLink(text: string): string {

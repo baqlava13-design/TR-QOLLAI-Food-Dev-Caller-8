@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Minus, Plus, Trash2, ShoppingCart, CreditCard, Banknote, ArrowRight } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useCart } from "@/lib/cart";
-import { generateWhatsAppOrderLink } from "@/lib/whatsapp";
+import { generateWhatsAppOrderLink, generateCustomerConfirmationLink } from "@/lib/whatsapp";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -75,16 +75,37 @@ export function OrderForm() {
       return apiRequest("POST", "/api/orders", order);
     },
     onSuccess: () => {
+      // Store form data before clearing
+      const customerName = getFullName();
+      const customerPhone = formData.customerPhone;
+      const customerAddress = getFullAddress();
+      const paymentMethod = formData.paymentMethod;
+      const notes = formData.notes;
+      const currentItems = [...items];
+      
+      // Open WhatsApp link to restaurant
       const whatsappLink = generateWhatsAppOrderLink(
-        items,
-        getFullName(),
-        formData.customerPhone,
-        getFullAddress(),
-        formData.paymentMethod,
-        formData.notes,
+        currentItems,
+        customerName,
+        customerPhone,
+        customerAddress,
+        paymentMethod,
+        notes,
         getWhatsAppNumber()
       );
       window.open(whatsappLink, "_blank");
+      
+      // After a short delay, open customer confirmation link
+      setTimeout(() => {
+        const confirmationLink = generateCustomerConfirmationLink(
+          currentItems,
+          customerName,
+          customerPhone,
+          paymentMethod
+        );
+        window.open(confirmationLink, "_blank");
+      }, 1500);
+      
       clearCart();
       setFormData({
         firstName: "",
@@ -99,7 +120,7 @@ export function OrderForm() {
       });
       toast({
         title: "Sipariş oluşturuldu!",
-        description: "WhatsApp'a yönlendiriliyorsunuz...",
+        description: "WhatsApp'a yönlendiriliyorsunuz. Müşteriye de teyit mesajı gönderilecek.",
       });
     },
     onError: (error) => {
