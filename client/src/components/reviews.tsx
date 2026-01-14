@@ -109,7 +109,7 @@ export function Reviews({ reviews = defaultReviews, isLoading = false }: Reviews
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayReviews.slice(0, 6).map((review, index) => (
+          {displayReviews.slice(0, 3).map((review) => (
             <Card
               key={review.id}
               className="relative overflow-hidden hover-elevate transition-all duration-300"
