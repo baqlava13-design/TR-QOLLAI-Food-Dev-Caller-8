@@ -20,7 +20,7 @@ export function Hero() {
         </h1>
         
         <p className="text-lg text-white/90 mb-6 max-w-xl mx-auto">
-          Corlu'nun en lezzetli pideleri
+          Çorlu'nun en lezzetli pideleri
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -29,12 +29,12 @@ export function Hero() {
             className="inline-flex items-center gap-2 bg-primary text-white rounded-lg px-8 py-3 text-lg font-medium hover:bg-primary/90 transition-colors"
             data-testid="link-hero-menu"
           >
-            Menuyu Gor
+            Menüyü Gör
           </a>
           
           <div className="inline-flex items-center gap-3 bg-whatsapp/20 border border-whatsapp/50 rounded-lg px-6 py-3" data-testid="text-hero-whatsapp">
             <SiWhatsapp className="h-6 w-6 text-whatsapp" />
-            <span className="text-white text-lg">WhatsApp ile Siparis</span>
+            <span className="text-white text-lg">WhatsApp ile Sipariş</span>
           </div>
         </div>
       </div>

@@ -4,26 +4,26 @@ import { Search, ShoppingCart, MessageCircle, Truck } from "lucide-react";
 const steps = [
   {
     icon: Search,
-    title: "Menuyu Inceleyin",
-    description: "Lezzetli yemeklerimiz arasinda secim yapin",
+    title: "Menüyü İnceleyin",
+    description: "Lezzetli yemeklerimiz arasında seçim yapın",
     step: "01",
   },
   {
     icon: ShoppingCart,
     title: "Sepete Ekleyin",
-    description: "Begendiginiz urunleri sepetinize ekleyin",
+    description: "Beğendiğiniz ürünleri sepetinize ekleyin",
     step: "02",
   },
   {
     icon: MessageCircle,
-    title: "WhatsApp ile Gonderin",
-    description: "Siparisini tek tikla WhatsApp'tan gonderin",
+    title: "WhatsApp ile Gönderin",
+    description: "Siparişinizi tek tıkla WhatsApp'tan gönderin",
     step: "03",
   },
   {
     icon: Truck,
-    title: "Teslim Alin",
-    description: "30 dakika icinde kapinizda olsun",
+    title: "Teslim Alın",
+    description: "30 dakika içinde kapınızda olsun",
     step: "04",
   },
 ];
@@ -38,14 +38,14 @@ export function HowItWorks() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <Badge className="mb-4 bg-primary/10 text-primary border-none">
-            Nasil Calisir?
+            Nasıl Çalışır?
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Siparis Vermek <span className="text-primary">Cok Kolay</span>
+            Sipariş Vermek <span className="text-primary">Çok Kolay</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            4 basit adimda lezzetli yemeginizi siparis edin. WhatsApp
-            entegrasyonu ile hizli ve guvenli alisveris deneyimi yasin.
+            4 basit adımda lezzetli yemeğinizi sipariş edin. WhatsApp
+            entegrasyonu ile hızlı ve güvenli alışveriş deneyimi yaşayın.
           </p>
         </div>
 

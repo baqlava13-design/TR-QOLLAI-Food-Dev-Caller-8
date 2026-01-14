@@ -4,14 +4,14 @@ import { MapPin, Phone, Clock, Mail, CreditCard, Banknote } from "lucide-react";
 import { SiWhatsapp, SiInstagram, SiFacebook } from "react-icons/si";
 
 const quickLinks = [
-  { label: "Menu", href: "#menu" },
-  { label: "Hakkimizda", href: "#about" },
+  { label: "Menü", href: "#menu" },
+  { label: "Hakkımızda", href: "#about" },
   { label: "Yorumlar", href: "#reviews" },
-  { label: "Siparis Ver", href: "#order" },
+  { label: "Sipariş Ver", href: "#order" },
 ];
 
 const contactInfo = [
-  { icon: MapPin, text: "Corlu Merkez, Tekirdag", href: "#" },
+  { icon: MapPin, text: "Çorlu Merkez, Tekirdağ", href: "#" },
   { icon: Phone, text: "0555 123 4567", href: "tel:+905551234567" },
   { icon: Mail, text: "info@lezzetexpress.com", href: "mailto:info@lezzetexpress.com" },
 ];
@@ -41,8 +41,8 @@ export function Footer() {
               <span className="font-bold text-xl">Lezzet Express</span>
             </div>
             <p className="text-background/70 mb-4">
-              Corlu'nun en lezzetli yemekleri, WhatsApp ile kolay siparis.
-              Taze, sicak ve hizli teslimat.
+              Çorlu'nun en lezzetli yemekleri, WhatsApp ile kolay sipariş.
+              Taze, sıcak ve hızlı teslimat.
             </p>
             <div className="flex gap-2">
               <Button
@@ -75,7 +75,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-lg mb-4">Hizli Linkler</h4>
+            <h4 className="font-semibold text-lg mb-4">Hızlı Linkler</h4>
             <ul className="space-y-2">
               {quickLinks.map((link) => (
                 <li key={link.href}>
@@ -92,7 +92,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-lg mb-4">Iletisim</h4>
+            <h4 className="font-semibold text-lg mb-4">İletişim</h4>
             <ul className="space-y-3">
               {contactInfo.map((info, index) => (
                 <li key={index}>
@@ -110,7 +110,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-lg mb-4">Calisma Saatleri</h4>
+            <h4 className="font-semibold text-lg mb-4">Çalışma Saatleri</h4>
             <ul className="space-y-2 mb-6">
               {hours.map((item, index) => (
                 <li key={index} className="flex items-start gap-2" data-testid={`text-hours-${index}`}>
@@ -123,7 +123,7 @@ export function Footer() {
               ))}
             </ul>
 
-            <h4 className="font-semibold text-lg mb-3">Odeme Yontemleri</h4>
+            <h4 className="font-semibold text-lg mb-3">Ödeme Yöntemleri</h4>
             <div className="flex gap-3">
               <div className="flex items-center gap-2 text-background/70">
                 <Banknote className="h-5 w-5" />
@@ -140,13 +140,13 @@ export function Footer() {
         <Separator className="bg-background/10 mb-8" />
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-background/50">
-          <p>© 2024 Lezzet Express. Tum haklari saklidir.</p>
+          <p>© 2024 Lezzet Express. Tüm hakları saklıdır.</p>
           <div className="flex gap-4">
             <a href="#" className="hover:text-background transition-colors">
-              Gizlilik Politikasi
+              Gizlilik Politikası
             </a>
             <a href="#" className="hover:text-background transition-colors">
-              Kullanim Sartlari
+              Kullanım Şartları
             </a>
           </div>
         </div>

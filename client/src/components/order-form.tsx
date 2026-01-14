@@ -88,14 +88,14 @@ export function OrderForm() {
         notes: "",
       });
       toast({
-        title: "Siparis olusturuldu!",
-        description: "WhatsApp'a yonlendiriliyorsunuz...",
+        title: "Sipariş oluşturuldu!",
+        description: "WhatsApp'a yönlendiriliyorsunuz...",
       });
     },
     onError: (error) => {
       toast({
         title: "Hata",
-        description: "Siparis olusturulurken bir hata olustu. Lutfen tekrar deneyin.",
+        description: "Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.",
         variant: "destructive",
       });
     },
@@ -106,8 +106,8 @@ export function OrderForm() {
     
     if (items.length === 0) {
       toast({
-        title: "Sepetiniz bos",
-        description: "Lutfen siparis vermek icin menu'den urun secin.",
+        title: "Sepetiniz boş",
+        description: "Lütfen sipariş vermek için menüden ürün seçin.",
         variant: "destructive",
       });
       return;
@@ -116,7 +116,7 @@ export function OrderForm() {
     if (!formData.firstName || !formData.lastName || !formData.customerPhone || !formData.mahalle || !formData.sokak || !formData.binaNo) {
       toast({
         title: "Eksik bilgi",
-        description: "Lutfen tum zorunlu alanlari doldurun.",
+        description: "Lütfen tüm zorunlu alanları doldurun.",
         variant: "destructive",
       });
       return;
@@ -128,8 +128,8 @@ export function OrderForm() {
   const handleDirectWhatsApp = () => {
     if (items.length === 0) {
       toast({
-        title: "Sepetiniz bos",
-        description: "Lutfen siparis vermek icin menu'den urun secin.",
+        title: "Sepetiniz boş",
+        description: "Lütfen sipariş vermek için menüden ürün seçin.",
         variant: "destructive",
       });
       return;
@@ -138,7 +138,7 @@ export function OrderForm() {
     if (!formData.firstName || !formData.lastName || !formData.customerPhone || !formData.mahalle || !formData.sokak || !formData.binaNo) {
       toast({
         title: "Eksik bilgi",
-        description: "Lutfen tum zorunlu alanlari doldurun.",
+        description: "Lütfen tüm zorunlu alanları doldurun.",
         variant: "destructive",
       });
       return;
@@ -160,13 +160,13 @@ export function OrderForm() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <Badge className="mb-4 bg-primary/10 text-primary border-none">
-            Siparis
+            Sipariş
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Siparisini <span className="text-primary">Tamamla</span>
+            Siparişini <span className="text-primary">Tamamla</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Bilgilerinizi girin ve WhatsApp ile kolayca siparis verin.
+            Bilgilerinizi girin ve WhatsApp ile kolayca sipariş verin.
           </p>
         </div>
 
@@ -177,7 +177,7 @@ export function OrderForm() {
                 <ShoppingCart className="h-5 w-5" />
                 Sepetiniz
                 {items.length > 0 && (
-                  <Badge variant="secondary">{items.length} urun</Badge>
+                  <Badge variant="secondary">{items.length} ürün</Badge>
                 )}
               </CardTitle>
             </CardHeader>
@@ -185,8 +185,8 @@ export function OrderForm() {
               {items.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                  <p>Sepetiniz bos</p>
-                  <p className="text-sm mt-2">Menu'den urun ekleyerek baslayin</p>
+                  <p>Sepetiniz boş</p>
+                  <p className="text-sm mt-2">Menüden ürün ekleyerek başlayın</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -252,7 +252,7 @@ export function OrderForm() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Teslimat</span>
-                      <span className="text-whatsapp">Ucretsiz</span>
+                      <span className="text-whatsapp">Ücretsiz</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-lg font-bold">
@@ -276,7 +276,7 @@ export function OrderForm() {
                     <Label htmlFor="firstName">Ad *</Label>
                     <Input
                       id="firstName"
-                      placeholder="Adiniz"
+                      placeholder="Adınız"
                       value={formData.firstName}
                       onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                       required
@@ -287,7 +287,7 @@ export function OrderForm() {
                     <Label htmlFor="lastName">Soyad *</Label>
                     <Input
                       id="lastName"
-                      placeholder="Soyadiniz"
+                      placeholder="Soyadınız"
                       value={formData.lastName}
                       onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                       required
@@ -345,7 +345,7 @@ export function OrderForm() {
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Odeme Yontemi *</Label>
+                  <Label>Ödeme Yöntemi *</Label>
                   <RadioGroup
                     value={formData.paymentMethod}
                     onValueChange={(value: "cash" | "pos") => setFormData({ ...formData, paymentMethod: value })}
@@ -385,10 +385,10 @@ export function OrderForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="notes">Siparis Notu (Istege bagli)</Label>
+                  <Label htmlFor="notes">Sipariş Notu (İsteğe bağlı)</Label>
                   <Textarea
                     id="notes"
-                    placeholder="Ozel isteklerinizi yazin (aci olmasin, ekstra sos, vb.)"
+                    placeholder="Özel isteklerinizi yazın (acı olmasın, ekstra sos, vb.)"
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     className="min-h-[60px]"
@@ -405,11 +405,11 @@ export function OrderForm() {
                     data-testid="button-submit-order"
                   >
                     <SiWhatsapp className="h-5 w-5" />
-                    {createOrderMutation.isPending ? "Gonderiliyor..." : "WhatsApp ile Siparis Ver"}
+                    {createOrderMutation.isPending ? "Gönderiliyor..." : "WhatsApp ile Sipariş Ver"}
                     <ArrowRight className="h-5 w-5" />
                   </Button>
                   <p className="text-xs text-center text-muted-foreground">
-                    Siparisi gondermek icin WhatsApp uygulamaniz acilacaktir
+                    Siparişi göndermek için WhatsApp uygulamanız açılacaktır
                   </p>
                 </div>
               </form>

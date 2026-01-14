@@ -76,10 +76,10 @@ interface DashboardStats {
 
 const statusLabels: Record<string, string> = {
   pending: "Beklemede",
-  confirmed: "Onaylandi",
-  preparing: "Hazirlaniyor",
+  confirmed: "Onaylandı",
+  preparing: "Hazırlanıyor",
   delivered: "Teslim Edildi",
-  cancelled: "Iptal",
+  cancelled: "İptal",
 };
 
 const statusColors: Record<string, string> = {
@@ -112,7 +112,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Giris basarisiz");
+        throw new Error(data.error || "Giriş başarısız");
       }
 
       // Save token to localStorage for subsequent requests
@@ -122,7 +122,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
 
       onLogin();
     } catch (err: any) {
-      setError(err.message || "Giris basarisiz");
+      setError(err.message || "Giriş başarısız");
     } finally {
       setLoading(false);
     }
@@ -135,7 +135,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
           <div className="w-16 h-16 rounded-full bg-primary mx-auto mb-4 flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-2xl">DP</span>
           </div>
-          <CardTitle className="text-2xl">Yonetici Girisi</CardTitle>
+          <CardTitle className="text-2xl">Yönetici Girişi</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -145,7 +145,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="username">Kullanici Adi</Label>
+              <Label htmlFor="username">Kullanıcı Adı</Label>
               <Input
                 id="username"
                 type="text"
@@ -157,7 +157,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Sifre</Label>
+              <Label htmlFor="password">Şifre</Label>
               <Input
                 id="password"
                 type="password"
@@ -169,7 +169,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading} data-testid="button-login">
-              {loading ? "Giris yapiliyor..." : "Giris Yap"}
+              {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
             </Button>
           </form>
         </CardContent>
@@ -198,7 +198,7 @@ function OrdersTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
-      toast({ title: "Siparis guncellendi" });
+      toast({ title: "Sipariş güncellendi" });
     },
   });
 
@@ -216,16 +216,16 @@ function OrdersTab() {
 SIPARIS: #${order.id.slice(0, 8).toUpperCase()}
 Tarih: ${new Date(order.createdAt!).toLocaleString("tr-TR")}
 
-MUSTERI
+MÜŞTERİ
 ${order.customerName}
 ${order.customerPhone}
 ${order.customerAddress}
 
-URUNLER
+ÜRÜNLER
 ${itemsText}
 
 TOPLAM: ${parseFloat(order.total).toFixed(2)} TL
-Odeme: ${order.paymentMethod === "cash" ? "Nakit" : "POS"}
+Ödeme: ${order.paymentMethod === "cash" ? "Nakit" : "POS"}
 ${order.notes ? `Not: ${order.notes}` : ""}
     `;
     
@@ -284,7 +284,7 @@ ${order.notes ? `Not: ${order.notes}` : ""}
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Bugun Ciro</p>
+                <p className="text-sm text-muted-foreground">Bugün Ciro</p>
                 <p className="text-2xl font-bold">{displayStats.todayRevenue.toFixed(0)} TL</p>
               </div>
               <span className="h-8 w-8 flex items-center justify-center text-xl font-bold text-primary opacity-50">₺</span>
@@ -298,7 +298,7 @@ ${order.notes ? `Not: ${order.notes}` : ""}
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Haftalik Ciro</p>
+                <p className="text-sm text-muted-foreground">Haftalık Ciro</p>
                 <p className="text-2xl font-bold text-blue-600">{displayStats.weekRevenue.toFixed(0)} TL</p>
               </div>
               <span className="h-8 w-8 flex items-center justify-center text-xl font-bold text-blue-500 opacity-50">₺</span>
@@ -309,7 +309,7 @@ ${order.notes ? `Not: ${order.notes}` : ""}
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Aylik Ciro</p>
+                <p className="text-sm text-muted-foreground">Aylık Ciro</p>
                 <p className="text-2xl font-bold text-green-600">{displayStats.monthRevenue.toFixed(0)} TL</p>
               </div>
               <span className="h-8 w-8 flex items-center justify-center text-xl font-bold text-green-500 opacity-50">₺</span>
@@ -320,35 +320,35 @@ ${order.notes ? `Not: ${order.notes}` : ""}
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
-          <CardTitle>Siparisler</CardTitle>
+          <CardTitle>Siparişler</CardTitle>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filtrele" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tumu</SelectItem>
+              <SelectItem value="all">Tümü</SelectItem>
               <SelectItem value="pending">Beklemede</SelectItem>
-              <SelectItem value="confirmed">Onaylandi</SelectItem>
-              <SelectItem value="preparing">Hazirlaniyor</SelectItem>
+              <SelectItem value="confirmed">Onaylandı</SelectItem>
+              <SelectItem value="preparing">Hazırlanıyor</SelectItem>
               <SelectItem value="delivered">Teslim Edildi</SelectItem>
             </SelectContent>
           </Select>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8">Yukleniyor...</div>
+            <div className="text-center py-8">Yükleniyor...</div>
           ) : filteredOrders.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">Siparis yok</div>
+            <div className="text-center py-8 text-muted-foreground">Sipariş yok</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>No</TableHead>
-                    <TableHead>Musteri</TableHead>
+                    <TableHead>Müşteri</TableHead>
                     <TableHead>Toplam</TableHead>
                     <TableHead>Durum</TableHead>
-                    <TableHead>Islem</TableHead>
+                    <TableHead>İşlem</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -367,10 +367,10 @@ ${order.notes ? `Not: ${order.notes}` : ""}
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="pending">Beklemede</SelectItem>
-                            <SelectItem value="confirmed">Onaylandi</SelectItem>
-                            <SelectItem value="preparing">Hazirlaniyor</SelectItem>
+                            <SelectItem value="confirmed">Onaylandı</SelectItem>
+                            <SelectItem value="preparing">Hazırlanıyor</SelectItem>
                             <SelectItem value="delivered">Teslim Edildi</SelectItem>
-                            <SelectItem value="cancelled">Iptal</SelectItem>
+                            <SelectItem value="cancelled">İptal</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -450,7 +450,7 @@ function CategoriesTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       setEditingCategory(null);
-      toast({ title: "Kategori guncellendi" });
+      toast({ title: "Kategori güncellendi" });
     },
   });
 
@@ -476,11 +476,11 @@ function CategoriesTab() {
           <CardContent className="p-4 space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
               <div>
-                <Label>Kategori Adi</Label>
+                <Label>Kategori Adı</Label>
                 <Input value={newCategory.name} onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })} />
               </div>
               <div>
-                <Label>Aciklama</Label>
+                <Label>Açıklama</Label>
                 <Input value={newCategory.description} onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })} />
               </div>
               <div>
@@ -490,7 +490,7 @@ function CategoriesTab() {
             </div>
             <div className="flex gap-2">
               <Button onClick={() => createMutation.mutate(newCategory)}>Kaydet</Button>
-              <Button variant="outline" onClick={() => setShowNew(false)}>Iptal</Button>
+              <Button variant="outline" onClick={() => setShowNew(false)}>İptal</Button>
             </div>
           </CardContent>
         </Card>
@@ -499,13 +499,13 @@ function CategoriesTab() {
       <Card>
         <CardContent className="p-4">
           {isLoading ? (
-            <div className="text-center py-8">Yukleniyor...</div>
+            <div className="text-center py-8">Yükleniyor...</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Ad</TableHead>
-                  <TableHead>Aciklama</TableHead>
+                  <TableHead>Açıklama</TableHead>
                   <TableHead>Resim</TableHead>
                   <TableHead>Islem</TableHead>
                 </TableRow>
@@ -548,7 +548,7 @@ function CategoriesTab() {
                 <Input value={editingCategory.name} onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })} />
               </div>
               <div>
-                <Label>Aciklama</Label>
+                <Label>Açıklama</Label>
                 <Input value={editingCategory.description || ""} onChange={(e) => setEditingCategory({ ...editingCategory, description: e.target.value })} />
               </div>
               <div>
@@ -588,7 +588,7 @@ function MenuItemsTab() {
       queryClient.invalidateQueries({ queryKey: ["/api/menu-items"] });
       setNewItem({ name: "", description: "", price: "", image: "", categoryId: "", isAvailable: true, isKampanya: false, kampanyaTag: "" });
       setShowNew(false);
-      toast({ title: "Urun eklendi" });
+      toast({ title: "Ürün eklendi" });
     },
   });
 
@@ -597,7 +597,7 @@ function MenuItemsTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/menu-items"] });
       setEditingItem(null);
-      toast({ title: "Urun guncellendi" });
+      toast({ title: "Ürün güncellendi" });
     },
   });
 
@@ -605,20 +605,20 @@ function MenuItemsTab() {
     mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/menu-items/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/menu-items"] });
-      toast({ title: "Urun silindi" });
+      toast({ title: "Ürün silindi" });
     },
     onError: (error: Error) => {
       console.error("Delete error:", error);
-      toast({ title: "Silme hatasi", description: error.message, variant: "destructive" });
+      toast({ title: "Silme hatası", description: error.message, variant: "destructive" });
     },
   });
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">Menu Urunleri</h2>
+        <h2 className="text-xl font-bold">Menü Ürünleri</h2>
         <Button onClick={() => setShowNew(true)} className="gap-2">
-          <Plus className="h-4 w-4" /> Yeni Urun
+          <Plus className="h-4 w-4" /> Yeni Ürün
         </Button>
       </div>
 
@@ -627,7 +627,7 @@ function MenuItemsTab() {
           <CardContent className="p-4 space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <Label>Urun Adi</Label>
+                <Label>Ürün Adı</Label>
                 <Input value={newItem.name} onChange={(e) => setNewItem({ ...newItem, name: e.target.value })} />
               </div>
               <div>
@@ -635,7 +635,7 @@ function MenuItemsTab() {
                 <Input type="number" value={newItem.price} onChange={(e) => setNewItem({ ...newItem, price: e.target.value })} />
               </div>
               <div>
-                <Label>Aciklama</Label>
+                <Label>Açıklama</Label>
                 <Textarea value={newItem.description} onChange={(e) => setNewItem({ ...newItem, description: e.target.value })} />
               </div>
               <div>
@@ -645,7 +645,7 @@ function MenuItemsTab() {
               <div>
                 <Label>Kategori</Label>
                 <Select value={newItem.categoryId} onValueChange={(v) => setNewItem({ ...newItem, categoryId: v })}>
-                  <SelectTrigger><SelectValue placeholder="Kategori sec" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Kategori seç" /></SelectTrigger>
                   <SelectContent>
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
@@ -670,7 +670,7 @@ function MenuItemsTab() {
             </div>
             <div className="flex gap-2">
               <Button onClick={() => createMutation.mutate(newItem)}>Kaydet</Button>
-              <Button variant="outline" onClick={() => setShowNew(false)}>Iptal</Button>
+              <Button variant="outline" onClick={() => setShowNew(false)}>İptal</Button>
             </div>
           </CardContent>
         </Card>
@@ -679,7 +679,7 @@ function MenuItemsTab() {
       <Card>
         <CardContent className="p-4">
           {isLoading ? (
-            <div className="text-center py-8">Yukleniyor...</div>
+            <div className="text-center py-8">Yükleniyor...</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -691,7 +691,7 @@ function MenuItemsTab() {
                     <TableHead>Kategori</TableHead>
                     <TableHead>Kampanya</TableHead>
                     <TableHead>Durum</TableHead>
-                    <TableHead>Islem</TableHead>
+                    <TableHead>İşlem</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -738,7 +738,7 @@ function MenuItemsTab() {
             </DialogHeader>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <Label>Urun Adi</Label>
+                <Label>Ürün Adı</Label>
                 <Input value={editingItem.name} onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })} />
               </div>
               <div>
@@ -746,7 +746,7 @@ function MenuItemsTab() {
                 <Input type="number" value={editingItem.price} onChange={(e) => setEditingItem({ ...editingItem, price: e.target.value })} />
               </div>
               <div className="md:col-span-2">
-                <Label>Aciklama</Label>
+                <Label>Açıklama</Label>
                 <Textarea value={editingItem.description || ""} onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })} />
               </div>
               <div>
@@ -835,7 +835,7 @@ function ReviewsTab() {
       <Card>
         <CardContent className="p-4">
           {isLoading ? (
-            <div className="text-center py-8">Yukleniyor...</div>
+            <div className="text-center py-8">Yükleniyor...</div>
           ) : reviews.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">Yorum yok</div>
           ) : (
@@ -1086,7 +1086,7 @@ export default function Admin() {
   };
 
   if (checkingAuth) {
-    return <div className="min-h-screen flex items-center justify-center">Yukleniyor...</div>;
+    return <div className="min-h-screen flex items-center justify-center">Yükleniyor...</div>;
   }
 
   if (!isLoggedIn) {

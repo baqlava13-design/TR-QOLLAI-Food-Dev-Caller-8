@@ -8,9 +8,9 @@ import { useCart } from "@/lib/cart";
 import { useTheme } from "@/lib/theme";
 
 const navItems = [
-  { label: "Menu", href: "#menu" },
+  { label: "Menü", href: "#menu" },
   { label: "Yorumlar", href: "#reviews" },
-  { label: "Iletisim", href: "#contact" },
+  { label: "İletişim", href: "#contact" },
 ];
 
 export function Header() {
@@ -96,7 +96,7 @@ export function Header() {
             data-testid="button-order-now"
           >
             <SiWhatsapp className="h-4 w-4" />
-            Siparis Ver
+            Sipariş Ver
           </Button>
 
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -128,7 +128,7 @@ export function Header() {
                   data-testid="button-mobile-order"
                 >
                   <SiWhatsapp className="h-4 w-4" />
-                  WhatsApp ile Siparis Ver
+                  WhatsApp ile Sipariş Ver
                 </Button>
                 <div className="flex items-center gap-2 text-muted-foreground mt-4">
                   <Phone className="h-4 w-4" />
