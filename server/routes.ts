@@ -346,7 +346,13 @@ export async function registerRoutes(
       req.session.adminUsername = admin.username;
       await storage.updateAdminLastLogin(admin.id);
 
-      res.json({ success: true, username: admin.username });
+      // Ensure session is saved before responding
+      req.session.save((err) => {
+        if (err) {
+          return res.status(500).json({ error: "Session save failed" });
+        }
+        res.json({ success: true, username: admin.username });
+      });
     } catch (error) {
       res.status(500).json({ error: "Login failed" });
     }
