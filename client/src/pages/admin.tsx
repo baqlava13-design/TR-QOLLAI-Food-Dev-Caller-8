@@ -918,6 +918,7 @@ function SettingsTab() {
   const [settings, setSettings] = useState<Record<string, string>>({
     whatsapp_number: "",
     hero_image: "",
+    company_logo: "",
     facebook_url: "",
     instagram_url: "",
   });
@@ -993,6 +994,29 @@ function SettingsTab() {
               />
             </div>
             <Button onClick={() => handleSave("whatsapp_number")} size="sm">Kaydet</Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Image className="h-5 w-5" /> Şirket Logosu
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>Logo URL</Label>
+              <Input
+                value={settings.company_logo}
+                onChange={(e) => setSettings({ ...settings, company_logo: e.target.value })}
+                placeholder="https://..."
+                data-testid="input-company-logo"
+              />
+            </div>
+            {settings.company_logo && (
+              <img src={settings.company_logo} alt="Logo" className="w-24 h-24 object-contain rounded border p-2" />
+            )}
+            <Button onClick={() => handleSave("company_logo")} size="sm">Kaydet</Button>
           </CardContent>
         </Card>
 
