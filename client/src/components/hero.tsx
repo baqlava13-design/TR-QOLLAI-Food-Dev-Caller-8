@@ -1,5 +1,5 @@
 import { SiWhatsapp } from "react-icons/si";
-import heroImage from "@assets/destan_pide_1768375586706.jpeg";
+import heroImage from "@assets/destan_pide_1768400874731.jpeg";
 
 export function Hero() {
   return (
