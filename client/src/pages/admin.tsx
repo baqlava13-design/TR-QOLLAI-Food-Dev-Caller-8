@@ -926,7 +926,12 @@ function SettingsTab() {
   const { data: settingsData = [], isLoading } = useQuery({
     queryKey: ["/api/admin/settings"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/settings", { credentials: "include" });
+      const token = localStorage.getItem("adminToken");
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const res = await fetch("/api/admin/settings", { credentials: "include", headers });
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },
@@ -944,9 +949,14 @@ function SettingsTab() {
 
   const saveMutation = useMutation({
     mutationFn: async (data: { key: string; value: string }) => {
+      const token = localStorage.getItem("adminToken");
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
       return fetch("/api/admin/settings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(data),
         credentials: "include",
       });
