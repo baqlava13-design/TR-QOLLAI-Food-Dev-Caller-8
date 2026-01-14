@@ -123,8 +123,8 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   loading="lazy"
                 />
-                {item.isKampanya && (
-                  <Badge className="absolute top-3 left-3 bg-red-500 text-white">
+                {item.isKampanya === true && (
+                  <Badge className="absolute top-3 left-3 z-10 bg-red-600 text-white font-bold shadow-lg">
                     {item.kampanyaTag || "Kampanya"}
                   </Badge>
                 )}
