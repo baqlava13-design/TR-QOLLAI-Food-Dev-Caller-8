@@ -58,7 +58,7 @@ import { useTheme } from "@/lib/theme";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
-import type { Order, OrderItem, Category, MenuItem, Review } from "@shared/schema";
+import type { Order, OrderItem, Category, MenuItem, Review, Customer } from "@shared/schema";
 
 interface OrderWithItems extends Order {
   items?: OrderItem[];
@@ -1060,6 +1060,261 @@ function SettingsTab() {
   );
 }
 
+interface CustomerWithStats extends Customer {
+  orderCount: number;
+  lastOrderDate: Date | null;
+}
+
+function CustomersTab() {
+  const { toast } = useToast();
+  const [editingCustomer, setEditingCustomer] = useState<CustomerWithStats | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    phone: "",
+    mahalle: "",
+    sokak: "",
+    binaNo: "",
+    daireNo: "",
+    notes: "",
+  });
+
+  const { data: customers = [], isLoading } = useQuery<CustomerWithStats[]>({
+    queryKey: ["/api/admin/customers"],
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      return apiRequest("PATCH", `/api/admin/customers/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      toast({ title: "Müşteri güncellendi" });
+      setEditingCustomer(null);
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Müşteri güncellenemedi", variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/admin/customers/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      toast({ title: "Müşteri silindi" });
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Müşteri silinemedi", variant: "destructive" });
+    },
+  });
+
+  const handleEdit = (customer: CustomerWithStats) => {
+    setEditingCustomer(customer);
+    setEditForm({
+      name: customer.name || "",
+      phone: customer.phone || "",
+      mahalle: customer.mahalle || "",
+      sokak: customer.sokak || "",
+      binaNo: customer.binaNo || "",
+      daireNo: customer.daireNo || "",
+      notes: customer.notes || "",
+    });
+  };
+
+  const handleSave = () => {
+    if (!editingCustomer) return;
+    updateMutation.mutate({
+      id: editingCustomer.id,
+      data: editForm,
+    });
+  };
+
+  const formatAddress = (customer: CustomerWithStats) => {
+    const parts = [
+      customer.mahalle,
+      customer.sokak,
+      customer.binaNo ? `No: ${customer.binaNo}` : null,
+      customer.daireNo ? `D: ${customer.daireNo}` : null,
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(", ") : customer.address || "-";
+  };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center py-12">Yükleniyor...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
+          <CardTitle>Müşteriler ({customers.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Ad Soyad</TableHead>
+                  <TableHead>Telefon</TableHead>
+                  <TableHead>Adres</TableHead>
+                  <TableHead>Sipariş Sayısı</TableHead>
+                  <TableHead>Son Sipariş</TableHead>
+                  <TableHead>İşlemler</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {customers.map((customer) => (
+                  <TableRow key={customer.id} data-testid={`row-customer-${customer.id}`}>
+                    <TableCell className="font-medium">{customer.name}</TableCell>
+                    <TableCell>{customer.phone}</TableCell>
+                    <TableCell className="max-w-[200px] truncate" title={formatAddress(customer)}>
+                      {formatAddress(customer)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{customer.orderCount}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {customer.lastOrderDate
+                        ? new Date(customer.lastOrderDate).toLocaleDateString("tr-TR")
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleEdit(customer)}
+                          data-testid={`button-edit-customer-${customer.id}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-destructive"
+                          onClick={() => deleteMutation.mutate(customer.id)}
+                          data-testid={`button-delete-customer-${customer.id}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {customers.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                      Henüz müşteri bulunmuyor
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!editingCustomer} onOpenChange={(open) => !open && setEditingCustomer(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Müşteri Düzenle</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-name">Ad Soyad</Label>
+                <Input
+                  id="edit-name"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  data-testid="input-customer-name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-phone">Telefon</Label>
+                <Input
+                  id="edit-phone"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  data-testid="input-customer-phone"
+                />
+              </div>
+            </div>
+            <Separator />
+            <p className="text-sm font-medium text-muted-foreground">Teslimat Adresi</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-mahalle">Mahalle</Label>
+                <Input
+                  id="edit-mahalle"
+                  value={editForm.mahalle}
+                  onChange={(e) => setEditForm({ ...editForm, mahalle: e.target.value })}
+                  placeholder="Örn: Reşadiye Mah."
+                  data-testid="input-customer-mahalle"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-sokak">Sokak / Cadde</Label>
+                <Input
+                  id="edit-sokak"
+                  value={editForm.sokak}
+                  onChange={(e) => setEditForm({ ...editForm, sokak: e.target.value })}
+                  placeholder="Örn: Atatürk Cad."
+                  data-testid="input-customer-sokak"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-binaNo">Bina No</Label>
+                <Input
+                  id="edit-binaNo"
+                  value={editForm.binaNo}
+                  onChange={(e) => setEditForm({ ...editForm, binaNo: e.target.value })}
+                  placeholder="Örn: 15"
+                  data-testid="input-customer-binaNo"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-daireNo">Daire No</Label>
+                <Input
+                  id="edit-daireNo"
+                  value={editForm.daireNo}
+                  onChange={(e) => setEditForm({ ...editForm, daireNo: e.target.value })}
+                  placeholder="Örn: 3"
+                  data-testid="input-customer-daireNo"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="edit-notes">Notlar</Label>
+              <Textarea
+                id="edit-notes"
+                value={editForm.notes}
+                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                placeholder="Müşteri hakkında notlar..."
+                data-testid="input-customer-notes"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditingCustomer(null)}>
+                İptal
+              </Button>
+              <Button onClick={handleSave} disabled={updateMutation.isPending}>
+                <Save className="h-4 w-4 mr-2" />
+                Kaydet
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 export default function Admin() {
   const { theme, toggleTheme } = useTheme();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -1123,14 +1378,18 @@ export default function Admin() {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="orders" className="gap-2">
               <ShoppingBag className="h-4 w-4" />
               <span className="hidden sm:inline">Siparisler</span>
             </TabsTrigger>
+            <TabsTrigger value="customers" className="gap-2">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Müşteriler</span>
+            </TabsTrigger>
             <TabsTrigger value="menu" className="gap-2">
               <UtensilsCrossed className="h-4 w-4" />
-              <span className="hidden sm:inline">Menu</span>
+              <span className="hidden sm:inline">Menü</span>
             </TabsTrigger>
             <TabsTrigger value="categories" className="gap-2">
               <FolderOpen className="h-4 w-4" />
@@ -1148,6 +1407,10 @@ export default function Admin() {
 
           <TabsContent value="orders">
             <OrdersTab />
+          </TabsContent>
+
+          <TabsContent value="customers">
+            <CustomersTab />
           </TabsContent>
 
           <TabsContent value="menu">
