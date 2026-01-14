@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -6,6 +7,19 @@ import { seedDatabase } from "./seed";
 
 const app = express();
 const httpServer = createServer(app);
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "destan-pide-secret-key-2024",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  })
+);
 
 declare module "http" {
   interface IncomingMessage {
