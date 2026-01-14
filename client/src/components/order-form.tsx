@@ -182,8 +182,8 @@ export function OrderForm() {
 
         <div className="grid lg:grid-cols-2 gap-8">
           <Card data-testid="card-cart">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-2xl">
                 <ShoppingCart className="h-5 w-5" />
                 Sepetiniz
                 {items.length > 0 && (
@@ -191,7 +191,7 @@ export function OrderForm() {
                 )}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
               {items.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-30" />
@@ -203,18 +203,18 @@ export function OrderForm() {
                   {items.map((item) => (
                     <div
                       key={item.menuItem.id}
-                      className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg bg-background"
+                      className="p-2 sm:p-3 rounded-lg bg-background"
                       data-testid={`cart-item-${item.menuItem.id}`}
                     >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="flex items-center gap-2 sm:gap-3">
                         <img
                           src={item.menuItem.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=80&q=80"}
                           alt={item.menuItem.name}
-                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover flex-shrink-0"
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg object-cover flex-shrink-0"
                         />
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium truncate text-sm sm:text-base">{item.menuItem.name}</h4>
-                          <p className="text-sm text-muted-foreground">
+                          <h4 className="font-medium truncate text-sm">{item.menuItem.name}</h4>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {parseFloat(item.menuItem.price).toFixed(2)} TL
                           </p>
                           {item.selectedUpsells.length > 0 && (
@@ -223,35 +223,35 @@ export function OrderForm() {
                             </p>
                           )}
                         </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6 text-destructive flex-shrink-0"
+                          onClick={() => removeItem(item.menuItem.id)}
+                          data-testid={`button-remove-${item.menuItem.id}`}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
-                      <div className="flex items-center justify-end gap-1 min-w-0">
+                      <div className="flex items-center justify-end gap-1 mt-2">
                         <Button
                           size="icon"
                           variant="outline"
-                          className="h-7 w-7 flex-shrink-0"
+                          className="h-7 w-7 min-w-0 flex-shrink-0"
                           onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
                           data-testid={`button-decrease-${item.menuItem.id}`}
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
-                        <span className="w-6 text-center font-medium text-sm flex-shrink-0">{item.quantity}</span>
+                        <span className="w-6 text-center font-medium text-sm">{item.quantity}</span>
                         <Button
                           size="icon"
                           variant="outline"
-                          className="h-7 w-7 flex-shrink-0"
+                          className="h-7 w-7 min-w-0 flex-shrink-0"
                           onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
                           data-testid={`button-increase-${item.menuItem.id}`}
                         >
                           <Plus className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-destructive flex-shrink-0"
-                          onClick={() => removeItem(item.menuItem.id)}
-                          data-testid={`button-remove-${item.menuItem.id}`}
-                        >
-                          <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
@@ -280,10 +280,10 @@ export function OrderForm() {
           </Card>
 
           <Card data-testid="card-customer-info">
-            <CardHeader>
-              <CardTitle>Teslimat Bilgileri</CardTitle>
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-lg sm:text-2xl">Teslimat Bilgileri</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-2">
@@ -363,7 +363,7 @@ export function OrderForm() {
                   <RadioGroup
                     value={formData.paymentMethod}
                     onValueChange={(value: "cash" | "pos") => setFormData({ ...formData, paymentMethod: value })}
-                    className="grid grid-cols-2 gap-2 sm:gap-4"
+                    className="grid grid-cols-2 gap-2"
                   >
                     <div>
                       <RadioGroupItem
@@ -373,11 +373,11 @@ export function OrderForm() {
                       />
                       <Label
                         htmlFor="cash"
-                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-3 sm:p-4 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer hover-elevate"
+                        className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-2 sm:p-4 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer hover-elevate"
                         data-testid="radio-payment-cash"
                       >
-                        <Banknote className="mb-2 sm:mb-3 h-5 w-5 sm:h-6 sm:w-6" />
-                        <span className="font-medium text-sm sm:text-base">Nakit</span>
+                        <Banknote className="mb-1 sm:mb-2 h-5 w-5" />
+                        <span className="font-medium text-xs sm:text-sm">Nakit</span>
                       </Label>
                     </div>
                     <div>
@@ -388,11 +388,11 @@ export function OrderForm() {
                       />
                       <Label
                         htmlFor="pos"
-                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-3 sm:p-4 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer hover-elevate"
+                        className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-2 sm:p-4 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer hover-elevate"
                         data-testid="radio-payment-pos"
                       >
-                        <CreditCard className="mb-2 sm:mb-3 h-5 w-5 sm:h-6 sm:w-6" />
-                        <span className="font-medium text-sm sm:text-base">POS</span>
+                        <CreditCard className="mb-1 sm:mb-2 h-5 w-5" />
+                        <span className="font-medium text-xs sm:text-sm">Kart</span>
                       </Label>
                     </div>
                   </RadioGroup>
