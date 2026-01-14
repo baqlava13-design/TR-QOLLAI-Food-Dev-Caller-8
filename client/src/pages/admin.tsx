@@ -608,6 +608,10 @@ function MenuItemsTab() {
       queryClient.invalidateQueries({ queryKey: ["/api/menu-items"] });
       toast({ title: "Urun silindi" });
     },
+    onError: (error: Error) => {
+      console.error("Delete error:", error);
+      toast({ title: "Silme hatasi", description: error.message, variant: "destructive" });
+    },
   });
 
   return (
