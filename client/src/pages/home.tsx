@@ -5,7 +5,6 @@ import { MenuSection } from "@/components/menu-section";
 import { HowItWorks } from "@/components/how-it-works";
 import { Reviews } from "@/components/reviews";
 import { OrderForm } from "@/components/order-form";
-import { SocialProof } from "@/components/social-proof";
 import { Footer } from "@/components/footer";
 import type { Category, MenuItem, Review } from "@shared/schema";
 
@@ -34,7 +33,6 @@ export default function Home() {
         />
         <HowItWorks />
         <Reviews reviews={reviews} isLoading={reviewsLoading} />
-        <SocialProof />
         <OrderForm />
       </main>
       <Footer />
