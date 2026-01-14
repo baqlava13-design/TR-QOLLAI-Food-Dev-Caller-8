@@ -41,7 +41,7 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
   const { addItem } = useCart();
 
   const filteredItems = activeCategory === "all" 
-    ? menuItems.filter((item) => item.isAvailable)
+    ? menuItems.filter((item) => item.isAvailable).slice(0, 9)
     : menuItems.filter((item) => item.categoryId === activeCategory && item.isAvailable);
 
   const handleAddToCart = (item: MenuItem) => {
@@ -94,7 +94,7 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
               onClick={() => setActiveCategory("all")}
               data-testid="tab-category-all"
             >
-              Tum Yemekler
+              En Fazla Satan
             </Button>
             {categories.map((category) => (
               <Button
