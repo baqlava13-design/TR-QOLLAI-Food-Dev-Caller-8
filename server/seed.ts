@@ -1,8 +1,36 @@
 import { db } from "./db";
-import { categories, menuItems, reviews, customers, orders, orderItems } from "@shared/schema";
+import { categories, menuItems, reviews, customers, orders, orderItems, adminUsers } from "@shared/schema";
+import bcrypt from "bcryptjs";
+import { eq } from "drizzle-orm";
+
+async function ensureAdminUser() {
+  // Always ensure admin user exists with correct credentials
+  const existingAdmin = await db.select().from(adminUsers).where(eq(adminUsers.username, "admin"));
+  
+  const hashedPassword = await bcrypt.hash("admin123", 10);
+  
+  if (existingAdmin.length === 0) {
+    // Create admin user if it doesn't exist
+    await db.insert(adminUsers).values({
+      username: "admin",
+      password: hashedPassword,
+      isActive: true,
+    });
+    console.log("Created admin user: admin/admin123");
+  } else {
+    // Update password to ensure it matches admin123
+    await db.update(adminUsers)
+      .set({ password: hashedPassword, isActive: true })
+      .where(eq(adminUsers.username, "admin"));
+    console.log("Updated admin user password to admin123");
+  }
+}
 
 export async function seedDatabase() {
   console.log("Seeding database...");
+
+  // Always ensure admin user exists first (independent of other seeding)
+  await ensureAdminUser();
 
   // Check if data already exists
   const existingCategories = await db.select().from(categories);
