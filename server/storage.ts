@@ -163,6 +163,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteMenuItem(id: string): Promise<boolean> {
+    // First, set menuItemId to null in order_items that reference this menu item
+    await db.update(orderItems).set({ menuItemId: null }).where(eq(orderItems.menuItemId, id));
+    // Delete upsell options associated with this menu item
+    await db.delete(upsellOptions).where(eq(upsellOptions.menuItemId, id));
+    // Now delete the menu item
     await db.delete(menuItems).where(eq(menuItems.id, id));
     return true;
   }
