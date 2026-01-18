@@ -331,6 +331,339 @@ export async function registerRoutes(
     }
   });
 
+  // Categories Export (CSV/Excel)
+  app.get("/api/admin/categories/export/:format", requireAdmin, async (req, res) => {
+    try {
+      const format = req.params.format;
+      if (format !== "csv" && format !== "xlsx") {
+        return res.status(400).json({ error: "Unsupported format. Use csv or xlsx." });
+      }
+      const categories = await storage.getCategories();
+      
+      const exportData = categories.map(c => ({
+        "ID": c.id,
+        "Kategori Adi": c.name,
+        "Aciklama": c.description || "",
+        "Gorsel URL": c.image || "",
+        "Sira": c.sortOrder || 0,
+        "Aktif": c.isActive ? "Evet" : "Hayir",
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Kategoriler");
+
+      if (format === "csv") {
+        const csv = XLSX.utils.sheet_to_csv(worksheet);
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader("Content-Disposition", "attachment; filename=kategoriler.csv");
+        res.send(csv);
+      } else {
+        const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", "attachment; filename=kategoriler.xlsx");
+        res.send(buffer);
+      }
+    } catch (error) {
+      console.error("Categories export error:", error);
+      res.status(500).json({ error: "Export failed" });
+    }
+  });
+
+  // Categories Import (CSV/Excel)
+  app.post("/api/admin/categories/import", requireAdmin, upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
+
+      let imported = 0;
+      let skipped = 0;
+
+      for (const row of data) {
+        const name = row["Kategori Adi"] || row["name"] || row["Name"] || row["kategori_adi"];
+        
+        if (!name) {
+          skipped++;
+          continue;
+        }
+
+        // Check if category with same name already exists
+        const categories = await storage.getCategories();
+        const existing = categories.find(c => c.name.toLowerCase() === String(name).toLowerCase());
+        if (existing) {
+          skipped++;
+          continue;
+        }
+
+        await storage.createCategory({
+          name: String(name),
+          description: row["Aciklama"] || row["description"] || "",
+          image: row["Gorsel URL"] || row["image"] || "",
+          sortOrder: parseInt(row["Sira"] || row["sortOrder"] || "0") || 0,
+          isActive: row["Aktif"] === "Evet" || row["isActive"] === true || row["Aktif"] !== "Hayir",
+        });
+        imported++;
+      }
+
+      res.json({ imported, skipped, total: data.length });
+    } catch (error) {
+      console.error("Categories import error:", error);
+      res.status(500).json({ error: "Import failed" });
+    }
+  });
+
+  // Menu Items Export (CSV/Excel)
+  app.get("/api/admin/menu-items/export/:format", requireAdmin, async (req, res) => {
+    try {
+      const format = req.params.format;
+      if (format !== "csv" && format !== "xlsx") {
+        return res.status(400).json({ error: "Unsupported format. Use csv or xlsx." });
+      }
+      const menuItems = await storage.getMenuItems();
+      const categories = await storage.getCategories();
+      
+      const categoryMap = new Map(categories.map(c => [c.id, c.name]));
+      
+      const exportData = menuItems.map(m => ({
+        "ID": m.id,
+        "Urun Adi": m.name,
+        "Aciklama": m.description || "",
+        "Fiyat": m.price,
+        "Kategori": m.categoryId ? categoryMap.get(m.categoryId) || "" : "",
+        "Gorsel URL": m.image || "",
+        "Mevcut": m.isAvailable ? "Evet" : "Hayir",
+        "Populer": m.isPopular ? "Evet" : "Hayir",
+        "Kampanya": m.isKampanya ? "Evet" : "Hayir",
+        "Kampanya Etiketi": m.kampanyaTag || "",
+        "Sira": m.sortOrder || 0,
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Menu");
+
+      if (format === "csv") {
+        const csv = XLSX.utils.sheet_to_csv(worksheet);
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader("Content-Disposition", "attachment; filename=menu.csv");
+        res.send(csv);
+      } else {
+        const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", "attachment; filename=menu.xlsx");
+        res.send(buffer);
+      }
+    } catch (error) {
+      console.error("Menu items export error:", error);
+      res.status(500).json({ error: "Export failed" });
+    }
+  });
+
+  // Menu Items Import (CSV/Excel)
+  app.post("/api/admin/menu-items/import", requireAdmin, upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
+
+      const categories = await storage.getCategories();
+      const categoryNameMap = new Map(categories.map(c => [c.name.toLowerCase(), c.id]));
+
+      let imported = 0;
+      let skipped = 0;
+
+      for (const row of data) {
+        const name = row["Urun Adi"] || row["name"] || row["Name"] || row["urun_adi"];
+        const price = row["Fiyat"] || row["price"] || row["Price"];
+        
+        if (!name || !price) {
+          skipped++;
+          continue;
+        }
+
+        // Check if menu item with same name already exists
+        const menuItems = await storage.getMenuItems();
+        const existing = menuItems.find(m => m.name.toLowerCase() === String(name).toLowerCase());
+        if (existing) {
+          skipped++;
+          continue;
+        }
+
+        const categoryName = row["Kategori"] || row["category"] || "";
+        const categoryId = categoryNameMap.get(String(categoryName).toLowerCase()) || null;
+
+        await storage.createMenuItem({
+          name: String(name),
+          description: row["Aciklama"] || row["description"] || "",
+          price: String(price),
+          image: row["Gorsel URL"] || row["image"] || "",
+          categoryId,
+          isAvailable: row["Mevcut"] === "Evet" || row["isAvailable"] === true || row["Mevcut"] !== "Hayir",
+          isPopular: row["Populer"] === "Evet" || row["isPopular"] === true,
+          isKampanya: row["Kampanya"] === "Evet" || row["isKampanya"] === true,
+          kampanyaTag: row["Kampanya Etiketi"] || row["kampanyaTag"] || "",
+          sortOrder: parseInt(row["Sira"] || row["sortOrder"] || "0") || 0,
+        });
+        imported++;
+      }
+
+      res.json({ imported, skipped, total: data.length });
+    } catch (error) {
+      console.error("Menu items import error:", error);
+      res.status(500).json({ error: "Import failed" });
+    }
+  });
+
+  // Orders Export (CSV/Excel)
+  app.get("/api/admin/orders/export/:format", requireAdmin, async (req, res) => {
+    try {
+      const format = req.params.format;
+      if (format !== "csv" && format !== "xlsx") {
+        return res.status(400).json({ error: "Unsupported format. Use csv or xlsx." });
+      }
+      const orders = await storage.getOrders();
+      
+      const statusMap: Record<string, string> = {
+        pending: "Beklemede",
+        confirmed: "Onaylandi",
+        preparing: "Hazirlaniyor",
+        ready: "Hazir",
+        delivered: "Teslim Edildi",
+        cancelled: "Iptal",
+      };
+
+      const paymentMap: Record<string, string> = {
+        cash: "Nakit",
+        credit_card: "Kredi Karti",
+        online: "Online",
+      };
+      
+      const exportData = orders.map(o => ({
+        "Siparis No": o.id,
+        "Musteri Adi": o.customerName,
+        "Telefon": o.customerPhone,
+        "Adres": o.customerAddress,
+        "Durum": statusMap[o.status || "pending"] || o.status,
+        "Odeme": paymentMap[o.paymentMethod || "cash"] || o.paymentMethod,
+        "Ara Toplam": o.subtotal,
+        "Toplam": o.total,
+        "Notlar": o.notes || "",
+        "Tarih": o.createdAt ? new Date(o.createdAt).toLocaleString("tr-TR") : "",
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Siparisler");
+
+      if (format === "csv") {
+        const csv = XLSX.utils.sheet_to_csv(worksheet);
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader("Content-Disposition", "attachment; filename=siparisler.csv");
+        res.send(csv);
+      } else {
+        const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", "attachment; filename=siparisler.xlsx");
+        res.send(buffer);
+      }
+    } catch (error) {
+      console.error("Orders export error:", error);
+      res.status(500).json({ error: "Export failed" });
+    }
+  });
+
+  // Reviews Export (CSV/Excel)
+  app.get("/api/admin/reviews/export/:format", requireAdmin, async (req, res) => {
+    try {
+      const format = req.params.format;
+      if (format !== "csv" && format !== "xlsx") {
+        return res.status(400).json({ error: "Unsupported format. Use csv or xlsx." });
+      }
+      const reviews = await storage.getReviews();
+      
+      const exportData = reviews.map(r => ({
+        "ID": r.id,
+        "Musteri Adi": r.customerName,
+        "Puan": r.rating,
+        "Yorum": r.comment || "",
+        "Urun": r.menuItemName || "",
+        "Onaylandi": r.isApproved ? "Evet" : "Hayir",
+        "Tarih": r.createdAt ? new Date(r.createdAt).toLocaleString("tr-TR") : "",
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Yorumlar");
+
+      if (format === "csv") {
+        const csv = XLSX.utils.sheet_to_csv(worksheet);
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader("Content-Disposition", "attachment; filename=yorumlar.csv");
+        res.send(csv);
+      } else {
+        const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", "attachment; filename=yorumlar.xlsx");
+        res.send(buffer);
+      }
+    } catch (error) {
+      console.error("Reviews export error:", error);
+      res.status(500).json({ error: "Export failed" });
+    }
+  });
+
+  // Reviews Import (CSV/Excel)
+  app.post("/api/admin/reviews/import", requireAdmin, upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
+
+      let imported = 0;
+      let skipped = 0;
+
+      for (const row of data) {
+        const customerName = row["Musteri Adi"] || row["customerName"] || row["name"];
+        const rating = row["Puan"] || row["rating"];
+        
+        if (!customerName || !rating) {
+          skipped++;
+          continue;
+        }
+
+        await storage.createReview({
+          customerName: String(customerName),
+          rating: parseInt(String(rating)) || 5,
+          comment: row["Yorum"] || row["comment"] || "",
+          menuItemName: row["Urun"] || row["menuItemName"] || "",
+          isApproved: row["Onaylandi"] === "Evet" || row["isApproved"] === true || row["Onaylandi"] !== "Hayir",
+        });
+        imported++;
+      }
+
+      res.json({ imported, skipped, total: data.length });
+    } catch (error) {
+      console.error("Reviews import error:", error);
+      res.status(500).json({ error: "Import failed" });
+    }
+  });
+
   // Orders
   app.get("/api/orders", async (req, res) => {
     try {

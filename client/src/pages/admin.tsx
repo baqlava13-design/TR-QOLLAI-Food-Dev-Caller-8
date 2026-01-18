@@ -195,6 +195,28 @@ function OrdersTab() {
     queryKey: ["/api/orders"],
   });
 
+  const handleExport = async (format: "csv" | "xlsx") => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`/api/admin/orders/export/${format}`, { credentials: "include", headers });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `siparisler.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({ title: "Dışa aktarma başarılı" });
+    } catch {
+      toast({ title: "Hata", description: "Dışa aktarma başarısız", variant: "destructive" });
+    }
+  };
+
   const updateStatusMutation = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
       return apiRequest("PATCH", `/api/orders/${orderId}/status`, { status });
@@ -362,18 +384,26 @@ ${order.notes ? `Not: ${order.notes}` : ""}
         <CardHeader className="space-y-4">
           <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
             <CardTitle>Siparişler</CardTitle>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filtrele" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tümü</SelectItem>
-                <SelectItem value="pending">Beklemede</SelectItem>
-                <SelectItem value="confirmed">Onaylandı</SelectItem>
-                <SelectItem value="preparing">Hazırlanıyor</SelectItem>
-                <SelectItem value="delivered">Teslim Edildi</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" size="sm" onClick={() => handleExport("xlsx")} data-testid="button-orders-export-excel">
+                <Download className="h-4 w-4 mr-1" /> Excel
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleExport("csv")} data-testid="button-orders-export-csv">
+                <Download className="h-4 w-4 mr-1" /> CSV
+              </Button>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filtrele" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tümü</SelectItem>
+                  <SelectItem value="pending">Beklemede</SelectItem>
+                  <SelectItem value="confirmed">Onaylandı</SelectItem>
+                  <SelectItem value="preparing">Hazırlanıyor</SelectItem>
+                  <SelectItem value="delivered">Teslim Edildi</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
@@ -506,10 +536,57 @@ function CategoriesTab() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [newCategory, setNewCategory] = useState({ name: "", description: "", image: "" });
   const [showNew, setShowNew] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
 
   const { data: categories = [], isLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
+
+  const handleExport = async (format: "csv" | "xlsx") => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`/api/admin/categories/export/${format}`, { credentials: "include", headers });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `kategoriler.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({ title: "Dışa aktarma başarılı" });
+    } catch {
+      toast({ title: "Hata", description: "Dışa aktarma başarısız", variant: "destructive" });
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const formData = new FormData();
+      formData.append("file", file);
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch("/api/admin/categories/import", { method: "POST", body: formData, credentials: "include", headers });
+      if (!res.ok) throw new Error("Import failed");
+      const result = await res.json();
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      toast({ title: "İçe aktarma tamamlandı", description: `${result.imported} kategori eklendi, ${result.skipped} atlandı` });
+    } catch {
+      toast({ title: "Hata", description: "İçe aktarma başarısız", variant: "destructive" });
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", "/api/admin/categories", data),
@@ -540,11 +617,23 @@ function CategoriesTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-2">
         <h2 className="text-xl font-bold">Kategoriler</h2>
-        <Button onClick={() => setShowNew(true)} className="gap-2">
-          <Plus className="h-4 w-4" /> Yeni Kategori
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => handleExport("xlsx")} data-testid="button-categories-export-excel">
+            <Download className="h-4 w-4 mr-1" /> Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => handleExport("csv")} data-testid="button-categories-export-csv">
+            <Download className="h-4 w-4 mr-1" /> CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing} data-testid="button-categories-import">
+            <Upload className="h-4 w-4 mr-1" /> {importing ? "Yükleniyor..." : "İçe Aktar"}
+          </Button>
+          <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" onChange={handleImport} className="hidden" />
+          <Button onClick={() => setShowNew(true)} className="gap-2">
+            <Plus className="h-4 w-4" /> Yeni Kategori
+          </Button>
+        </div>
       </div>
 
       {showNew && (
@@ -649,6 +738,8 @@ function MenuItemsTab() {
   const [newItem, setNewItem] = useState({
     name: "", description: "", price: "", image: "", categoryId: "", isAvailable: true, isKampanya: false, kampanyaTag: ""
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
 
   const { data: items = [], isLoading } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu-items"],
@@ -657,6 +748,51 @@ function MenuItemsTab() {
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
+
+  const handleExport = async (format: "csv" | "xlsx") => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`/api/admin/menu-items/export/${format}`, { credentials: "include", headers });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `menu.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({ title: "Dışa aktarma başarılı" });
+    } catch {
+      toast({ title: "Hata", description: "Dışa aktarma başarısız", variant: "destructive" });
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const formData = new FormData();
+      formData.append("file", file);
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch("/api/admin/menu-items/import", { method: "POST", body: formData, credentials: "include", headers });
+      if (!res.ok) throw new Error("Import failed");
+      const result = await res.json();
+      queryClient.invalidateQueries({ queryKey: ["/api/menu-items"] });
+      toast({ title: "İçe aktarma tamamlandı", description: `${result.imported} ürün eklendi, ${result.skipped} atlandı` });
+    } catch {
+      toast({ title: "Hata", description: "İçe aktarma başarısız", variant: "destructive" });
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", "/api/admin/menu-items", data),
@@ -691,11 +827,23 @@ function MenuItemsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-2">
         <h2 className="text-xl font-bold">Menü Ürünleri</h2>
-        <Button onClick={() => setShowNew(true)} className="gap-2">
-          <Plus className="h-4 w-4" /> Yeni Ürün
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => handleExport("xlsx")} data-testid="button-menu-export-excel">
+            <Download className="h-4 w-4 mr-1" /> Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => handleExport("csv")} data-testid="button-menu-export-csv">
+            <Download className="h-4 w-4 mr-1" /> CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing} data-testid="button-menu-import">
+            <Upload className="h-4 w-4 mr-1" /> {importing ? "Yükleniyor..." : "İçe Aktar"}
+          </Button>
+          <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" onChange={handleImport} className="hidden" />
+          <Button onClick={() => setShowNew(true)} className="gap-2">
+            <Plus className="h-4 w-4" /> Yeni Ürün
+          </Button>
+        </div>
       </div>
 
       {showNew && (
@@ -868,6 +1016,8 @@ function MenuItemsTab() {
 function ReviewsTab() {
   const { toast } = useToast();
   const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
 
   const { data: reviews = [], isLoading } = useQuery<Review[]>({
     queryKey: ["/api/admin/reviews"],
@@ -877,6 +1027,52 @@ function ReviewsTab() {
       return res.json();
     },
   });
+
+  const handleExport = async (format: "csv" | "xlsx") => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`/api/admin/reviews/export/${format}`, { credentials: "include", headers });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `yorumlar.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({ title: "Dışa aktarma başarılı" });
+    } catch {
+      toast({ title: "Hata", description: "Dışa aktarma başarısız", variant: "destructive" });
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const formData = new FormData();
+      formData.append("file", file);
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch("/api/admin/reviews/import", { method: "POST", body: formData, credentials: "include", headers });
+      if (!res.ok) throw new Error("Import failed");
+      const result = await res.json();
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reviews"] });
+      toast({ title: "İçe aktarma tamamlandı", description: `${result.imported} yorum eklendi, ${result.skipped} atlandı` });
+    } catch {
+      toast({ title: "Hata", description: "İçe aktarma başarısız", variant: "destructive" });
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => 
@@ -906,7 +1102,21 @@ function ReviewsTab() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold">Musteri Yorumlari</h2>
+      <div className="flex justify-between items-center flex-wrap gap-2">
+        <h2 className="text-xl font-bold">Musteri Yorumlari</h2>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => handleExport("xlsx")} data-testid="button-reviews-export-excel">
+            <Download className="h-4 w-4 mr-1" /> Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => handleExport("csv")} data-testid="button-reviews-export-csv">
+            <Download className="h-4 w-4 mr-1" /> CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing} data-testid="button-reviews-import">
+            <Upload className="h-4 w-4 mr-1" /> {importing ? "Yükleniyor..." : "İçe Aktar"}
+          </Button>
+          <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" onChange={handleImport} className="hidden" />
+        </div>
+      </div>
 
       <Card>
         <CardContent className="p-4">
