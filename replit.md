@@ -77,14 +77,33 @@ Preferred communication style: Simple, everyday language.
 
 ## Admin Features
 
-### Customer Import/Export
-- **Export formats**: CSV and Excel (.xlsx) with Turkish column headers
+### Data Import/Export
+All admin tables support CSV and Excel (.xlsx) export/import with Turkish column headers.
+
+#### Customers (Müşteriler)
 - **Columns**: Ad Soyad, Telefon, Mahalle, Sokak, Bina No, Daire No, Notlar, Siparis Sayisi
-- **Import**: Supports CSV and Excel files, skips duplicates based on phone number
-- **Endpoints**:
-  - GET `/api/admin/customers/export/csv` - Export as CSV
-  - GET `/api/admin/customers/export/xlsx` - Export as Excel
-  - POST `/api/admin/customers/import` - Import from file (multipart/form-data)
+- **Import**: Skips duplicates based on phone number
+- **Endpoints**: GET `/api/admin/customers/export/:format`, POST `/api/admin/customers/import`
+
+#### Categories (Kategoriler)
+- **Columns**: ID, Kategori Adi, Aciklama, Gorsel URL, Sira, Aktif
+- **Import**: Skips duplicates based on category name
+- **Endpoints**: GET `/api/admin/categories/export/:format`, POST `/api/admin/categories/import`
+
+#### Menu Items (Menü Öğeleri)
+- **Columns**: ID, Urun Adi, Aciklama, Fiyat, Kategori, Gorsel URL, Mevcut, Populer, Kampanya, Kampanya Etiketi, Sira
+- **Import**: Skips duplicates based on product name, maps category name to ID
+- **Endpoints**: GET `/api/admin/menu-items/export/:format`, POST `/api/admin/menu-items/import`
+
+#### Orders (Siparişler)
+- **Columns**: Siparis No, Musteri Adi, Telefon, Adres, Durum, Odeme, Ara Toplam, Toplam, Notlar, Tarih
+- **Export only** (no import - orders are created through the ordering process)
+- **Endpoint**: GET `/api/admin/orders/export/:format`
+
+#### Reviews (Yorumlar)
+- **Columns**: ID, Musteri Adi, Puan, Yorum, Urun, Onaylandi, Tarih
+- **Import**: Creates new reviews (no duplicate checking)
+- **Endpoints**: GET `/api/admin/reviews/export/:format`, POST `/api/admin/reviews/import`
 
 ### Admin Authentication
 - Default credentials: admin/admin123
