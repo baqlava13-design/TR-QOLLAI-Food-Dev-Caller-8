@@ -74,3 +74,18 @@ Preferred communication style: Simple, everyday language.
 ### Icon Libraries
 - Lucide React for general icons
 - react-icons for brand icons (WhatsApp, social media)
+
+## Admin Features
+
+### Customer Import/Export
+- **Export formats**: CSV and Excel (.xlsx) with Turkish column headers
+- **Columns**: Ad Soyad, Telefon, Mahalle, Sokak, Bina No, Daire No, Notlar, Siparis Sayisi
+- **Import**: Supports CSV and Excel files, skips duplicates based on phone number
+- **Endpoints**:
+  - GET `/api/admin/customers/export/csv` - Export as CSV
+  - GET `/api/admin/customers/export/xlsx` - Export as Excel
+  - POST `/api/admin/customers/import` - Import from file (multipart/form-data)
+
+### Admin Authentication
+- Default credentials: admin/admin123
+- Password is automatically reset on server startup to ensure consistent access after deployments
