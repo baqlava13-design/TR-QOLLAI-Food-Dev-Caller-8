@@ -45,15 +45,15 @@ export function Footer() {
   return (
     <footer id="contact" className="bg-foreground text-background py-16" data-testid="footer">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          <div>
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 mb-12">
+          <div className="col-span-2 sm:col-span-2 md:col-span-1 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">DP</span>
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                <span className="text-primary-foreground font-bold text-sm sm:text-lg">DP</span>
               </div>
-              <span className="font-bold text-xl">Destan Pide</span>
+              <span className="font-bold text-lg sm:text-xl">Destan Pide</span>
             </div>
-            <p className="text-background/70 mb-4">
+            <p className="text-background/70 mb-4 text-sm sm:text-base">
               Çorlu'nun en lezzetli pideleri, WhatsApp ile kolay sipariş.
               Taze, sıcak ve hızlı teslimat.
             </p>
@@ -61,40 +61,40 @@ export function Footer() {
               <Button
                 size="icon"
                 variant="outline"
-                className="border-background/20 text-background bg-transparent"
+                className="border-background/20 text-background bg-transparent h-8 w-8 sm:h-9 sm:w-9"
                 onClick={() => window.open(getInstagramUrl(), "_blank")}
                 data-testid="button-instagram"
               >
-                <SiInstagram className="h-5 w-5" />
+                <SiInstagram className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
               <Button
                 size="icon"
                 variant="outline"
-                className="border-background/20 text-background bg-transparent"
+                className="border-background/20 text-background bg-transparent h-8 w-8 sm:h-9 sm:w-9"
                 onClick={() => window.open(getFacebookUrl(), "_blank")}
                 data-testid="button-facebook"
               >
-                <SiFacebook className="h-5 w-5" />
+                <SiFacebook className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
               <Button
                 size="icon"
-                className="bg-whatsapp text-white"
+                className="bg-whatsapp text-white h-8 w-8 sm:h-9 sm:w-9"
                 onClick={() => window.open(getWhatsAppUrl(), "_blank")}
                 data-testid="button-whatsapp"
               >
-                <SiWhatsapp className="h-5 w-5" />
+                <SiWhatsapp className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </div>
           </div>
 
           <div>
-            <h4 className="font-semibold text-lg mb-4">Hızlı Linkler</h4>
-            <ul className="space-y-2">
+            <h4 className="font-semibold text-sm sm:text-base md:text-lg mb-3 sm:mb-4">Hızlı Linkler</h4>
+            <ul className="space-y-1.5 sm:space-y-2">
               {quickLinks.map((link) => (
                 <li key={link.href}>
                   <button
                     onClick={() => scrollToSection(link.href)}
-                    className="text-background/70 hover:text-background transition-colors"
+                    className="text-background/70 hover:text-background transition-colors text-sm sm:text-base"
                     data-testid={`link-footer-${link.label.toLowerCase()}`}
                   >
                     {link.label}
@@ -104,46 +104,46 @@ export function Footer() {
             </ul>
           </div>
 
-          <div>
-            <h4 className="font-semibold text-lg mb-4">İletişim</h4>
-            <ul className="space-y-3">
+          <div className="col-span-2 sm:col-span-1">
+            <h4 className="font-semibold text-sm sm:text-base md:text-lg mb-3 sm:mb-4">İletişim</h4>
+            <ul className="space-y-2 sm:space-y-3">
               {contactInfo.map((info, index) => (
                 <li key={index}>
                   <a
                     href={info.href}
-                    className="flex items-center gap-2 text-background/70 hover:text-background transition-colors"
+                    className="flex items-start gap-2 text-background/70 hover:text-background transition-colors text-sm sm:text-base"
                     data-testid={`text-contact-${index}`}
                   >
-                    <info.icon className="h-4 w-4 shrink-0" />
-                    <span>{info.text}</span>
+                    <info.icon className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span className="break-words">{info.text}</span>
                   </a>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div>
-            <h4 className="font-semibold text-lg mb-4">Çalışma Saatleri</h4>
-            <ul className="space-y-2 mb-6">
+          <div className="col-span-2 sm:col-span-1">
+            <h4 className="font-semibold text-sm sm:text-base md:text-lg mb-3 sm:mb-4">Çalışma Saatleri</h4>
+            <ul className="space-y-1.5 sm:space-y-2 mb-4 sm:mb-6">
               {hours.map((item, index) => (
                 <li key={index} className="flex items-start gap-2" data-testid={`text-hours-${index}`}>
                   <Clock className="h-4 w-4 shrink-0 mt-0.5 text-background/50" />
                   <div>
-                    <div className="text-background/70">{item.day}</div>
-                    <div className="font-medium">{item.time}</div>
+                    <div className="text-background/70 text-sm sm:text-base">{item.day}</div>
+                    <div className="font-medium text-sm sm:text-base">{item.time}</div>
                   </div>
                 </li>
               ))}
             </ul>
 
-            <h4 className="font-semibold text-lg mb-3">Ödeme Yöntemleri</h4>
+            <h4 className="font-semibold text-sm sm:text-base md:text-lg mb-2 sm:mb-3">Ödeme Yöntemleri</h4>
             <div className="flex gap-3">
-              <div className="flex items-center gap-2 text-background/70">
-                <Banknote className="h-5 w-5" />
+              <div className="flex items-center gap-1.5 sm:gap-2 text-background/70 text-sm sm:text-base">
+                <Banknote className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>Nakit</span>
               </div>
-              <div className="flex items-center gap-2 text-background/70">
-                <CreditCard className="h-5 w-5" />
+              <div className="flex items-center gap-1.5 sm:gap-2 text-background/70 text-sm sm:text-base">
+                <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>POS</span>
               </div>
             </div>

@@ -49,7 +49,7 @@ export function HowItWorks() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {steps.map((step, index) => (
             <div
               key={index}
@@ -57,22 +57,22 @@ export function HowItWorks() {
               data-testid={`text-step-${index}`}
             >
               {index < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-12 left-[60%] w-[80%] h-0.5 bg-border">
+                <div className="hidden md:block absolute top-10 sm:top-12 left-[60%] w-[80%] h-0.5 bg-border">
                   <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 bg-primary rounded-full" />
                 </div>
               )}
 
-              <div className="relative mb-6">
-                <div className="w-24 h-24 mx-auto rounded-full bg-background border-2 border-primary/20 flex items-center justify-center group-hover:border-primary transition-colors">
-                  <step.icon className="h-10 w-10 text-primary" />
+              <div className="relative mb-4 sm:mb-6">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto rounded-full bg-background border-2 border-primary/20 flex items-center justify-center group-hover:border-primary transition-colors">
+                  <step.icon className="h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 text-primary" />
                 </div>
-                <span className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold flex items-center justify-center">
+                <span className="absolute -top-1 right-1/4 sm:right-auto sm:-right-2 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-bold flex items-center justify-center">
                   {step.step}
                 </span>
               </div>
 
-              <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
-              <p className="text-muted-foreground text-sm">{step.description}</p>
+              <h3 className="font-semibold text-sm sm:text-base md:text-lg mb-1 sm:mb-2">{step.title}</h3>
+              <p className="text-muted-foreground text-xs sm:text-sm">{step.description}</p>
             </div>
           ))}
         </div>

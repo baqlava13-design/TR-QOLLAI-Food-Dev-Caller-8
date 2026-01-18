@@ -187,8 +187,8 @@ export function OrderForm() {
   };
 
   return (
-    <section id="order" className="py-16 md:py-24 bg-muted/30" data-testid="section-order">
-      <div className="max-w-7xl mx-auto px-4">
+    <section id="order" className="py-12 sm:py-16 md:py-24 bg-muted/30 overflow-x-hidden" data-testid="section-order">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4">
         <div className="text-center mb-12">
           <Badge className="mb-4 bg-primary/10 text-primary border-none">
             Sipariş
@@ -202,8 +202,8 @@ export function OrderForm() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          <Card data-testid="card-cart">
-            <CardHeader className="p-4 sm:p-6">
+          <Card data-testid="card-cart" className="overflow-hidden">
+            <CardHeader className="p-3 sm:p-4 md:p-6">
               <CardTitle className="flex items-center gap-2 text-lg sm:text-2xl">
                 <ShoppingCart className="h-5 w-5" />
                 Sepetiniz
@@ -212,7 +212,7 @@ export function OrderForm() {
                 )}
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0 md:p-6 md:pt-0">
               {items.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-30" />
@@ -300,11 +300,11 @@ export function OrderForm() {
             </CardContent>
           </Card>
 
-          <Card data-testid="card-customer-info">
-            <CardHeader className="p-4 sm:p-6">
+          <Card data-testid="card-customer-info" className="overflow-hidden">
+            <CardHeader className="p-3 sm:p-4 md:p-6">
               <CardTitle className="text-lg sm:text-2xl">Teslimat Bilgileri</CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0 md:p-6 md:pt-0">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-2">

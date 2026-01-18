@@ -87,12 +87,12 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
           </p>
         </div>
 
-        <div className="mb-8">
-          <div className="flex flex-wrap justify-center gap-2 bg-muted/50 p-2 rounded-lg">
+        <div className="mb-8 -mx-4 px-4 overflow-x-auto">
+          <div className="flex gap-2 bg-muted/50 p-2 rounded-lg min-w-max sm:flex-wrap sm:justify-center sm:min-w-0">
             <Button
               variant={activeCategory === "all" ? "default" : "ghost"}
               onClick={() => setActiveCategory("all")}
-              className="whitespace-nowrap text-sm"
+              className="whitespace-nowrap text-sm flex-shrink-0"
               data-testid="tab-category-all"
             >
               En Fazla Satan
@@ -102,7 +102,7 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
                 key={category.id}
                 variant={activeCategory === category.id ? "default" : "ghost"}
                 onClick={() => setActiveCategory(category.id)}
-                className="whitespace-nowrap text-sm"
+                className="whitespace-nowrap text-sm flex-shrink-0"
                 data-testid={`tab-category-${category.id}`}
               >
                 {category.name}
