@@ -11,6 +11,10 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import * as XLSX from "xlsx";
+import multer from "multer";
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 declare module "express-session" {
   interface SessionData {
@@ -231,6 +235,99 @@ export async function registerRoutes(
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete customer" });
+    }
+  });
+
+  // Customer Export (CSV/Excel)
+  app.get("/api/admin/customers/export/:format", requireAdmin, async (req, res) => {
+    try {
+      const format = req.params.format;
+      if (format !== "csv" && format !== "xlsx") {
+        return res.status(400).json({ error: "Unsupported format. Use csv or xlsx." });
+      }
+      const customers = await storage.getCustomersWithStats();
+      
+      const exportData = customers.map(c => ({
+        "Ad Soyad": c.name,
+        "Telefon": c.phone,
+        "Adres": c.address || "",
+        "Mahalle": c.mahalle || "",
+        "Sokak": c.sokak || "",
+        "Bina No": c.binaNo || "",
+        "Daire No": c.daireNo || "",
+        "Notlar": c.notes || "",
+        "Siparis Sayisi": c.orderCount || 0,
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Musteriler");
+
+      if (format === "csv") {
+        const csv = XLSX.utils.sheet_to_csv(ws);
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader("Content-Disposition", "attachment; filename=musteriler.csv");
+        res.send("\uFEFF" + csv); // BOM for Excel UTF-8 compatibility
+      } else {
+        const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", "attachment; filename=musteriler.xlsx");
+        res.send(buffer);
+      }
+    } catch (error) {
+      console.error("Export error:", error);
+      res.status(500).json({ error: "Export failed" });
+    }
+  });
+
+  // Customer Import (CSV/Excel)
+  app.post("/api/admin/customers/import", requireAdmin, upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
+
+      let imported = 0;
+      let skipped = 0;
+
+      for (const row of data) {
+        const name = row["Ad Soyad"] || row["name"] || row["Name"] || row["ad soyad"];
+        const phone = row["Telefon"] || row["phone"] || row["Phone"] || row["telefon"];
+
+        if (!name || !phone) {
+          skipped++;
+          continue;
+        }
+
+        // Check if customer with same phone already exists
+        const existing = await storage.getCustomerByPhone(String(phone));
+        if (existing) {
+          skipped++;
+          continue;
+        }
+
+        await storage.createCustomer({
+          name: String(name),
+          phone: String(phone),
+          address: row["Adres"] || row["address"] || row["Address"] || "",
+          mahalle: row["Mahalle"] || row["mahalle"] || "",
+          sokak: row["Sokak"] || row["sokak"] || "",
+          binaNo: row["Bina No"] || row["binaNo"] || row["bina_no"] || "",
+          daireNo: row["Daire No"] || row["daireNo"] || row["daire_no"] || "",
+          notes: row["Notlar"] || row["notes"] || row["Notes"] || "",
+        });
+        imported++;
+      }
+
+      res.json({ imported, skipped, total: data.length });
+    } catch (error) {
+      console.error("Import error:", error);
+      res.status(500).json({ error: "Import failed" });
     }
   });
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,8 @@ import {
   Trash2,
   Plus,
   Save,
+  Download,
+  Upload,
 } from "lucide-react";
 import { SiWhatsapp, SiFacebook, SiInstagram } from "react-icons/si";
 import { useTheme } from "@/lib/theme";
@@ -1193,10 +1195,76 @@ function CustomersTab() {
     daireNo: "",
     notes: "",
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
 
   const { data: customers = [], isLoading } = useQuery<CustomerWithStats[]>({
     queryKey: ["/api/admin/customers"],
   });
+
+  const handleExport = async (format: "csv" | "xlsx") => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const res = await fetch(`/api/admin/customers/export/${format}`, {
+        credentials: "include",
+        headers,
+      });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `musteriler.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({ title: "Dışa aktarma başarılı" });
+    } catch {
+      toast({ title: "Hata", description: "Dışa aktarma başarısız", variant: "destructive" });
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch("/api/admin/customers/import", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+        headers,
+      });
+
+      if (!res.ok) throw new Error("Import failed");
+      const result = await res.json();
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
+      toast({
+        title: "İçe aktarma tamamlandı",
+        description: `${result.imported} müşteri eklendi, ${result.skipped} atlandı`,
+      });
+    } catch {
+      toast({ title: "Hata", description: "İçe aktarma başarısız", variant: "destructive" });
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
@@ -1267,6 +1335,41 @@ function CustomersTab() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
           <CardTitle>Müşteriler ({customers.length})</CardTitle>
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport("xlsx")}
+              data-testid="button-export-excel"
+            >
+              <Download className="h-4 w-4 mr-1" /> Excel
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport("csv")}
+              data-testid="button-export-csv"
+            >
+              <Download className="h-4 w-4 mr-1" /> CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+              data-testid="button-import"
+            >
+              <Upload className="h-4 w-4 mr-1" /> {importing ? "Yükleniyor..." : "İçe Aktar"}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              onChange={handleImport}
+              className="hidden"
+              data-testid="input-import-file"
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
