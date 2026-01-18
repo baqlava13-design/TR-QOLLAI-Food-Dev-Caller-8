@@ -1028,17 +1028,25 @@ function SettingsTab() {
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
-      return fetch("/api/admin/settings", {
+      const res = await fetch("/api/admin/settings", {
         method: "POST",
         headers,
         body: JSON.stringify(data),
         credentials: "include",
       });
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ error: "Kaydetme hatası" }));
+        throw new Error(error.error || "Kaydetme hatası");
+      }
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       toast({ title: "Ayarlar kaydedildi" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Hata", description: error.message, variant: "destructive" });
     },
   });
 
