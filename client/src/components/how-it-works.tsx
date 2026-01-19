@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Search, ShoppingCart, MessageCircle, Truck } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 const steps = [
   {
@@ -29,6 +30,15 @@ const steps = [
 ];
 
 export function HowItWorks() {
+  const { data: settings = {} } = useQuery<Record<string, string>>({
+    queryKey: ["/api/settings"],
+  });
+
+  const title = settings.how_it_works_title || "Sipariş Vermek Çok Kolay";
+  const titleParts = title.split(" ");
+  const lastTwo = titleParts.slice(-2).join(" ");
+  const firstPart = titleParts.slice(0, -2).join(" ");
+
   return (
     <section
       id="how-it-works"
@@ -41,7 +51,7 @@ export function HowItWorks() {
             Nasıl Çalışır?
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Sipariş Vermek <span className="text-primary">Çok Kolay</span>
+            {firstPart} <span className="text-primary">{lastTwo}</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             4 basit adımda lezzetli yemeğinizi sipariş edin. WhatsApp

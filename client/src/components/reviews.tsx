@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Star, Quote } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import type { Review } from "@shared/schema";
 
 interface ReviewsProps {
@@ -68,6 +69,15 @@ const defaultReviews: Review[] = [
 
 export function Reviews({ reviews = defaultReviews, isLoading = false }: ReviewsProps) {
   const displayReviews = reviews.length > 0 ? reviews : defaultReviews;
+  
+  const { data: settings = {} } = useQuery<Record<string, string>>({
+    queryKey: ["/api/settings"],
+  });
+
+  const title = settings.reviews_section_title || "Müşterilerimiz Ne Diyor?";
+  const titleParts = title.split(" ");
+  const lastTwo = titleParts.slice(-2).join(" ");
+  const firstPart = titleParts.slice(0, -2).join(" ");
 
   if (isLoading) {
     return (
@@ -101,7 +111,7 @@ export function Reviews({ reviews = defaultReviews, isLoading = false }: Reviews
             Yorumlar
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Müşterilerimiz <span className="text-primary">Ne Diyor?</span>
+            {firstPart} <span className="text-primary">{lastTwo}</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Binlerce mutlu müşterimizden bazı yorumlar. Siz de deneyiminizi paylaşabilirsiniz.

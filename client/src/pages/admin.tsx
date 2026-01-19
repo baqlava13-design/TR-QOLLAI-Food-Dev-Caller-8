@@ -54,6 +54,7 @@ import {
   Save,
   Download,
   Upload,
+  Type,
 } from "lucide-react";
 import { SiWhatsapp, SiFacebook, SiInstagram } from "react-icons/si";
 import { useTheme } from "@/lib/theme";
@@ -1207,6 +1208,12 @@ function SettingsTab() {
     company_logo: "",
     facebook_url: "",
     instagram_url: "",
+    hero_title: "",
+    hero_subtitle: "",
+    menu_section_title: "",
+    how_it_works_title: "",
+    reviews_section_title: "",
+    footer_text: "",
   });
 
   const { data: settingsData = [], isLoading } = useQuery({
@@ -1281,109 +1288,247 @@ function SettingsTab() {
         </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <SiWhatsapp className="text-whatsapp" /> WhatsApp Ayarlari
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>WhatsApp Numarasi (905xxxxxxxxx)</Label>
-              <Input
-                value={settings.whatsapp_number}
-                onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
-                placeholder="905551234567"
-              />
-            </div>
-            <Button onClick={() => handleSave("whatsapp_number")} size="sm">Kaydet</Button>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="general" className="gap-2">
+            <Settings className="h-4 w-4" /> Genel Ayarlar
+          </TabsTrigger>
+          <TabsTrigger value="text" className="gap-2">
+            <Type className="h-4 w-4" /> Metin Icerikleri
+          </TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Image className="h-5 w-5" /> Şirket Logosu
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>Logo URL</Label>
-              <Input
-                value={settings.company_logo}
-                onChange={(e) => setSettings({ ...settings, company_logo: e.target.value })}
-                placeholder="https://..."
-                data-testid="input-company-logo"
-              />
-            </div>
-            {settings.company_logo && (
-              <img src={settings.company_logo} alt="Logo" className="w-24 h-24 object-contain rounded border p-2" />
-            )}
-            <Button onClick={() => handleSave("company_logo")} size="sm">Kaydet</Button>
-          </CardContent>
-        </Card>
+        <TabsContent value="general" className="mt-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <SiWhatsapp className="text-whatsapp" /> WhatsApp Ayarlari
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>WhatsApp Numarasi (905xxxxxxxxx)</Label>
+                  <Input
+                    value={settings.whatsapp_number}
+                    onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
+                    placeholder="905551234567"
+                  />
+                </div>
+                <Button onClick={() => handleSave("whatsapp_number")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Image className="h-5 w-5" /> Hero Resmi
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>Hero Resim URL</Label>
-              <Input
-                value={settings.hero_image}
-                onChange={(e) => setSettings({ ...settings, hero_image: e.target.value })}
-                placeholder="https://..."
-              />
-            </div>
-            {settings.hero_image && (
-              <img src={settings.hero_image} alt="Hero" className="w-full h-32 object-cover rounded" />
-            )}
-            <Button onClick={() => handleSave("hero_image")} size="sm">Kaydet</Button>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Image className="h-5 w-5" /> Sirket Logosu
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Logo URL</Label>
+                  <Input
+                    value={settings.company_logo}
+                    onChange={(e) => setSettings({ ...settings, company_logo: e.target.value })}
+                    placeholder="https://..."
+                    data-testid="input-company-logo"
+                  />
+                </div>
+                {settings.company_logo && (
+                  <img src={settings.company_logo} alt="Logo" className="w-24 h-24 object-contain rounded border p-2" />
+                )}
+                <Button onClick={() => handleSave("company_logo")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <SiFacebook className="text-blue-600" /> Facebook
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>Facebook Sayfa URL</Label>
-              <Input
-                value={settings.facebook_url}
-                onChange={(e) => setSettings({ ...settings, facebook_url: e.target.value })}
-                placeholder="https://facebook.com/..."
-              />
-            </div>
-            <Button onClick={() => handleSave("facebook_url")} size="sm">Kaydet</Button>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Image className="h-5 w-5" /> Hero Resmi
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Hero Resim URL</Label>
+                  <Input
+                    value={settings.hero_image}
+                    onChange={(e) => setSettings({ ...settings, hero_image: e.target.value })}
+                    placeholder="https://..."
+                  />
+                </div>
+                {settings.hero_image && (
+                  <img src={settings.hero_image} alt="Hero" className="w-full h-32 object-cover rounded" />
+                )}
+                <Button onClick={() => handleSave("hero_image")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <SiInstagram className="text-pink-600" /> Instagram
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>Instagram Sayfa URL</Label>
-              <Input
-                value={settings.instagram_url}
-                onChange={(e) => setSettings({ ...settings, instagram_url: e.target.value })}
-                placeholder="https://instagram.com/..."
-              />
-            </div>
-            <Button onClick={() => handleSave("instagram_url")} size="sm">Kaydet</Button>
-          </CardContent>
-        </Card>
-      </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <SiFacebook className="text-blue-600" /> Facebook
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Facebook Sayfa URL</Label>
+                  <Input
+                    value={settings.facebook_url}
+                    onChange={(e) => setSettings({ ...settings, facebook_url: e.target.value })}
+                    placeholder="https://facebook.com/..."
+                  />
+                </div>
+                <Button onClick={() => handleSave("facebook_url")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <SiInstagram className="text-pink-600" /> Instagram
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Instagram Sayfa URL</Label>
+                  <Input
+                    value={settings.instagram_url}
+                    onChange={(e) => setSettings({ ...settings, instagram_url: e.target.value })}
+                    placeholder="https://instagram.com/..."
+                  />
+                </div>
+                <Button onClick={() => handleSave("instagram_url")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="text" className="mt-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Type className="h-5 w-5" /> Hero Basligi (H1)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Ana Baslik</Label>
+                  <Input
+                    value={settings.hero_title}
+                    onChange={(e) => setSettings({ ...settings, hero_title: e.target.value })}
+                    placeholder="Destan Pide"
+                    data-testid="input-hero-title"
+                  />
+                </div>
+                <Button onClick={() => handleSave("hero_title")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Type className="h-5 w-5" /> Hero Alt Basligi
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Alt Baslik</Label>
+                  <Input
+                    value={settings.hero_subtitle}
+                    onChange={(e) => setSettings({ ...settings, hero_subtitle: e.target.value })}
+                    placeholder="Çorlu'nun en lezzetli pideleri"
+                    data-testid="input-hero-subtitle"
+                  />
+                </div>
+                <Button onClick={() => handleSave("hero_subtitle")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Type className="h-5 w-5" /> Menu Bolumu Basligi (H2)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Menu Basligi</Label>
+                  <Input
+                    value={settings.menu_section_title}
+                    onChange={(e) => setSettings({ ...settings, menu_section_title: e.target.value })}
+                    placeholder="Lezzetli Seçenekler"
+                    data-testid="input-menu-title"
+                  />
+                </div>
+                <Button onClick={() => handleSave("menu_section_title")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Type className="h-5 w-5" /> Nasil Calisir Basligi (H2)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Adimlar Basligi</Label>
+                  <Input
+                    value={settings.how_it_works_title}
+                    onChange={(e) => setSettings({ ...settings, how_it_works_title: e.target.value })}
+                    placeholder="Sipariş Vermek Çok Kolay"
+                    data-testid="input-how-it-works-title"
+                  />
+                </div>
+                <Button onClick={() => handleSave("how_it_works_title")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Type className="h-5 w-5" /> Yorumlar Basligi (H2)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Yorumlar Bolumu Basligi</Label>
+                  <Input
+                    value={settings.reviews_section_title}
+                    onChange={(e) => setSettings({ ...settings, reviews_section_title: e.target.value })}
+                    placeholder="Müşterilerimiz Ne Diyor?"
+                    data-testid="input-reviews-title"
+                  />
+                </div>
+                <Button onClick={() => handleSave("reviews_section_title")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
+
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Type className="h-5 w-5" /> Footer Metni
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Footer Aciklama Metni</Label>
+                  <Textarea
+                    value={settings.footer_text}
+                    onChange={(e) => setSettings({ ...settings, footer_text: e.target.value })}
+                    placeholder="Çorlu'nun en lezzetli pideleri, WhatsApp ile kolay sipariş. Taze, sıcak ve hızlı teslimat."
+                    data-testid="input-footer-text"
+                    rows={3}
+                  />
+                </div>
+                <Button onClick={() => handleSave("footer_text")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

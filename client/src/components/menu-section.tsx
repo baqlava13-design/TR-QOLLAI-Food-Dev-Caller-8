@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Flame } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useCart } from "@/lib/cart";
 import type { MenuItem, Category } from "@shared/schema";
 
@@ -39,6 +40,15 @@ const defaultMenuItems: MenuItem[] = [
 export function MenuSection({ categories = defaultCategories, menuItems = defaultMenuItems, isLoading = false }: MenuSectionProps) {
   const [activeCategory, setActiveCategory] = useState("all");
   const { addItem } = useCart();
+  
+  const { data: settings = {} } = useQuery<Record<string, string>>({
+    queryKey: ["/api/settings"],
+  });
+
+  const menuTitle = settings.menu_section_title || "Lezzetli Seçenekler";
+  const titleParts = menuTitle.split(" ");
+  const lastWord = titleParts.slice(-1).join(" ");
+  const firstPart = titleParts.slice(0, -1).join(" ");
 
   const filteredItems = activeCategory === "all" 
     ? menuItems.filter((item) => item.isAvailable).slice(0, 9)
@@ -79,7 +89,7 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
         <div className="text-center mb-12">
           <Badge className="mb-4 bg-primary/10 text-primary border-none">Menümüz</Badge>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Lezzetli <span className="text-primary">Seçenekler</span>
+            {firstPart} <span className="text-primary">{lastWord}</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Taze malzemelerle hazırlanan, özenle pişirilmiş yemeklerimizi keşfedin.

@@ -54,8 +54,7 @@ export function Footer() {
               <span className="font-bold text-lg sm:text-xl">Destan Pide</span>
             </div>
             <p className="text-background/70 mb-4 text-sm sm:text-base">
-              Çorlu'nun en lezzetli pideleri, WhatsApp ile kolay sipariş.
-              Taze, sıcak ve hızlı teslimat.
+              {settings.footer_text || "Çorlu'nun en lezzetli pideleri, WhatsApp ile kolay sipariş. Taze, sıcak ve hızlı teslimat."}
             </p>
             <div className="flex gap-2">
               <Button
