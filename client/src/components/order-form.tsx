@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Minus, Plus, Trash2, ShoppingCart, CreditCard, Banknote, ArrowRight } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart, CreditCard, Banknote, ArrowRight, AlertTriangle } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useCart } from "@/lib/cart";
 import { generateWhatsAppOrderLink } from "@/lib/whatsapp";
@@ -26,6 +26,11 @@ export function OrderForm() {
   const getWhatsAppNumber = () => {
     return settingsData.whatsapp_number || "";
   };
+
+  const minimumOrderAmount = parseFloat(settingsData.minimum_order_amount || "0");
+  const currentTotal = getTotal();
+  const isBelowMinimum = minimumOrderAmount > 0 && currentTotal < minimumOrderAmount;
+  const remainingAmount = minimumOrderAmount - currentTotal;
   
   const [formData, setFormData] = useState({
     firstName: "",
@@ -108,6 +113,15 @@ export function OrderForm() {
       toast({
         title: "Sepetiniz boş",
         description: "Lütfen sipariş vermek için menüden ürün seçin.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isBelowMinimum) {
+      toast({
+        title: "Minimum sipariş tutarına ulaşılmadı",
+        description: `Sipariş verebilmek için sepetinize ${remainingAmount.toFixed(2)} TL daha eklemeniz gerekmektedir.`,
         variant: "destructive",
       });
       return;
@@ -279,8 +293,31 @@ export function OrderForm() {
                     <Separator />
                     <div className="flex justify-between text-lg font-bold">
                       <span>Toplam</span>
-                      <span className="text-primary">{getTotal().toFixed(2)} TL</span>
+                      <span className="text-primary">{currentTotal.toFixed(2)} TL</span>
                     </div>
+                    
+                    {minimumOrderAmount > 0 && (
+                      <div className="pt-2">
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>Minimum Sipariş</span>
+                          <span>{minimumOrderAmount.toFixed(2)} TL</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {isBelowMinimum && items.length > 0 && (
+                      <div className="mt-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20" data-testid="minimum-order-warning">
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+                          <div className="text-sm">
+                            <p className="font-medium text-destructive">Minimum sipariş tutarına ulaşılmadı</p>
+                            <p className="text-muted-foreground mt-1">
+                              Sipariş verebilmek için sepetinize <span className="font-semibold text-foreground">{remainingAmount.toFixed(2)} TL</span> daha eklemeniz gerekmektedir.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -423,16 +460,22 @@ export function OrderForm() {
                     type="submit"
                     size="lg"
                     className="w-full bg-whatsapp text-white gap-2 text-lg py-6"
-                    disabled={createOrderMutation.isPending}
+                    disabled={createOrderMutation.isPending || isBelowMinimum}
                     data-testid="button-submit-order"
                   >
                     <SiWhatsapp className="h-5 w-5" />
                     {createOrderMutation.isPending ? "Gönderiliyor..." : "WhatsApp ile Sipariş Ver"}
                     <ArrowRight className="h-5 w-5" />
                   </Button>
-                  <p className="text-xs text-center text-muted-foreground">
-                    Siparişi göndermek için WhatsApp uygulamanız açılacaktır
-                  </p>
+                  {isBelowMinimum && items.length > 0 ? (
+                    <p className="text-xs text-center text-destructive font-medium">
+                      Minimum sipariş tutarı: {minimumOrderAmount.toFixed(2)} TL
+                    </p>
+                  ) : (
+                    <p className="text-xs text-center text-muted-foreground">
+                      Siparişi göndermek için WhatsApp uygulamanız açılacaktır
+                    </p>
+                  )}
                 </div>
               </form>
             </CardContent>

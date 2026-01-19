@@ -1220,6 +1220,7 @@ function SettingsTab() {
     footer_email: "",
     footer_hours_weekday: "",
     footer_hours_weekend: "",
+    minimum_order_amount: "",
   });
 
   const { data: settingsData = [], isLoading } = useQuery({
@@ -1405,6 +1406,30 @@ function SettingsTab() {
                   />
                 </div>
                 <Button onClick={() => handleSave("instagram_url")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingBag className="h-5 w-5" /> Minimum Siparis Tutari
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Minimum Siparis (TL)</Label>
+                  <Input
+                    type="number"
+                    value={settings.minimum_order_amount}
+                    onChange={(e) => setSettings({ ...settings, minimum_order_amount: e.target.value })}
+                    placeholder="100"
+                    data-testid="input-minimum-order"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Musteri bu tutarin altinda siparis veremez
+                  </p>
+                </div>
+                <Button onClick={() => handleSave("minimum_order_amount")} size="sm">Kaydet</Button>
               </CardContent>
             </Card>
           </div>
