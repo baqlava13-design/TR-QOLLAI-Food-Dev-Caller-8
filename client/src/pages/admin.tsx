@@ -294,7 +294,7 @@ ${order.notes ? `Not: ${order.notes}` : ""}
     
     const printWindow = window.open("", "_blank");
     if (printWindow) {
-      printWindow.document.write(`<pre style="font-family: monospace;">${printContent}</pre>`);
+      printWindow.document.write(`<pre style="font-family: monospace; font-size: 13px;">${printContent}</pre>`);
       printWindow.document.close();
       printWindow.print();
     }
