@@ -6,6 +6,7 @@ import { Menu, ShoppingCart, Sun, Moon, Phone } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useCart } from "@/lib/cart";
 import { useTheme } from "@/lib/theme";
+import { useQuery } from "@tanstack/react-query";
 
 const navItems = [
   { label: "Menü", href: "#menu" },
@@ -18,6 +19,10 @@ export function Header() {
   const { getItemCount } = useCart();
   const { theme, toggleTheme } = useTheme();
   const itemCount = getItemCount();
+  
+  const { data: settings = {} } = useQuery<Record<string, string>>({
+    queryKey: ["/api/settings"],
+  });
 
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
@@ -42,9 +47,17 @@ export function Header() {
           }}
           data-testid="link-logo"
         >
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-            <span className="text-primary-foreground font-bold text-base sm:text-lg">DP</span>
-          </div>
+          {settings.company_logo ? (
+            <img 
+              src={settings.company_logo} 
+              alt="Destan Pide" 
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover flex-shrink-0"
+            />
+          ) : (
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+              <span className="text-primary-foreground font-bold text-base sm:text-lg">DP</span>
+            </div>
+          )}
           <span className="font-bold text-lg sm:text-xl text-foreground truncate">
             Destan Pide
           </span>
