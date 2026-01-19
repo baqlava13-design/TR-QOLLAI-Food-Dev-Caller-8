@@ -1214,6 +1214,12 @@ function SettingsTab() {
     how_it_works_title: "",
     reviews_section_title: "",
     footer_text: "",
+    footer_logo_name: "",
+    footer_address: "",
+    footer_phone: "",
+    footer_email: "",
+    footer_hours_weekday: "",
+    footer_hours_weekend: "",
   });
 
   const { data: settingsData = [], isLoading } = useQuery({
@@ -1506,6 +1512,26 @@ function SettingsTab() {
               </CardContent>
             </Card>
 
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Type className="h-5 w-5" /> Footer Logo Ismi
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Logo Yani Isim</Label>
+                  <Input
+                    value={settings.footer_logo_name}
+                    onChange={(e) => setSettings({ ...settings, footer_logo_name: e.target.value })}
+                    placeholder="Destan Pide"
+                    data-testid="input-footer-logo-name"
+                  />
+                </div>
+                <Button onClick={() => handleSave("footer_logo_name")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
+
             <Card className="md:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1524,6 +1550,106 @@ function SettingsTab() {
                   />
                 </div>
                 <Button onClick={() => handleSave("footer_text")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Type className="h-5 w-5" /> Iletisim - Adres
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Adres</Label>
+                  <Input
+                    value={settings.footer_address}
+                    onChange={(e) => setSettings({ ...settings, footer_address: e.target.value })}
+                    placeholder="Kılıçoğlu Vizyon Konutları, Esentepe, Çorlu"
+                    data-testid="input-footer-address"
+                  />
+                </div>
+                <Button onClick={() => handleSave("footer_address")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Type className="h-5 w-5" /> Iletisim - Telefon
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Telefon Numarasi</Label>
+                  <Input
+                    value={settings.footer_phone}
+                    onChange={(e) => setSettings({ ...settings, footer_phone: e.target.value })}
+                    placeholder="0555 123 4567"
+                    data-testid="input-footer-phone"
+                  />
+                </div>
+                <Button onClick={() => handleSave("footer_phone")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Type className="h-5 w-5" /> Iletisim - E-posta
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>E-posta Adresi</Label>
+                  <Input
+                    value={settings.footer_email}
+                    onChange={(e) => setSettings({ ...settings, footer_email: e.target.value })}
+                    placeholder="info@destanpide.com"
+                    data-testid="input-footer-email"
+                  />
+                </div>
+                <Button onClick={() => handleSave("footer_email")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Type className="h-5 w-5" /> Calisma Saatleri - Hafta Ici
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Pazartesi - Cuma</Label>
+                  <Input
+                    value={settings.footer_hours_weekday}
+                    onChange={(e) => setSettings({ ...settings, footer_hours_weekday: e.target.value })}
+                    placeholder="10:00 - 22:00"
+                    data-testid="input-footer-hours-weekday"
+                  />
+                </div>
+                <Button onClick={() => handleSave("footer_hours_weekday")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Type className="h-5 w-5" /> Calisma Saatleri - Hafta Sonu
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Cumartesi - Pazar</Label>
+                  <Input
+                    value={settings.footer_hours_weekend}
+                    onChange={(e) => setSettings({ ...settings, footer_hours_weekend: e.target.value })}
+                    placeholder="11:00 - 23:00"
+                    data-testid="input-footer-hours-weekend"
+                  />
+                </div>
+                <Button onClick={() => handleSave("footer_hours_weekend")} size="sm">Kaydet</Button>
               </CardContent>
             </Card>
           </div>

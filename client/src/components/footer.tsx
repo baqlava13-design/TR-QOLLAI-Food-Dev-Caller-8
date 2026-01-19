@@ -11,21 +11,29 @@ const quickLinks = [
   { label: "Sipariş Ver", href: "#order" },
 ];
 
-const contactInfo = [
-  { icon: MapPin, text: "Kılıçoğlu Vizyon Konutları, Esentepe, Çorlu", href: "#" },
-  { icon: Phone, text: "0555 123 4567", href: "tel:+905551234567" },
-  { icon: Mail, text: "info@destanpide.com", href: "mailto:info@destanpide.com" },
-];
-
-const hours = [
-  { day: "Pazartesi - Cuma", time: "10:00 - 22:00" },
-  { day: "Cumartesi - Pazar", time: "11:00 - 23:00" },
-];
 
 export function Footer() {
   const { data: settings = {} } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
   });
+
+  const logoName = settings.footer_logo_name || "Destan Pide";
+  const address = settings.footer_address || "Kılıçoğlu Vizyon Konutları, Esentepe, Çorlu";
+  const phone = settings.footer_phone || "0555 123 4567";
+  const email = settings.footer_email || "info@destanpide.com";
+  const hoursWeekday = settings.footer_hours_weekday || "10:00 - 22:00";
+  const hoursWeekend = settings.footer_hours_weekend || "11:00 - 23:00";
+
+  const contactInfo = [
+    { icon: MapPin, text: address, href: "#" },
+    { icon: Phone, text: phone, href: `tel:${phone.replace(/\s/g, "")}` },
+    { icon: Mail, text: email, href: `mailto:${email}` },
+  ];
+
+  const hours = [
+    { day: "Pazartesi - Cuma", time: hoursWeekday },
+    { day: "Cumartesi - Pazar", time: hoursWeekend },
+  ];
 
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
@@ -49,9 +57,11 @@ export function Footer() {
           <div className="col-span-2 sm:col-span-2 md:col-span-1 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                <span className="text-primary-foreground font-bold text-sm sm:text-lg">DP</span>
+                <span className="text-primary-foreground font-bold text-sm sm:text-lg">
+                  {logoName.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase()}
+                </span>
               </div>
-              <span className="font-bold text-lg sm:text-xl">Destan Pide</span>
+              <span className="font-bold text-lg sm:text-xl">{logoName}</span>
             </div>
             <p className="text-background/70 mb-4 text-sm sm:text-base">
               {settings.footer_text || "Çorlu'nun en lezzetli pideleri, WhatsApp ile kolay sipariş. Taze, sıcak ve hızlı teslimat."}
