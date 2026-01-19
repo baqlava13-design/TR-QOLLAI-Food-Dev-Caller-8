@@ -1,7 +1,15 @@
 import { SiWhatsapp } from "react-icons/si";
-import heroImage from "@assets/20260114_132921_1768406108369.jpg";
+import { useQuery } from "@tanstack/react-query";
+import defaultHeroImage from "@assets/20260114_132921_1768406108369.jpg";
 
 export function Hero() {
+  const { data: settings = {} } = useQuery<Record<string, string>>({
+    queryKey: ["/api/settings"],
+  });
+
+  // Use hero_image from settings if available, otherwise use default
+  const heroImage = settings.hero_image || defaultHeroImage;
+
   return (
     <section
       id="hero"
