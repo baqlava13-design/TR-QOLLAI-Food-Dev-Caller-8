@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Flame } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, Flame, Search, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useCart } from "@/lib/cart";
 import type { MenuItem, Category } from "@shared/schema";
@@ -39,6 +40,7 @@ const defaultMenuItems: MenuItem[] = [
 
 export function MenuSection({ categories = defaultCategories, menuItems = defaultMenuItems, isLoading = false }: MenuSectionProps) {
   const [activeCategory, setActiveCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const { addItem } = useCart();
   
   const { data: settings = {} } = useQuery<Record<string, string>>({
@@ -50,9 +52,30 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
   const lastWord = titleParts.slice(-1).join(" ");
   const firstPart = titleParts.slice(0, -1).join(" ");
 
-  const filteredItems = activeCategory === "all" 
-    ? menuItems.filter((item) => item.isAvailable).slice(0, 9)
-    : menuItems.filter((item) => item.categoryId === activeCategory && item.isAvailable);
+  const normalizeText = (text: string) => {
+    return text.toLowerCase()
+      .replace(/ı/g, "i")
+      .replace(/ğ/g, "g")
+      .replace(/ü/g, "u")
+      .replace(/ş/g, "s")
+      .replace(/ö/g, "o")
+      .replace(/ç/g, "c");
+  };
+
+  const filteredItems = menuItems.filter((item) => {
+    if (!item.isAvailable) return false;
+    
+    const matchesSearch = searchQuery.trim() === "" || 
+      normalizeText(item.name).includes(normalizeText(searchQuery)) ||
+      normalizeText(item.description || "").includes(normalizeText(searchQuery));
+    
+    if (!matchesSearch) return false;
+    
+    if (searchQuery.trim() !== "") return true;
+    
+    if (activeCategory === "all") return true;
+    return item.categoryId === activeCategory;
+  }).slice(0, activeCategory === "all" && searchQuery.trim() === "" ? 9 : undefined);
 
   const handleAddToCart = (item: MenuItem) => {
     addItem(item, 1, []);
@@ -97,11 +120,36 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
           </p>
         </div>
 
+        <div className="mb-6 max-w-md mx-auto">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Menüde ara..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+              data-testid="input-menu-search"
+            />
+            {searchQuery && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                onClick={() => setSearchQuery("")}
+                data-testid="button-clear-search"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+
         <div className="mb-8 -mx-4 px-4 overflow-x-auto">
           <div className="flex gap-2 bg-muted/50 p-2 rounded-lg min-w-max sm:flex-wrap sm:justify-center sm:min-w-0">
             <Button
               variant={activeCategory === "all" ? "default" : "ghost"}
-              onClick={() => setActiveCategory("all")}
+              onClick={() => { setActiveCategory("all"); setSearchQuery(""); }}
               className="whitespace-nowrap text-sm flex-shrink-0"
               data-testid="tab-category-all"
             >
@@ -111,7 +159,7 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
               <Button
                 key={category.id}
                 variant={activeCategory === category.id ? "default" : "ghost"}
-                onClick={() => setActiveCategory(category.id)}
+                onClick={() => { setActiveCategory(category.id); setSearchQuery(""); }}
                 className="whitespace-nowrap text-sm flex-shrink-0"
                 data-testid={`tab-category-${category.id}`}
               >
@@ -174,7 +222,9 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
         </div>
         {filteredItems.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
-            Bu kategoride henuz urun bulunmamaktadir.
+            {searchQuery.trim() !== "" 
+              ? `"${searchQuery}" için sonuç bulunamadı.`
+              : "Bu kategoride henüz ürün bulunmamaktadır."}
           </div>
         )}
       </div>
