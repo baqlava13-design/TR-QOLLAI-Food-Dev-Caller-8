@@ -132,15 +132,14 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
               data-testid="input-menu-search"
             />
             {searchQuery && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setSearchQuery("")}
                 data-testid="button-clear-search"
               >
                 <X className="h-4 w-4" />
-              </Button>
+              </button>
             )}
           </div>
         </div>
