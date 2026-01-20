@@ -17,10 +17,10 @@ export function Footer() {
     queryKey: ["/api/settings"],
   });
 
-  const logoName = settings.footer_logo_name || "Destan Pide";
+  const logoName = settings.footer_logo_name || "Kolay Siparis";
   const address = settings.footer_address || "Kılıçoğlu Vizyon Konutları, Esentepe, Çorlu";
   const phone = settings.footer_phone || "0555 123 4567";
-  const email = settings.footer_email || "info@destanpide.com";
+  const email = settings.footer_email || "info@kolaysiparis.com";
   const hoursWeekday = settings.footer_hours_weekday || "10:00 - 22:00";
   const hoursWeekend = settings.footer_hours_weekend || "11:00 - 23:00";
 
