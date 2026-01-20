@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Plus, Flame, Search, X } from "lucide-react";
+import { Plus, Flame, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useCart } from "@/lib/cart";
 import type { MenuItem, Category } from "@shared/schema";
+
+const ITEMS_PER_PAGE = 12;
 
 interface MenuSectionProps {
   categories: Category[];
@@ -41,6 +43,7 @@ const defaultMenuItems: MenuItem[] = [
 export function MenuSection({ categories = defaultCategories, menuItems = defaultMenuItems, isLoading = false }: MenuSectionProps) {
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const { addItem } = useCart();
   
   const { data: settings = {} } = useQuery<Record<string, string>>({
@@ -62,7 +65,12 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
       .replace(/ç/g, "c");
   };
 
-  const filteredItems = menuItems.filter((item) => {
+  // Reset to page 1 when category or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeCategory, searchQuery]);
+
+  const allFilteredItems = menuItems.filter((item) => {
     if (!item.isAvailable) return false;
     
     const matchesSearch = searchQuery.trim() === "" || 
@@ -75,7 +83,11 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
     
     if (activeCategory === "all") return true;
     return item.categoryId === activeCategory;
-  }).slice(0, activeCategory === "all" && searchQuery.trim() === "" ? 9 : undefined);
+  });
+
+  const totalPages = Math.ceil(allFilteredItems.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const filteredItems = allFilteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const handleAddToCart = (item: MenuItem) => {
     addItem(item, 1, []);
@@ -226,6 +238,47 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
             {searchQuery.trim() !== "" 
               ? `"${searchQuery}" için sonuç bulunamadı.`
               : "Bu kategoride henüz ürün bulunmamaktadır."}
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-8" data-testid="pagination">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              data-testid="button-prev-page"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1">Önceki</span>
+            </Button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentPage(page)}
+                  className="w-8 h-8 p-0"
+                  data-testid={`button-page-${page}`}
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              data-testid="button-next-page"
+            >
+              <span className="hidden sm:inline mr-1">Sonraki</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         )}
       </div>
