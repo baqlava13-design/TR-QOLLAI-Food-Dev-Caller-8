@@ -89,8 +89,8 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
             <Badge className="mb-4 bg-primary/10 text-primary border-none">Menümüz</Badge>
             <h2 className="text-3xl md:text-4xl font-bold">Lezzetli Seçenekler</h2>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <Card key={i} className="animate-pulse">
                 <div className="aspect-[4/3] bg-muted" />
                 <CardContent className="p-4">
@@ -168,7 +168,7 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
           {filteredItems.map((item) => (
             <Card
               key={item.id}
