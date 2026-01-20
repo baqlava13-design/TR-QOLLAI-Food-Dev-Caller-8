@@ -92,16 +92,14 @@ export function Header() {
             size="icon"
             variant={itemCount > 0 ? "default" : "ghost"}
             onClick={() => scrollToSection("#order")}
-            className={`relative ${itemCount > 0 ? "bg-primary text-primary-foreground animate-pulse" : ""}`}
+            className="relative"
             data-testid="button-cart"
           >
             <ShoppingCart className="h-5 w-5" />
             {itemCount > 0 && (
-              <Badge
-                className="absolute -top-2 -right-2 h-5 min-w-5 flex items-center justify-center px-1 text-xs bg-red-500 text-white border-2 border-background"
-              >
+              <span className="absolute -top-1.5 -right-1.5 h-5 min-w-5 flex items-center justify-center px-1 text-[11px] font-bold rounded-full bg-red-500 text-white border-2 border-background">
                 {itemCount}
-              </Badge>
+              </span>
             )}
           </Button>
 
