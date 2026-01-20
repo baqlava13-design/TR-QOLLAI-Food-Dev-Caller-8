@@ -89,7 +89,7 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
             <Badge className="mb-4 bg-primary/10 text-primary border-none">Menümüz</Badge>
             <h2 className="text-3xl md:text-4xl font-bold">Lezzetli Seçenekler</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <Card key={i} className="animate-pulse">
                 <div className="aspect-[4/3] bg-muted" />
@@ -168,7 +168,7 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
           {filteredItems.map((item) => (
             <Card
               key={item.id}
@@ -184,36 +184,38 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
                 />
                 {Boolean(item.isKampanya) && (
                   <span 
-                    className="absolute top-3 left-3 z-50 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-md shadow-lg border-2 border-white"
+                    className="absolute top-1 left-1 md:top-3 md:left-3 z-50 bg-red-600 text-white text-[10px] md:text-xs font-bold px-1.5 py-0.5 md:px-3 md:py-1.5 rounded-md shadow-lg border md:border-2 border-white"
                     data-testid={`badge-kampanya-${item.id}`}
                   >
                     {item.kampanyaTag || "Kampanya"}
                   </span>
                 )}
                 {item.isPopular && !Boolean(item.isKampanya) && (
-                  <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground gap-1">
-                    <Flame className="h-3 w-3" />
+                  <Badge className="absolute top-1 left-1 md:top-3 md:left-3 bg-primary text-primary-foreground gap-0.5 md:gap-1 text-[10px] md:text-xs px-1.5 md:px-2.5">
+                    <Flame className="h-2.5 w-2.5 md:h-3 md:w-3" />
                     Populer
                   </Badge>
                 )}
               </div>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="font-semibold text-lg">{item.name}</h3>
-                  <span className="font-bold text-primary text-lg whitespace-nowrap">
-                    {parseFloat(item.price).toFixed(2)} TL
+              <CardContent className="p-2 md:p-4">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-1 md:gap-2 mb-1 md:mb-2">
+                  <h3 className="font-semibold text-sm md:text-lg line-clamp-1">{item.name}</h3>
+                  <span className="font-bold text-primary text-sm md:text-lg whitespace-nowrap">
+                    {parseFloat(item.price).toFixed(0)} TL
                   </span>
                 </div>
-                <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                <p className="text-muted-foreground text-xs md:text-sm mb-2 md:mb-4 line-clamp-2 hidden md:block">
                   {item.description}
                 </p>
                 <Button
+                  size="sm"
                   onClick={() => handleAddToCart(item)}
-                  className="w-full gap-2"
+                  className="w-full gap-1 md:gap-2 text-xs md:text-sm"
                   data-testid={`button-add-to-cart-${item.id}`}
                 >
-                  <Plus className="h-4 w-4" />
-                  Sepete Ekle
+                  <Plus className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Sepete Ekle</span>
+                  <span className="sm:hidden">Ekle</span>
                 </Button>
               </CardContent>
             </Card>
