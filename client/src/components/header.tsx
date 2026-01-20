@@ -90,15 +90,15 @@ export function Header() {
 
           <Button
             size="icon"
-            variant="ghost"
+            variant={itemCount > 0 ? "default" : "ghost"}
             onClick={() => scrollToSection("#order")}
-            className="relative"
+            className={`relative ${itemCount > 0 ? "bg-primary text-primary-foreground animate-pulse" : ""}`}
             data-testid="button-cart"
           >
             <ShoppingCart className="h-5 w-5" />
             {itemCount > 0 && (
               <Badge
-                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground"
+                className="absolute -top-2 -right-2 h-5 min-w-5 flex items-center justify-center px-1 text-xs bg-red-500 text-white border-2 border-background"
               >
                 {itemCount}
               </Badge>
