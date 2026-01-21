@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,13 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Minus, Plus, Trash2, ShoppingCart, CreditCard, Banknote, ArrowRight, AlertTriangle } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart, CreditCard, Banknote, ArrowRight, AlertTriangle, History, ChevronDown, ChevronUp } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useCart } from "@/lib/cart";
 import { generateWhatsAppOrderLink } from "@/lib/whatsapp";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { loadCustomerInfo, saveCustomerInfo, saveOrder, loadOrderHistory, type SavedOrder } from "@/lib/customer-storage";
 
 export function OrderForm() {
   const { items, updateQuantity, removeItem, getSubtotal, getTotal, clearCart } = useCart();
@@ -43,6 +44,28 @@ export function OrderForm() {
     paymentMethod: "cash" as "cash" | "pos",
     notes: "",
   });
+
+  const [orderHistory, setOrderHistory] = useState<SavedOrder[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  useEffect(() => {
+    const savedInfo = loadCustomerInfo();
+    if (savedInfo) {
+      const [firstName = "", lastName = ""] = savedInfo.name.split(" ");
+      setFormData(prev => ({
+        ...prev,
+        firstName,
+        lastName: savedInfo.name.split(" ").slice(1).join(" ") || lastName,
+        customerPhone: savedInfo.phone,
+        mahalle: savedInfo.neighborhood,
+        sokak: savedInfo.street,
+        binaNo: savedInfo.buildingNo,
+        daireNo: savedInfo.apartmentNo,
+        notes: savedInfo.notes,
+      }));
+    }
+    setOrderHistory(loadOrderHistory());
+  }, []);
 
   const getFullName = () => `${formData.firstName} ${formData.lastName}`.trim();
   const getFullAddress = () => {
@@ -81,17 +104,6 @@ export function OrderForm() {
     },
     onSuccess: () => {
       clearCart();
-      setFormData({
-        firstName: "",
-        lastName: "",
-        customerPhone: "",
-        mahalle: "",
-        sokak: "",
-        binaNo: "",
-        daireNo: "",
-        paymentMethod: "cash",
-        notes: "",
-      });
       toast({
         title: "Sipariş oluşturuldu!",
         description: "WhatsApp açılıyor, siparişinizi gönderin.",
@@ -135,6 +147,28 @@ export function OrderForm() {
       });
       return;
     }
+
+    // Save customer info immediately (before API call) so it persists even if API fails
+    saveCustomerInfo({
+      name: getFullName(),
+      phone: formData.customerPhone,
+      neighborhood: formData.mahalle,
+      street: formData.sokak,
+      buildingNo: formData.binaNo,
+      apartmentNo: formData.daireNo,
+      notes: formData.notes,
+    });
+    
+    // Save order to local history immediately
+    saveOrder({
+      items: items.map(item => ({
+        name: item.menuItem.name,
+        quantity: item.quantity,
+        price: item.menuItem.price,
+      })),
+      total: getTotal().toFixed(2),
+    });
+    setOrderHistory(loadOrderHistory());
 
     // Generate WhatsApp link IMMEDIATELY before any async operation
     // This prevents popup blockers from blocking the window.open
@@ -201,6 +235,58 @@ export function OrderForm() {
             Bilgilerinizi girin ve WhatsApp ile kolayca sipariş verin.
           </p>
         </div>
+
+        {orderHistory.length > 0 && (
+          <Card className="mb-8" data-testid="card-order-history">
+            <CardHeader className="p-3 sm:p-4 cursor-pointer" onClick={() => setShowHistory(!showHistory)}>
+              <CardTitle className="flex items-center justify-between text-lg">
+                <div className="flex items-center gap-2">
+                  <History className="h-5 w-5 text-primary" />
+                  Önceki Siparişlerim
+                  <Badge variant="secondary">{orderHistory.length}</Badge>
+                </div>
+                {showHistory ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+              </CardTitle>
+            </CardHeader>
+            {showHistory && (
+              <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0">
+                <div className="space-y-3">
+                  {orderHistory.map((order) => (
+                    <div key={order.id} className="p-3 rounded-lg bg-muted/50 border" data-testid={`order-history-${order.id}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">
+                          {new Date(order.date).toLocaleDateString("tr-TR", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                        <span className="text-xs text-muted-foreground">Yerel kayıt</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="flex justify-between">
+                            <span>{item.quantity}x {item.name}</span>
+                            <span>{(parseFloat(item.price) * item.quantity).toFixed(2)} TL</span>
+                          </div>
+                        ))}
+                      </div>
+                      <Separator className="my-2" />
+                      <div className="flex items-center justify-between">
+                        <div className="font-medium">
+                          <span>Toplam: </span>
+                          <span className="text-primary">{order.total} TL</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            )}
+          </Card>
+        )}
 
         <div className="grid lg:grid-cols-2 gap-8">
           <Card data-testid="card-cart" className="overflow-hidden">

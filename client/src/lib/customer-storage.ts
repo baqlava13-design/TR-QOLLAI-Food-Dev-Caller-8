@@ -17,7 +17,6 @@ export interface SavedOrder {
     price: string;
   }>;
   total: string;
-  status: "pending" | "confirmed" | "delivered";
 }
 
 const CUSTOMER_INFO_KEY = "kolay_siparis_customer";
@@ -43,14 +42,13 @@ export function loadCustomerInfo(): SavedCustomerInfo | null {
   return null;
 }
 
-export function saveOrder(order: Omit<SavedOrder, "id" | "date" | "status">): void {
+export function saveOrder(order: Omit<SavedOrder, "id" | "date">): void {
   try {
     const history = loadOrderHistory();
     const newOrder: SavedOrder = {
       ...order,
       id: Date.now().toString(),
       date: new Date().toISOString(),
-      status: "pending",
     };
     history.unshift(newOrder);
     if (history.length > 10) {
