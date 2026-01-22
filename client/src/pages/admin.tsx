@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useUpload } from "@/hooks/use-upload";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1286,6 +1287,51 @@ function SettingsTab() {
     });
   };
 
+  // File upload handler for images
+  const handleImageUpload = async (file: File, settingKey: string) => {
+    try {
+      // Step 1: Request presigned URL
+      const urlResponse = await fetch("/api/uploads/request-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: file.name,
+          size: file.size,
+          contentType: file.type,
+        }),
+      });
+      
+      if (!urlResponse.ok) {
+        throw new Error("Yükleme URL'si alınamadı");
+      }
+      
+      const { uploadURL, objectPath } = await urlResponse.json();
+      
+      // Step 2: Upload file directly to presigned URL
+      const uploadResponse = await fetch(uploadURL, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+      
+      if (!uploadResponse.ok) {
+        throw new Error("Dosya yüklenemedi");
+      }
+      
+      // Step 3: Save the object path to settings
+      setSettings(prev => ({ ...prev, [settingKey]: objectPath }));
+      saveMutation.mutate({ key: settingKey, value: objectPath });
+      
+      toast({ title: "Resim başarıyla yüklendi" });
+    } catch (error) {
+      toast({ 
+        title: "Hata", 
+        description: error instanceof Error ? error.message : "Resim yüklenemedi", 
+        variant: "destructive" 
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -1334,18 +1380,32 @@ function SettingsTab() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Logo URL</Label>
+                  <Label>Logo Yukle</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, "company_logo");
+                      }}
+                      data-testid="input-company-logo-file"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>veya URL girin</Label>
                   <Input
                     value={settings.company_logo}
                     onChange={(e) => setSettings({ ...settings, company_logo: e.target.value })}
                     placeholder="https://..."
                     data-testid="input-company-logo"
                   />
+                  <Button onClick={() => handleSave("company_logo")} size="sm" className="mt-2">URL Kaydet</Button>
                 </div>
                 {settings.company_logo && (
                   <img src={settings.company_logo} alt="Logo" className="w-24 h-24 object-contain rounded border p-2" />
                 )}
-                <Button onClick={() => handleSave("company_logo")} size="sm">Kaydet</Button>
               </CardContent>
             </Card>
 
@@ -1357,17 +1417,31 @@ function SettingsTab() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Hero Resim URL</Label>
+                  <Label>Hero Resmi Yukle</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, "hero_image");
+                      }}
+                      data-testid="input-hero-image-file"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>veya URL girin</Label>
                   <Input
                     value={settings.hero_image}
                     onChange={(e) => setSettings({ ...settings, hero_image: e.target.value })}
                     placeholder="https://..."
                   />
+                  <Button onClick={() => handleSave("hero_image")} size="sm" className="mt-2">URL Kaydet</Button>
                 </div>
                 {settings.hero_image && (
                   <img src={settings.hero_image} alt="Hero" className="w-full h-32 object-cover rounded" />
                 )}
-                <Button onClick={() => handleSave("hero_image")} size="sm">Kaydet</Button>
               </CardContent>
             </Card>
 
