@@ -13,8 +13,13 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import * as XLSX from "xlsx";
 import multer from "multer";
+import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_integrations/object_storage";
 
 const upload = multer({ storage: multer.memoryStorage() });
+const objectStorageService = new ObjectStorageService();
+
+// Image setting keys that should trigger old image deletion
+const IMAGE_SETTING_KEYS = ["hero_image", "company_logo"];
 
 declare module "express-session" {
   interface SessionData {
@@ -893,9 +898,20 @@ export async function registerRoutes(
       if (!key) {
         return res.status(400).json({ error: "Key is required" });
       }
+      
+      // If this is an image setting, delete the old image first
+      if (IMAGE_SETTING_KEYS.includes(key)) {
+        const oldSetting = await storage.getSetting(key);
+        if (oldSetting?.value && objectStorageService.isLocalObjectPath(oldSetting.value)) {
+          // Delete old image from object storage
+          await objectStorageService.deleteObject(oldSetting.value);
+        }
+      }
+      
       const setting = await storage.setSetting(key, value || "");
       res.json(setting);
     } catch (error) {
+      console.error("Error saving setting:", error);
       res.status(500).json({ error: "Failed to save setting" });
     }
   });
@@ -1017,6 +1033,9 @@ export async function registerRoutes(
       res.status(500).json({ error: "Failed to delete menu item" });
     }
   });
+
+  // Register object storage routes for file uploads
+  registerObjectStorageRoutes(app);
 
   return httpServer;
 }
