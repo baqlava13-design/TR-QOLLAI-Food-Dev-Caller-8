@@ -24,7 +24,7 @@ export function Hero() {
 
       <div className="relative z-10 w-full max-w-4xl mx-auto px-4 py-12 sm:py-16 text-center">
         <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4">
-          {settings.hero_title || "Destan Pide"}
+          {settings.hero_title || "Siparis Kolay"}
         </h1>
         
         <p className="text-base sm:text-lg text-white/90 mb-5 sm:mb-6 max-w-xl mx-auto px-2">

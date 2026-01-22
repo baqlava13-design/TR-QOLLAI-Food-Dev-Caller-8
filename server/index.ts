@@ -23,7 +23,7 @@ app.use(
       tableName: "user_sessions",
       createTableIfMissing: true,
     }),
-    secret: process.env.SESSION_SECRET || "destan-pide-secret-key-2024",
+    secret: process.env.SESSION_SECRET || "siparis-kolay-secret-key-2024",
     resave: false,
     saveUninitialized: false,
     cookie: {

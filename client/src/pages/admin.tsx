@@ -1449,7 +1449,7 @@ function SettingsTab() {
                   <Input
                     value={settings.hero_title}
                     onChange={(e) => setSettings({ ...settings, hero_title: e.target.value })}
-                    placeholder="Destan Pide"
+                    placeholder="Siparis Kolay"
                     data-testid="input-hero-title"
                   />
                 </div>
@@ -1549,7 +1549,7 @@ function SettingsTab() {
                   <Input
                     value={settings.footer_logo_name}
                     onChange={(e) => setSettings({ ...settings, footer_logo_name: e.target.value })}
-                    placeholder="Destan Pide"
+                    placeholder="Siparis Kolay"
                     data-testid="input-footer-logo-name"
                   />
                 </div>
@@ -1630,7 +1630,7 @@ function SettingsTab() {
                   <Input
                     value={settings.footer_email}
                     onChange={(e) => setSettings({ ...settings, footer_email: e.target.value })}
-                    placeholder="info@destanpide.com"
+                    placeholder="info@sipariskolay.com"
                     data-testid="input-footer-email"
                   />
                 </div>

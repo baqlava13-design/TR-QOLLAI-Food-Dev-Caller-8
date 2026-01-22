@@ -84,7 +84,7 @@ Odeme: ${paymentText}
 
 Siparisini hazirlamaya basladik! Teslimat suremiz 30-45 dakikadir.
 
-Destan Pide
+Siparis Kolay
 `.trim();
 
   const encodedMessage = encodeURIComponent(message);
