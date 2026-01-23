@@ -56,6 +56,7 @@ import {
   Download,
   Upload,
   Type,
+  Gift,
 } from "lucide-react";
 import { SiWhatsapp, SiFacebook, SiInstagram } from "react-icons/si";
 import { useTheme } from "@/lib/theme";
@@ -1201,6 +1202,154 @@ function ReviewsTab() {
   );
 }
 
+function CrossSellTab() {
+  const { toast } = useToast();
+  
+  const { data: crossSellProducts = [], isLoading: loadingCrossSell } = useQuery({
+    queryKey: ["/api/admin/cross-sell"],
+    queryFn: async () => {
+      const token = localStorage.getItem("adminToken");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch("/api/admin/cross-sell", { credentials: "include", headers });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+  });
+
+  const { data: menuItems = [], isLoading: loadingMenu } = useQuery({
+    queryKey: ["/api/menu-items"],
+  });
+
+  const addMutation = useMutation({
+    mutationFn: async (menuItemId: string) => {
+      const token = localStorage.getItem("adminToken");
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch("/api/admin/cross-sell", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ menuItemId }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/cross-sell"] });
+      toast({ title: "Ürün eklendi" });
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Ürün eklenemedi", variant: "destructive" });
+    },
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const token = localStorage.getItem("adminToken");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      await fetch(`/api/admin/cross-sell/${id}`, {
+        method: "DELETE",
+        headers,
+        credentials: "include",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/cross-sell"] });
+      toast({ title: "Ürün kaldırıldı" });
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Ürün kaldırılamadı", variant: "destructive" });
+    },
+  });
+
+  const selectedIds = crossSellProducts.map((p: any) => p.menuItemId);
+  const availableItems = menuItems.filter((item: MenuItem) => !selectedIds.includes(item.id));
+
+  if (loadingCrossSell || loadingMenu) {
+    return <div className="p-8 text-center">Yükleniyor...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold">Sepet Upsell / Cross-sell Ürünleri</h2>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Gift className="h-5 w-5" /> Sepette Gösterilecek Önerilen Ürünler
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Müşteriler sepetlerini görüntülerken bu ürünler öneri olarak gösterilecek.
+          </p>
+
+          <div className="space-y-2">
+            <Label>Yeni Ürün Ekle</Label>
+            <Select onValueChange={(value) => addMutation.mutate(value)}>
+              <SelectTrigger data-testid="select-cross-sell-product">
+                <SelectValue placeholder="Ürün seçin..." />
+              </SelectTrigger>
+              <SelectContent>
+                {availableItems.map((item: MenuItem) => (
+                  <SelectItem key={item.id} value={item.id}>
+                    {item.name} - {parseFloat(item.price).toFixed(2)} TL
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2 mt-4">
+            <Label>Seçili Ürünler ({crossSellProducts.length})</Label>
+            {crossSellProducts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Henüz ürün eklenmedi.</p>
+            ) : (
+              <div className="space-y-2">
+                {crossSellProducts.map((product: any) => (
+                  <div
+                    key={product.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted"
+                    data-testid={`cross-sell-item-${product.id}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {product.menuItem?.image && (
+                        <img
+                          src={product.menuItem.image}
+                          alt={product.menuItem?.name}
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                      )}
+                      <div>
+                        <p className="font-medium">{product.menuItem?.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {parseFloat(product.menuItem?.price || 0).toFixed(2)} TL
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => removeMutation.mutate(product.id)}
+                      data-testid={`button-remove-cross-sell-${product.id}`}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function SettingsTab() {
   const { toast } = useToast();
   const [settings, setSettings] = useState<Record<string, string>>({
@@ -2177,7 +2326,7 @@ export default function Admin() {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="orders" className="gap-2">
               <ShoppingBag className="h-4 w-4" />
               <span className="hidden sm:inline">Siparisler</span>
@@ -2193,6 +2342,10 @@ export default function Admin() {
             <TabsTrigger value="categories" className="gap-2">
               <FolderOpen className="h-4 w-4" />
               <span className="hidden sm:inline">Kategoriler</span>
+            </TabsTrigger>
+            <TabsTrigger value="cross-sell" className="gap-2">
+              <Gift className="h-4 w-4" />
+              <span className="hidden sm:inline">Upsell</span>
             </TabsTrigger>
             <TabsTrigger value="reviews" className="gap-2">
               <Star className="h-4 w-4" />
@@ -2218,6 +2371,10 @@ export default function Admin() {
 
           <TabsContent value="categories">
             <CategoriesTab />
+          </TabsContent>
+
+          <TabsContent value="cross-sell">
+            <CrossSellTab />
           </TabsContent>
 
           <TabsContent value="reviews">
