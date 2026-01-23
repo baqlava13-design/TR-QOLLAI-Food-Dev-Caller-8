@@ -8,10 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Minus, Plus, Trash2, ShoppingCart, CreditCard, Banknote, ArrowRight, AlertTriangle, History, ChevronDown, ChevronUp, Gift, RotateCcw } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart, CreditCard, Banknote, ArrowRight, AlertTriangle, History, ChevronDown, ChevronUp, Gift, RotateCcw, Copy, Check } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useCart } from "@/lib/cart";
-import { generateWhatsAppOrderLink } from "@/lib/whatsapp";
+import { generateWhatsAppOrderLink, generateOrderMessage } from "@/lib/whatsapp";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -57,6 +57,8 @@ export function OrderForm() {
   const [orderHistory, setOrderHistory] = useState<SavedOrder[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [whatsappLink, setWhatsappLink] = useState<string | null>(null);
+  const [orderMessage, setOrderMessage] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const savedInfo = loadCustomerInfo();
@@ -181,7 +183,7 @@ export function OrderForm() {
     });
     setOrderHistory(loadOrderHistory());
 
-    // Generate WhatsApp link
+    // Generate WhatsApp link and message
     const whatsappNumber = getWhatsAppNumber();
     const link = generateWhatsAppOrderLink(
       items,
@@ -193,8 +195,19 @@ export function OrderForm() {
       whatsappNumber
     );
     
-    // Set the link for display - user will click it directly
+    const message = generateOrderMessage(
+      items,
+      getFullName(),
+      formData.customerPhone,
+      getFullAddress(),
+      formData.paymentMethod,
+      formData.notes
+    );
+    
+    // Set the link and message for display
     setWhatsappLink(link);
+    setOrderMessage(message);
+    setCopied(false);
     
     // Then save order to database in background
     createOrderMutation.mutate({ ...formData, items });
@@ -669,7 +682,7 @@ export function OrderForm() {
               Siparişiniz Hazır
             </DialogTitle>
             <DialogDescription>
-              Aşağıdaki butona tıklayarak WhatsApp'ta siparişinizi gönderin.
+              WhatsApp ile siparişinizi gönderin veya mesajı kopyalayın.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -689,9 +702,46 @@ export function OrderForm() {
               <SiWhatsapp className="h-6 w-6" />
               WhatsApp ile Gönder
             </a>
-            <p className="text-xs text-center text-muted-foreground">
-              Butona tıkladığınızda WhatsApp açılacak ve sipariş mesajınız hazır olacak.
-            </p>
+            
+            <div className="relative">
+              <Separator />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
+                veya
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Mesaj iPhone'da görünmüyorsa:</p>
+              <div className="p-3 rounded-lg bg-muted text-sm break-words max-h-24 overflow-y-auto">
+                {orderMessage}
+              </div>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  navigator.clipboard.writeText(orderMessage);
+                  setCopied(true);
+                  toast({ title: "Mesaj kopyalandı!" });
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                data-testid="button-copy-message"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Kopyalandı
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Mesajı Kopyala
+                  </>
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Kopyaladıktan sonra WhatsApp'ı açın ve mesajı yapıştırın.
+              </p>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
