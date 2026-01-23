@@ -50,16 +50,10 @@ Siparis zamani: ${new Date().toLocaleString("tr-TR")}
 }
 
 export function openWhatsAppLink(url: string): void {
-  // Create a temporary anchor element for more reliable opening across devices
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.target = "_blank";
-  anchor.rel = "noopener noreferrer";
-  
-  // This approach works better on mobile devices
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
+  // Use window.location.href for same-window navigation to WhatsApp
+  // This is more reliable than window.open or anchor clicks in production
+  // WhatsApp will handle the redirect properly on both mobile and desktop
+  window.location.href = url;
 }
 
 export function generateCustomerConfirmationLink(
