@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Minus, Plus, Trash2, ShoppingCart, CreditCard, Banknote, ArrowRight, AlertTriangle, History, ChevronDown, ChevronUp, Gift } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart, CreditCard, Banknote, ArrowRight, AlertTriangle, History, ChevronDown, ChevronUp, Gift, RotateCcw } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useCart } from "@/lib/cart";
 import { generateWhatsAppOrderLink } from "@/lib/whatsapp";
@@ -26,6 +26,10 @@ export function OrderForm() {
 
   const { data: crossSellProducts = [] } = useQuery<any[]>({
     queryKey: ["/api/cross-sell"],
+  });
+
+  const { data: menuItems = [] } = useQuery<any[]>({
+    queryKey: ["/api/menu-items"],
   });
   
   const getWhatsAppNumber = () => {
@@ -166,6 +170,7 @@ export function OrderForm() {
     // Save order to local history immediately
     saveOrder({
       items: items.map(item => ({
+        menuItemId: item.menuItem.id,
         name: item.menuItem.name,
         quantity: item.quantity,
         price: item.menuItem.price,
@@ -225,6 +230,30 @@ export function OrderForm() {
     window.location.href = whatsappLink;
   };
 
+  const handleReorder = (order: SavedOrder) => {
+    let addedCount = 0;
+    order.items.forEach((item) => {
+      const menuItem = menuItems.find((m: any) => m.id === item.menuItemId || m.name === item.name);
+      if (menuItem && menuItem.isAvailable) {
+        addItem(menuItem, item.quantity, []);
+        addedCount++;
+      }
+    });
+    
+    if (addedCount > 0) {
+      toast({
+        title: "Sepete eklendi",
+        description: `${addedCount} ürün sepetinize eklendi.`,
+      });
+    } else {
+      toast({
+        title: "Ürünler bulunamadı",
+        description: "Bu siparişin ürünleri artık mevcut değil.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <section id="order" className="py-12 sm:py-16 md:py-24 bg-muted/30 overflow-x-hidden" data-testid="section-order">
       <div className="max-w-7xl mx-auto px-3 sm:px-4">
@@ -247,7 +276,7 @@ export function OrderForm() {
                 <div className="flex items-center gap-2">
                   <History className="h-5 w-5 text-primary" />
                   Önceki Siparişlerim
-                  <Badge variant="secondary">{orderHistory.length}</Badge>
+                  <Badge variant="secondary">{Math.min(orderHistory.length, 3)}</Badge>
                 </div>
                 {showHistory ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
               </CardTitle>
@@ -255,34 +284,37 @@ export function OrderForm() {
             {showHistory && (
               <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0">
                 <div className="space-y-3">
-                  {orderHistory.map((order) => (
-                    <div key={order.id} className="p-3 rounded-lg bg-muted/50 border" data-testid={`order-history-${order.id}`}>
+                  {orderHistory.slice(0, 3).map((order) => (
+                    <div 
+                      key={order.id} 
+                      className="p-3 rounded-lg bg-muted/50 border cursor-pointer hover-elevate transition-all"
+                      onClick={() => handleReorder(order)}
+                      data-testid={`order-history-${order.id}`}
+                    >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium">
                           {new Date(order.date).toLocaleDateString("tr-TR", {
                             day: "numeric",
-                            month: "long",
-                            year: "numeric",
+                            month: "short",
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
                         </span>
-                        <span className="text-xs text-muted-foreground">Yerel kayıt</span>
+                        <Badge variant="outline" className="text-xs gap-1">
+                          <RotateCcw className="h-3 w-3" />
+                          Tekrar Sipariş
+                        </Badge>
                       </div>
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        {order.items.map((item, idx) => (
-                          <div key={idx} className="flex justify-between">
-                            <span>{item.quantity}x {item.name}</span>
-                            <span>{(parseFloat(item.price) * item.quantity).toFixed(2)} TL</span>
-                          </div>
+                      <div className="text-sm text-muted-foreground">
+                        {order.items.slice(0, 3).map((item, idx) => (
+                          <span key={idx}>
+                            {item.quantity}x {item.name}{idx < Math.min(order.items.length, 3) - 1 ? ", " : ""}
+                          </span>
                         ))}
+                        {order.items.length > 3 && <span className="text-primary"> +{order.items.length - 3} daha</span>}
                       </div>
-                      <Separator className="my-2" />
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium">
-                          <span>Toplam: </span>
-                          <span className="text-primary">{order.total} TL</span>
-                        </div>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="font-medium text-primary">{order.total} TL</span>
                       </div>
                     </div>
                   ))}

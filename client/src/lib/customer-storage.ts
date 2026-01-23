@@ -12,6 +12,7 @@ export interface SavedOrder {
   id: string;
   date: string;
   items: Array<{
+    menuItemId: string;
     name: string;
     quantity: number;
     price: string;
