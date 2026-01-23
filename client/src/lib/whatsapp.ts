@@ -2,19 +2,16 @@ import type { CartItem } from "@shared/schema";
 
 const DEFAULT_PHONE = import.meta.env.VITE_WHATSAPP_PHONE || "905551234567";
 
-function isDesktop(): boolean {
-  return !/iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-}
-
-function buildWhatsAppUrl(phone: string, message: string): string {
-  const cleanPhone = phone.replace(/\D/g, "");
-  const encodedMessage = encodeURIComponent(message);
-  
-  if (isDesktop()) {
-    return `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`;
-  } else {
-    return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
-  }
+function turkishToAscii(text: string): string {
+  const map: Record<string, string> = {
+    'ç': 'c', 'Ç': 'C',
+    'ğ': 'g', 'Ğ': 'G',
+    'ı': 'i', 'İ': 'I',
+    'ö': 'o', 'Ö': 'O',
+    'ş': 's', 'Ş': 'S',
+    'ü': 'u', 'Ü': 'U',
+  };
+  return text.replace(/[çÇğĞıİöÖşŞüÜ]/g, char => map[char] || char);
 }
 
 export function generateWhatsAppOrderLink(
@@ -26,12 +23,11 @@ export function generateWhatsAppOrderLink(
   notes?: string,
   businessPhone?: string
 ): string {
-  const phoneNumber = businessPhone || DEFAULT_PHONE;
+  const phoneNumber = (businessPhone || DEFAULT_PHONE).replace(/\D/g, "");
   
   const orderLines = items.map((item) => {
-    const upsellNames = item.selectedUpsells.map((u) => u.name).join(", ");
-    const upsellText = upsellNames ? ` (${upsellNames})` : "";
-    return `${item.quantity}x ${item.menuItem.name}${upsellText} ${(parseFloat(item.menuItem.price) * item.quantity).toFixed(2)} TL`;
+    const name = turkishToAscii(item.menuItem.name);
+    return `${item.quantity}x ${name} ${(parseFloat(item.menuItem.price) * item.quantity).toFixed(2)}TL`;
   });
 
   const subtotal = items.reduce((sum, item) => {
@@ -41,34 +37,27 @@ export function generateWhatsAppOrderLink(
   }, 0);
 
   const paymentText = paymentMethod === "cash" ? "Nakit" : "POS";
+  const cleanName = turkishToAscii(customerName);
+  const cleanAddress = turkishToAscii(customerAddress);
+  const cleanNotes = notes ? turkishToAscii(notes) : "";
 
-  const messageParts = [
-    "YENI SIPARIS",
-    "",
-    ...orderLines,
-    "",
-    `Toplam: ${subtotal.toFixed(2)} TL`,
-    "",
-    `Ad: ${customerName}`,
-    `Tel: ${customerPhone}`,
-    `Adres: ${customerAddress}`,
-    `Odeme: ${paymentText}`,
-  ];
+  let message = `SIPARIS\n\n${orderLines.join("\n")}\n\nToplam: ${subtotal.toFixed(2)}TL\n\nAd: ${cleanName}\nTel: ${customerPhone}\nAdres: ${cleanAddress}\nOdeme: ${paymentText}`;
   
-  if (notes && notes.trim()) {
-    messageParts.push(`Not: ${notes}`);
+  if (cleanNotes) {
+    message += `\nNot: ${cleanNotes}`;
   }
-  
-  messageParts.push("");
-  messageParts.push(`Tarih: ${new Date().toLocaleString("tr-TR")}`);
-  
-  const message = messageParts.join("\n");
-  
-  return buildWhatsAppUrl(phoneNumber, message);
+
+  const encoded = encodeURIComponent(message);
+  return `https://wa.me/${phoneNumber}?text=${encoded}`;
 }
 
 export function openWhatsAppLink(url: string): void {
-  window.location.href = url;
+  const a = document.createElement("a");
+  a.href = url;
+  a.target = "_self";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 export function generateCustomerConfirmationLink(
@@ -78,7 +67,7 @@ export function generateCustomerConfirmationLink(
   paymentMethod: "cash" | "pos"
 ): string {
   const orderLines = items.map((item) => {
-    return `${item.quantity}x ${item.menuItem.name}`;
+    return `${item.quantity}x ${turkishToAscii(item.menuItem.name)}`;
   });
 
   const subtotal = items.reduce((sum, item) => {
@@ -87,8 +76,6 @@ export function generateCustomerConfirmationLink(
     return sum + (itemPrice + upsellsPrice) * item.quantity;
   }, 0);
 
-  const paymentText = paymentMethod === "cash" ? "Nakit" : "POS";
-
   let formattedPhone = customerPhone.replace(/\D/g, "");
   if (formattedPhone.startsWith("0")) {
     formattedPhone = "90" + formattedPhone.substring(1);
@@ -96,31 +83,15 @@ export function generateCustomerConfirmationLink(
     formattedPhone = "90" + formattedPhone;
   }
 
-  const message = `Merhaba ${customerName}!
+  const cleanName = turkishToAscii(customerName);
+  const message = `Merhaba ${cleanName}! Siparisinizi aldik. Toplam: ${subtotal.toFixed(2)}TL. Teslimat 30-45 dk.`;
 
-Siparisini aldik:
-${orderLines.join("\n")}
-
-Toplam: ${subtotal.toFixed(2)} TL
-Odeme: ${paymentText}
-
-Teslimat 30-45 dakika.
-
-Siparis Kolay`;
-
-  return buildWhatsAppUrl(formattedPhone, message);
+  const encoded = encodeURIComponent(message);
+  return `https://wa.me/${formattedPhone}?text=${encoded}`;
 }
 
 export function generateShareLink(text: string): string {
-  const shareMessage = `${text}
-
-Siparis Kolay - WhatsApp ile hizli teslimat.`;
-
-  const encodedMessage = encodeURIComponent(shareMessage);
-  
-  if (isDesktop()) {
-    return `https://web.whatsapp.com/send?text=${encodedMessage}`;
-  } else {
-    return `https://wa.me/?text=${encodedMessage}`;
-  }
+  const cleanText = turkishToAscii(text);
+  const encoded = encodeURIComponent(cleanText);
+  return `https://wa.me/?text=${encoded}`;
 }
