@@ -2,19 +2,18 @@ import type { CartItem } from "@shared/schema";
 
 const DEFAULT_PHONE = import.meta.env.VITE_WHATSAPP_PHONE || "905551234567";
 
-// Detect if user is on a mobile device
-function isMobileDevice(): boolean {
-  return /iPhone|iPad|iPod|Android|webOS|BlackBerry/i.test(navigator.userAgent);
+function isDesktop(): boolean {
+  return !/iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
-// Generate WhatsApp URL based on device type
-function getWhatsAppUrl(phone: string, encodedMessage: string): string {
-  if (isMobileDevice()) {
-    // Mobile devices (iPhone, Android) - use whatsapp:// protocol
-    return `whatsapp://send?phone=${phone}&text=${encodedMessage}`;
+function buildWhatsAppUrl(phone: string, message: string): string {
+  const cleanPhone = phone.replace(/\D/g, "");
+  const encodedMessage = encodeURIComponent(message);
+  
+  if (isDesktop()) {
+    return `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`;
   } else {
-    // Desktop browsers - use web.whatsapp.com
-    return `https://web.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
+    return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
   }
 }
 
@@ -28,10 +27,11 @@ export function generateWhatsAppOrderLink(
   businessPhone?: string
 ): string {
   const phoneNumber = businessPhone || DEFAULT_PHONE;
+  
   const orderLines = items.map((item) => {
     const upsellNames = item.selectedUpsells.map((u) => u.name).join(", ");
-    const upsellText = upsellNames ? ` (+ ${upsellNames})` : "";
-    return `${item.quantity}x ${item.menuItem.name}${upsellText} - ${(parseFloat(item.menuItem.price) * item.quantity).toFixed(2)} TL`;
+    const upsellText = upsellNames ? ` (${upsellNames})` : "";
+    return `${item.quantity}x ${item.menuItem.name}${upsellText} ${(parseFloat(item.menuItem.price) * item.quantity).toFixed(2)} TL`;
   });
 
   const subtotal = items.reduce((sum, item) => {
@@ -40,52 +40,35 @@ export function generateWhatsAppOrderLink(
     return sum + (itemPrice + upsellsPrice) * item.quantity;
   }, 0);
 
-  const paymentText = paymentMethod === "cash" ? "Nakit" : "POS ile Kart";
+  const paymentText = paymentMethod === "cash" ? "Nakit" : "POS";
 
-  // Build message with simple format - avoid special characters that may cause issues
-  const lines: string[] = [
+  const messageParts = [
     "YENI SIPARIS",
     "",
     ...orderLines,
     "",
     `Toplam: ${subtotal.toFixed(2)} TL`,
     "",
-    "Musteri Bilgileri:",
     `Ad: ${customerName}`,
-    `Telefon: ${customerPhone}`,
+    `Tel: ${customerPhone}`,
     `Adres: ${customerAddress}`,
     `Odeme: ${paymentText}`,
   ];
   
   if (notes && notes.trim()) {
-    lines.push(`Not: ${notes}`);
+    messageParts.push(`Not: ${notes}`);
   }
   
-  lines.push("");
-  lines.push(`Siparis zamani: ${new Date().toLocaleString("tr-TR")}`);
+  messageParts.push("");
+  messageParts.push(`Tarih: ${new Date().toLocaleString("tr-TR")}`);
   
-  const message = lines.join("\n");
-
-  const encodedMessage = encodeURIComponent(message);
-  // Clean phone number - remove any non-digit characters and leading +
-  const cleanPhone = phoneNumber.replace(/\D/g, "");
-  // Use device-specific URL format
-  return getWhatsAppUrl(cleanPhone, encodedMessage);
+  const message = messageParts.join("\n");
+  
+  return buildWhatsAppUrl(phoneNumber, message);
 }
 
 export function openWhatsAppLink(url: string): void {
-  // Try multiple methods to open WhatsApp link
-  // This handles various browser contexts (iframe, popup blockers, mobile, desktop)
-  
-  // Method 1: Create an anchor element and click it (works in most cases)
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.target = "_blank";
-  anchor.rel = "noopener noreferrer";
-  anchor.style.display = "none";
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
+  window.location.href = url;
 }
 
 export function generateCustomerConfirmationLink(
@@ -104,9 +87,8 @@ export function generateCustomerConfirmationLink(
     return sum + (itemPrice + upsellsPrice) * item.quantity;
   }, 0);
 
-  const paymentText = paymentMethod === "cash" ? "Nakit" : "POS ile Kart";
+  const paymentText = paymentMethod === "cash" ? "Nakit" : "POS";
 
-  // Format phone number - ensure it has country code
   let formattedPhone = customerPhone.replace(/\D/g, "");
   if (formattedPhone.startsWith("0")) {
     formattedPhone = "90" + formattedPhone.substring(1);
@@ -114,8 +96,7 @@ export function generateCustomerConfirmationLink(
     formattedPhone = "90" + formattedPhone;
   }
 
-  const message = `
-Merhaba ${customerName}!
+  const message = `Merhaba ${customerName}!
 
 Siparisini aldik:
 ${orderLines.join("\n")}
@@ -123,27 +104,23 @@ ${orderLines.join("\n")}
 Toplam: ${subtotal.toFixed(2)} TL
 Odeme: ${paymentText}
 
-Siparisini hazirlamaya basladik! Teslimat suremiz 30-45 dakikadir.
+Teslimat 30-45 dakika.
 
-Siparis Kolay
-`.trim();
+Siparis Kolay`;
 
-  const encodedMessage = encodeURIComponent(message);
-  // Use device-specific URL format
-  return getWhatsAppUrl(formattedPhone, encodedMessage);
+  return buildWhatsAppUrl(formattedPhone, message);
 }
 
 export function generateShareLink(text: string): string {
-  const shareMessage = `
-${text}
+  const shareMessage = `${text}
 
-Siparis Kolay'dan siparis vermek cok kolay! WhatsApp ile hizli teslimat.
-`.trim();
+Siparis Kolay - WhatsApp ile hizli teslimat.`;
+
   const encodedMessage = encodeURIComponent(shareMessage);
-  // For sharing without specific phone number
-  if (isMobileDevice()) {
-    return `whatsapp://send?text=${encodedMessage}`;
-  } else {
+  
+  if (isDesktop()) {
     return `https://web.whatsapp.com/send?text=${encodedMessage}`;
+  } else {
+    return `https://wa.me/?text=${encodedMessage}`;
   }
 }
