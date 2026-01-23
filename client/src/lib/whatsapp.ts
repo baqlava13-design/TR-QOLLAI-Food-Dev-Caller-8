@@ -53,7 +53,8 @@ export function generateWhatsAppOrderLink(
   const encodedMessage = encodeURIComponent(message);
   // Clean phone number - remove any non-digit characters and leading +
   const cleanPhone = phoneNumber.replace(/\D/g, "");
-  return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+  // Use api.whatsapp.com/send format - more reliable on iOS and all browsers
+  return `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`;
 }
 
 export function openWhatsAppLink(url: string): void {
@@ -112,15 +113,17 @@ Siparis Kolay
 `.trim();
 
   const encodedMessage = encodeURIComponent(message);
-  return `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
+  // Use api.whatsapp.com/send format - more reliable on iOS and all browsers
+  return `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodedMessage}`;
 }
 
 export function generateShareLink(text: string): string {
   const shareMessage = `
 ${text}
 
-Lezzet Express'ten siparis vermek cok kolay! WhatsApp ile hizli teslimat.
+Siparis Kolay'dan siparis vermek cok kolay! WhatsApp ile hizli teslimat.
 `.trim();
   const encodedMessage = encodeURIComponent(shareMessage);
-  return `https://wa.me/?text=${encodedMessage}`;
+  // Use api.whatsapp.com/send for sharing (without phone number for general sharing)
+  return `https://api.whatsapp.com/send?text=${encodedMessage}`;
 }
