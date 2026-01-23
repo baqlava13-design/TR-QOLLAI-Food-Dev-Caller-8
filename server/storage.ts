@@ -30,6 +30,9 @@ import {
   type InsertAdminUser,
   type CrossSellProduct,
   type InsertCrossSellProduct,
+  neighborhoods,
+  type Neighborhood,
+  type InsertNeighborhood,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, gte, and, sql, lt } from "drizzle-orm";
@@ -120,6 +123,14 @@ export interface IStorage {
   addCrossSellProduct(data: InsertCrossSellProduct): Promise<CrossSellProduct>;
   removeCrossSellProduct(id: string): Promise<boolean>;
   updateCrossSellProduct(id: string, data: Partial<InsertCrossSellProduct>): Promise<CrossSellProduct | undefined>;
+
+  // Neighborhoods
+  getNeighborhoods(): Promise<Neighborhood[]>;
+  getActiveNeighborhoods(): Promise<Neighborhood[]>;
+  getNeighborhoodById(id: string): Promise<Neighborhood | undefined>;
+  createNeighborhood(neighborhood: InsertNeighborhood): Promise<Neighborhood>;
+  updateNeighborhood(id: string, neighborhood: Partial<InsertNeighborhood>): Promise<Neighborhood | undefined>;
+  deleteNeighborhood(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -479,6 +490,35 @@ export class DatabaseStorage implements IStorage {
   async updateCrossSellProduct(id: string, data: Partial<InsertCrossSellProduct>): Promise<CrossSellProduct | undefined> {
     const [updated] = await db.update(crossSellProducts).set(data).where(eq(crossSellProducts.id, id)).returning();
     return updated || undefined;
+  }
+
+  // Neighborhoods
+  async getNeighborhoods(): Promise<Neighborhood[]> {
+    return db.select().from(neighborhoods).orderBy(neighborhoods.sortOrder);
+  }
+
+  async getActiveNeighborhoods(): Promise<Neighborhood[]> {
+    return db.select().from(neighborhoods).where(eq(neighborhoods.isActive, true)).orderBy(neighborhoods.sortOrder);
+  }
+
+  async getNeighborhoodById(id: string): Promise<Neighborhood | undefined> {
+    const [neighborhood] = await db.select().from(neighborhoods).where(eq(neighborhoods.id, id));
+    return neighborhood || undefined;
+  }
+
+  async createNeighborhood(neighborhood: InsertNeighborhood): Promise<Neighborhood> {
+    const [created] = await db.insert(neighborhoods).values(neighborhood).returning();
+    return created;
+  }
+
+  async updateNeighborhood(id: string, neighborhood: Partial<InsertNeighborhood>): Promise<Neighborhood | undefined> {
+    const [updated] = await db.update(neighborhoods).set(neighborhood).where(eq(neighborhoods.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteNeighborhood(id: string): Promise<boolean> {
+    await db.delete(neighborhoods).where(eq(neighborhoods.id, id));
+    return true;
   }
 }
 

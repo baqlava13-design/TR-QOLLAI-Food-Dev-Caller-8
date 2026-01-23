@@ -9,6 +9,7 @@ import {
   insertOrderItemSchema,
   insertReviewSchema,
   insertCrossSellProductSchema,
+  insertNeighborhoodSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
@@ -1009,6 +1010,67 @@ export async function registerRoutes(
       res.json(products);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch cross-sell products" });
+    }
+  });
+
+  // Neighborhoods (Public - for delivery form)
+  app.get("/api/neighborhoods", async (req, res) => {
+    try {
+      const neighborhoods = await storage.getActiveNeighborhoods();
+      res.json(neighborhoods);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch neighborhoods" });
+    }
+  });
+
+  // Admin Neighborhoods (protected)
+  app.get("/api/admin/neighborhoods", requireAdmin, async (req, res) => {
+    try {
+      const neighborhoods = await storage.getNeighborhoods();
+      res.json(neighborhoods);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch neighborhoods" });
+    }
+  });
+
+  app.post("/api/admin/neighborhoods", requireAdmin, async (req, res) => {
+    try {
+      const data = insertNeighborhoodSchema.parse(req.body);
+      const neighborhood = await storage.createNeighborhood(data);
+      res.status(201).json(neighborhood);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create neighborhood" });
+      }
+    }
+  });
+
+  app.patch("/api/admin/neighborhoods/:id", requireAdmin, async (req, res) => {
+    try {
+      const partialSchema = insertNeighborhoodSchema.partial();
+      const data = partialSchema.parse(req.body);
+      const neighborhood = await storage.updateNeighborhood(req.params.id, data);
+      if (!neighborhood) {
+        return res.status(404).json({ error: "Neighborhood not found" });
+      }
+      res.json(neighborhood);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update neighborhood" });
+      }
+    }
+  });
+
+  app.delete("/api/admin/neighborhoods/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteNeighborhood(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete neighborhood" });
     }
   });
 
