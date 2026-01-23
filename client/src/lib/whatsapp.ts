@@ -25,10 +25,10 @@ export function generateWhatsAppOrderLink(
 ): string {
   const phoneNumber = (businessPhone || DEFAULT_PHONE).replace(/\D/g, "");
   
-  const orderLines = items.map((item) => {
-    const name = turkishToAscii(item.menuItem.name);
-    return `${item.quantity}x ${name} ${(parseFloat(item.menuItem.price) * item.quantity).toFixed(2)}TL`;
-  });
+  const orderItems = items.map((item) => {
+    const name = turkishToAscii(item.menuItem.name).trim();
+    return `${item.quantity}x ${name}`;
+  }).join(", ");
 
   const subtotal = items.reduce((sum, item) => {
     const itemPrice = parseFloat(item.menuItem.price);
@@ -39,25 +39,16 @@ export function generateWhatsAppOrderLink(
   const paymentText = paymentMethod === "cash" ? "Nakit" : "POS";
   const cleanName = turkishToAscii(customerName);
   const cleanAddress = turkishToAscii(customerAddress);
-  const cleanNotes = notes ? turkishToAscii(notes) : "";
 
-  let message = `SIPARIS\n\n${orderLines.join("\n")}\n\nToplam: ${subtotal.toFixed(2)}TL\n\nAd: ${cleanName}\nTel: ${customerPhone}\nAdres: ${cleanAddress}\nOdeme: ${paymentText}`;
+  // Single line message - no newlines for iOS compatibility
+  let message = `SIPARIS: ${orderItems} | Toplam: ${subtotal.toFixed(2)}TL | Ad: ${cleanName} | Tel: ${customerPhone} | Adres: ${cleanAddress} | Odeme: ${paymentText}`;
   
-  if (cleanNotes) {
-    message += `\nNot: ${cleanNotes}`;
+  if (notes && notes.trim()) {
+    message += ` | Not: ${turkishToAscii(notes)}`;
   }
 
   const encoded = encodeURIComponent(message);
   return `https://wa.me/${phoneNumber}?text=${encoded}`;
-}
-
-export function openWhatsAppLink(url: string): void {
-  const a = document.createElement("a");
-  a.href = url;
-  a.target = "_self";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
 }
 
 export function generateCustomerConfirmationLink(
@@ -66,9 +57,9 @@ export function generateCustomerConfirmationLink(
   customerPhone: string,
   paymentMethod: "cash" | "pos"
 ): string {
-  const orderLines = items.map((item) => {
-    return `${item.quantity}x ${turkishToAscii(item.menuItem.name)}`;
-  });
+  const orderItems = items.map((item) => {
+    return `${item.quantity}x ${turkishToAscii(item.menuItem.name).trim()}`;
+  }).join(", ");
 
   const subtotal = items.reduce((sum, item) => {
     const itemPrice = parseFloat(item.menuItem.price);
@@ -84,7 +75,7 @@ export function generateCustomerConfirmationLink(
   }
 
   const cleanName = turkishToAscii(customerName);
-  const message = `Merhaba ${cleanName}! Siparisinizi aldik. Toplam: ${subtotal.toFixed(2)}TL. Teslimat 30-45 dk.`;
+  const message = `Merhaba ${cleanName}! Siparis: ${orderItems} | Toplam: ${subtotal.toFixed(2)}TL | Teslimat 30-45dk`;
 
   const encoded = encodeURIComponent(message);
   return `https://wa.me/${formattedPhone}?text=${encoded}`;
