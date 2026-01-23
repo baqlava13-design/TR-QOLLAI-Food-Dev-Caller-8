@@ -108,7 +108,8 @@ export function KampanyaSection({ menuItems, isLoading }: KampanyaSectionProps) 
                   </div>
                   <Button 
                     onClick={() => handleAddToCart(item)}
-                    className="bg-red-600 hover:bg-red-700 text-white gap-1"
+                    variant="destructive"
+                    className="gap-1"
                     data-testid={`button-add-kampanya-${item.id}`}
                   >
                     <Plus className="h-4 w-4" />
