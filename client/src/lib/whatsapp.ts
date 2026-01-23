@@ -57,10 +57,18 @@ export function generateWhatsAppOrderLink(
 }
 
 export function openWhatsAppLink(url: string): void {
-  // Use window.location.href for same-window navigation to WhatsApp
-  // This is more reliable than window.open or anchor clicks in production
-  // WhatsApp will handle the redirect properly on both mobile and desktop
-  window.location.href = url;
+  // Try multiple methods to open WhatsApp link
+  // This handles various browser contexts (iframe, popup blockers, mobile, desktop)
+  
+  // Method 1: Create an anchor element and click it (works in most cases)
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.target = "_blank";
+  anchor.rel = "noopener noreferrer";
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
 }
 
 export function generateCustomerConfirmationLink(
