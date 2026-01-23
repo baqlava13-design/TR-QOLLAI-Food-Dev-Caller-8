@@ -15,10 +15,27 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import * as XLSX from "xlsx";
 import multer from "multer";
+import path from "path";
+import fs from "fs";
+import express from "express";
 import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_integrations/object_storage";
 
 const upload = multer({ storage: multer.memoryStorage() });
 const objectStorageService = new ObjectStorageService();
+
+const uploadsDir = path.join(process.cwd(), "public", "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+const diskStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, uniqueSuffix + ext);
+  },
+});
+const localUpload = multer({ storage: diskStorage });
 
 // Image setting keys that should trigger old image deletion
 const IMAGE_SETTING_KEYS = ["hero_image", "company_logo"];
@@ -1153,6 +1170,23 @@ export async function registerRoutes(
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete menu item" });
+    }
+  });
+
+  // Serve uploaded files statically
+  app.use("/uploads", express.static(uploadsDir));
+
+  // Local file upload endpoint (fallback when object storage fails)
+  app.post("/api/uploads/local", localUpload.single("file"), (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      const filePath = `/uploads/${req.file.filename}`;
+      res.json({ path: filePath });
+    } catch (error) {
+      console.error("Local upload error:", error);
+      res.status(500).json({ error: "Failed to upload file" });
     }
   });
 

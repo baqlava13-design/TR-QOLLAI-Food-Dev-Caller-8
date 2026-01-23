@@ -665,15 +665,12 @@ function CategoriesTab() {
                         const file = e.target.files?.[0];
                         if (!file) return;
                         try {
-                          const urlRes = await fetch("/api/uploads/request-url", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
-                          });
-                          if (!urlRes.ok) throw new Error("URL alınamadı");
-                          const { uploadURL, objectPath } = await urlRes.json();
-                          await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
-                          setNewCategory({ ...newCategory, image: objectPath });
+                          const formData = new FormData();
+                          formData.append("file", file);
+                          const res = await fetch("/api/uploads/local", { method: "POST", body: formData });
+                          if (!res.ok) throw new Error("Yükleme hatası");
+                          const { path } = await res.json();
+                          setNewCategory({ ...newCategory, image: path });
                           toast({ title: "Resim yüklendi" });
                         } catch {
                           toast({ title: "Hata", description: "Resim yüklenemedi", variant: "destructive" });
@@ -763,15 +760,12 @@ function CategoriesTab() {
                         const file = e.target.files?.[0];
                         if (!file) return;
                         try {
-                          const urlRes = await fetch("/api/uploads/request-url", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
-                          });
-                          if (!urlRes.ok) throw new Error("URL alınamadı");
-                          const { uploadURL, objectPath } = await urlRes.json();
-                          await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
-                          setEditingCategory({ ...editingCategory, image: objectPath });
+                          const formData = new FormData();
+                          formData.append("file", file);
+                          const res = await fetch("/api/uploads/local", { method: "POST", body: formData });
+                          if (!res.ok) throw new Error("Yükleme hatası");
+                          const { path } = await res.json();
+                          setEditingCategory({ ...editingCategory, image: path });
                           toast({ title: "Resim yüklendi" });
                         } catch {
                           toast({ title: "Hata", description: "Resim yüklenemedi", variant: "destructive" });
@@ -953,15 +947,12 @@ function MenuItemsTab() {
                         const file = e.target.files?.[0];
                         if (!file) return;
                         try {
-                          const urlRes = await fetch("/api/uploads/request-url", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
-                          });
-                          if (!urlRes.ok) throw new Error("URL alınamadı");
-                          const { uploadURL, objectPath } = await urlRes.json();
-                          await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
-                          setNewItem({ ...newItem, image: objectPath });
+                          const formData = new FormData();
+                          formData.append("file", file);
+                          const res = await fetch("/api/uploads/local", { method: "POST", body: formData });
+                          if (!res.ok) throw new Error("Yükleme hatası");
+                          const { path } = await res.json();
+                          setNewItem({ ...newItem, image: path });
                           toast({ title: "Resim yüklendi" });
                         } catch {
                           toast({ title: "Hata", description: "Resim yüklenemedi", variant: "destructive" });
@@ -1104,15 +1095,12 @@ function MenuItemsTab() {
                         const file = e.target.files?.[0];
                         if (!file) return;
                         try {
-                          const urlRes = await fetch("/api/uploads/request-url", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
-                          });
-                          if (!urlRes.ok) throw new Error("URL alınamadı");
-                          const { uploadURL, objectPath } = await urlRes.json();
-                          await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
-                          setEditingItem({ ...editingItem, image: objectPath });
+                          const formData = new FormData();
+                          formData.append("file", file);
+                          const res = await fetch("/api/uploads/local", { method: "POST", body: formData });
+                          if (!res.ok) throw new Error("Yükleme hatası");
+                          const { path } = await res.json();
+                          setEditingItem({ ...editingItem, image: path });
                           toast({ title: "Resim yüklendi" });
                         } catch {
                           toast({ title: "Hata", description: "Resim yüklenemedi", variant: "destructive" });
@@ -1855,37 +1843,18 @@ function SettingsTab() {
   // File upload handler for images
   const handleImageUpload = async (file: File, settingKey: string) => {
     try {
-      // Step 1: Request presigned URL
-      const urlResponse = await fetch("/api/uploads/request-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: file.name,
-          size: file.size,
-          contentType: file.type,
-        }),
-      });
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/uploads/local", { method: "POST", body: formData });
       
-      if (!urlResponse.ok) {
-        throw new Error("Yükleme URL'si alınamadı");
-      }
-      
-      const { uploadURL, objectPath } = await urlResponse.json();
-      
-      // Step 2: Upload file directly to presigned URL
-      const uploadResponse = await fetch(uploadURL, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
-      });
-      
-      if (!uploadResponse.ok) {
+      if (!res.ok) {
         throw new Error("Dosya yüklenemedi");
       }
       
-      // Step 3: Save the object path to settings
-      setSettings(prev => ({ ...prev, [settingKey]: objectPath }));
-      saveMutation.mutate({ key: settingKey, value: objectPath });
+      const { path } = await res.json();
+      
+      setSettings(prev => ({ ...prev, [settingKey]: path }));
+      saveMutation.mutate({ key: settingKey, value: path });
       
       toast({ title: "Resim başarıyla yüklendi" });
     } catch (error) {
