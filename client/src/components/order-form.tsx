@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Minus, Plus, Trash2, ShoppingCart, CreditCard, Banknote, ArrowRight, AlertTriangle, History, ChevronDown, ChevronUp, Gift, RotateCcw, Copy, Check } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useCart } from "@/lib/cart";
@@ -16,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { loadCustomerInfo, saveCustomerInfo, saveOrder, loadOrderHistory, type SavedOrder } from "@/lib/customer-storage";
+import type { Neighborhood } from "@shared/schema";
 
 export function OrderForm() {
   const { items, updateQuantity, removeItem, getSubtotal, getTotal, clearCart, addItem } = useCart();
@@ -32,27 +34,47 @@ export function OrderForm() {
   const { data: menuItems = [] } = useQuery<any[]>({
     queryKey: ["/api/menu-items"],
   });
+
+  const { data: neighborhoods = [] } = useQuery<Neighborhood[]>({
+    queryKey: ["/api/neighborhoods"],
+  });
   
   const getWhatsAppNumber = () => {
     return settingsData.whatsapp_number || "";
   };
 
-  const minimumOrderAmount = parseFloat(settingsData.minimum_order_amount || "0");
-  const currentTotal = getTotal();
-  const isBelowMinimum = minimumOrderAmount > 0 && currentTotal < minimumOrderAmount;
-  const remainingAmount = minimumOrderAmount - currentTotal;
-  
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     customerPhone: "",
     mahalle: "",
+    mahalleId: "",
     sokak: "",
     binaNo: "",
     daireNo: "",
     paymentMethod: "cash" as "cash" | "pos",
     notes: "",
   });
+
+  const globalMinimumOrderAmount = parseFloat(settingsData.minimum_order_amount || "0");
+  const currentTotal = getTotal();
+  
+  const selectedNeighborhood = useMemo(() => {
+    if (formData.mahalleId) {
+      return neighborhoods.find(n => n.id === formData.mahalleId);
+    }
+    return neighborhoods.find(n => n.name === formData.mahalle);
+  }, [neighborhoods, formData.mahalleId, formData.mahalle]);
+  
+  const minimumOrderAmount = useMemo(() => {
+    if (selectedNeighborhood && selectedNeighborhood.minimumOrderAmount) {
+      return parseFloat(selectedNeighborhood.minimumOrderAmount);
+    }
+    return globalMinimumOrderAmount;
+  }, [selectedNeighborhood, globalMinimumOrderAmount]);
+  
+  const isBelowMinimum = minimumOrderAmount > 0 && currentTotal < minimumOrderAmount;
+  const remainingAmount = minimumOrderAmount - currentTotal;
 
   const [orderHistory, setOrderHistory] = useState<SavedOrder[]>([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -562,13 +584,43 @@ export function OrderForm() {
                 <div className="space-y-3">
                   <Label>Teslimat Adresi *</Label>
                   <div className="space-y-3">
-                    <Input
-                      placeholder="Mahalle"
-                      value={formData.mahalle}
-                      onChange={(e) => setFormData({ ...formData, mahalle: e.target.value })}
-                      required
-                      data-testid="input-mahalle"
-                    />
+                    {neighborhoods.length > 0 ? (
+                      <Select
+                        value={formData.mahalleId}
+                        onValueChange={(value) => {
+                          const neighborhood = neighborhoods.find(n => n.id === value);
+                          setFormData({ 
+                            ...formData, 
+                            mahalleId: value,
+                            mahalle: neighborhood?.name || ""
+                          });
+                        }}
+                      >
+                        <SelectTrigger data-testid="select-mahalle">
+                          <SelectValue placeholder="Mahalle seçin" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {neighborhoods.map((neighborhood) => (
+                            <SelectItem key={neighborhood.id} value={neighborhood.id}>
+                              {neighborhood.name}
+                              {neighborhood.minimumOrderAmount && parseFloat(neighborhood.minimumOrderAmount) > 0 && (
+                                <span className="text-muted-foreground ml-2">
+                                  (Min: {parseFloat(neighborhood.minimumOrderAmount).toFixed(0)} TL)
+                                </span>
+                              )}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        placeholder="Mahalle"
+                        value={formData.mahalle}
+                        onChange={(e) => setFormData({ ...formData, mahalle: e.target.value })}
+                        required
+                        data-testid="input-mahalle"
+                      />
+                    )}
                     <Input
                       placeholder="Sokak / Cadde"
                       value={formData.sokak}
