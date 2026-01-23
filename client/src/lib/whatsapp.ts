@@ -2,6 +2,22 @@ import type { CartItem } from "@shared/schema";
 
 const DEFAULT_PHONE = import.meta.env.VITE_WHATSAPP_PHONE || "905551234567";
 
+// Detect if user is on a mobile device
+function isMobileDevice(): boolean {
+  return /iPhone|iPad|iPod|Android|webOS|BlackBerry/i.test(navigator.userAgent);
+}
+
+// Generate WhatsApp URL based on device type
+function getWhatsAppUrl(phone: string, encodedMessage: string): string {
+  if (isMobileDevice()) {
+    // Mobile devices (iPhone, Android) - use whatsapp:// protocol
+    return `whatsapp://send?phone=${phone}&text=${encodedMessage}`;
+  } else {
+    // Desktop browsers - use web.whatsapp.com
+    return `https://web.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
+  }
+}
+
 export function generateWhatsAppOrderLink(
   items: CartItem[],
   customerName: string,
@@ -53,8 +69,8 @@ export function generateWhatsAppOrderLink(
   const encodedMessage = encodeURIComponent(message);
   // Clean phone number - remove any non-digit characters and leading +
   const cleanPhone = phoneNumber.replace(/\D/g, "");
-  // Use api.whatsapp.com/send format - more reliable on iOS and all browsers
-  return `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`;
+  // Use device-specific URL format
+  return getWhatsAppUrl(cleanPhone, encodedMessage);
 }
 
 export function openWhatsAppLink(url: string): void {
@@ -113,8 +129,8 @@ Siparis Kolay
 `.trim();
 
   const encodedMessage = encodeURIComponent(message);
-  // Use api.whatsapp.com/send format - more reliable on iOS and all browsers
-  return `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodedMessage}`;
+  // Use device-specific URL format
+  return getWhatsAppUrl(formattedPhone, encodedMessage);
 }
 
 export function generateShareLink(text: string): string {
@@ -124,6 +140,10 @@ ${text}
 Siparis Kolay'dan siparis vermek cok kolay! WhatsApp ile hizli teslimat.
 `.trim();
   const encodedMessage = encodeURIComponent(shareMessage);
-  // Use api.whatsapp.com/send for sharing (without phone number for general sharing)
-  return `https://api.whatsapp.com/send?text=${encodedMessage}`;
+  // For sharing without specific phone number
+  if (isMobileDevice()) {
+    return `whatsapp://send?text=${encodedMessage}`;
+  } else {
+    return `https://web.whatsapp.com/send?text=${encodedMessage}`;
+  }
 }
