@@ -34,6 +34,7 @@ export const menuItems = pgTable("menu_items", {
   name: text("name").notNull(),
   description: text("description"),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  originalPrice: decimal("original_price", { precision: 10, scale: 2 }),
   image: text("image"),
   categoryId: varchar("category_id").references(() => categories.id),
   isAvailable: boolean("is_available").default(true),

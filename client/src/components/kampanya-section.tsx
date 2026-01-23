@@ -87,9 +87,16 @@ export function KampanyaSection({ menuItems, isLoading }: KampanyaSectionProps) 
                   {item.description}
                 </p>
                 <div className="flex items-center justify-between gap-1">
-                  <span className="text-sm md:text-base font-bold text-red-600">
-                    {parseFloat(item.price).toFixed(2)} TL
-                  </span>
+                  <div className="flex flex-col">
+                    {item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price) && (
+                      <span className="text-[10px] md:text-xs text-muted-foreground line-through">
+                        {parseFloat(item.originalPrice).toFixed(2)} TL
+                      </span>
+                    )}
+                    <span className="text-sm md:text-base font-bold text-red-600">
+                      {parseFloat(item.price).toFixed(2)} TL
+                    </span>
+                  </div>
                   <Button 
                     onClick={() => handleAddToCart(item)}
                     size="sm"

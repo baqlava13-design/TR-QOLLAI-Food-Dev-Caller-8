@@ -739,7 +739,7 @@ function MenuItemsTab() {
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [newItem, setNewItem] = useState({
-    name: "", description: "", price: "", image: "", categoryId: "", isAvailable: true, isKampanya: false, kampanyaTag: ""
+    name: "", description: "", price: "", originalPrice: "", image: "", categoryId: "", isAvailable: true, isKampanya: false, kampanyaTag: ""
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
@@ -801,7 +801,7 @@ function MenuItemsTab() {
     mutationFn: (data: any) => apiRequest("POST", "/api/admin/menu-items", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/menu-items"] });
-      setNewItem({ name: "", description: "", price: "", image: "", categoryId: "", isAvailable: true, isKampanya: false, kampanyaTag: "" });
+      setNewItem({ name: "", description: "", price: "", originalPrice: "", image: "", categoryId: "", isAvailable: true, isKampanya: false, kampanyaTag: "" });
       setShowNew(false);
       toast({ title: "Ürün eklendi" });
     },
@@ -860,6 +860,10 @@ function MenuItemsTab() {
               <div>
                 <Label>Fiyat (TL)</Label>
                 <Input type="number" value={newItem.price} onChange={(e) => setNewItem({ ...newItem, price: e.target.value })} />
+              </div>
+              <div>
+                <Label>Orjinal Fiyat (TL) - Kampanya için</Label>
+                <Input type="number" value={newItem.originalPrice} onChange={(e) => setNewItem({ ...newItem, originalPrice: e.target.value })} placeholder="Kampanya öncesi fiyat" />
               </div>
               <div>
                 <Label>Açıklama</Label>
@@ -971,6 +975,10 @@ function MenuItemsTab() {
               <div>
                 <Label>Fiyat (TL)</Label>
                 <Input type="number" value={editingItem.price} onChange={(e) => setEditingItem({ ...editingItem, price: e.target.value })} />
+              </div>
+              <div>
+                <Label>Orjinal Fiyat (TL)</Label>
+                <Input type="number" value={editingItem.originalPrice || ""} onChange={(e) => setEditingItem({ ...editingItem, originalPrice: e.target.value })} placeholder="Kampanya öncesi fiyat" />
               </div>
               <div className="md:col-span-2">
                 <Label>Açıklama</Label>
