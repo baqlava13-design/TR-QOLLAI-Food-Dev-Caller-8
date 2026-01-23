@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,6 +56,7 @@ export function OrderForm() {
 
   const [orderHistory, setOrderHistory] = useState<SavedOrder[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [whatsappLink, setWhatsappLink] = useState<string | null>(null);
 
   useEffect(() => {
     const savedInfo = loadCustomerInfo();
@@ -179,10 +181,9 @@ export function OrderForm() {
     });
     setOrderHistory(loadOrderHistory());
 
-    // Generate WhatsApp link IMMEDIATELY before any async operation
-    // This prevents popup blockers from blocking the window.open
+    // Generate WhatsApp link
     const whatsappNumber = getWhatsAppNumber();
-    const whatsappLink = generateWhatsAppOrderLink(
+    const link = generateWhatsAppOrderLink(
       items,
       getFullName(),
       formData.customerPhone,
@@ -192,8 +193,8 @@ export function OrderForm() {
       whatsappNumber
     );
     
-    // Open WhatsApp link directly
-    window.location.href = whatsappLink;
+    // Set the link for display - user will click it directly
+    setWhatsappLink(link);
     
     // Then save order to database in background
     createOrderMutation.mutate({ ...formData, items });
@@ -659,6 +660,41 @@ export function OrderForm() {
           </Card>
         </div>
       </div>
+
+      <Dialog open={!!whatsappLink} onOpenChange={(open) => !open && setWhatsappLink(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <SiWhatsapp className="h-6 w-6 text-whatsapp" />
+              Siparişiniz Hazır
+            </DialogTitle>
+            <DialogDescription>
+              Aşağıdaki butona tıklayarak WhatsApp'ta siparişinizi gönderin.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <a
+              href={whatsappLink || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-4 px-6 bg-whatsapp hover:bg-whatsapp/90 text-white font-bold rounded-lg text-lg transition-colors"
+              data-testid="link-whatsapp-order"
+              onClick={() => {
+                setTimeout(() => {
+                  setWhatsappLink(null);
+                  clearCart();
+                }, 1000);
+              }}
+            >
+              <SiWhatsapp className="h-6 w-6" />
+              WhatsApp ile Gönder
+            </a>
+            <p className="text-xs text-center text-muted-foreground">
+              Butona tıkladığınızda WhatsApp açılacak ve sipariş mesajınız hazır olacak.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
