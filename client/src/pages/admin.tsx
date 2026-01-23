@@ -919,6 +919,7 @@ function MenuItemsTab() {
                     <TableHead>Resim</TableHead>
                     <TableHead>Ad</TableHead>
                     <TableHead>Fiyat</TableHead>
+                    <TableHead>Orjinal Fiyat</TableHead>
                     <TableHead>Kategori</TableHead>
                     <TableHead>Kampanya</TableHead>
                     <TableHead>Durum</TableHead>
@@ -932,7 +933,12 @@ function MenuItemsTab() {
                         {item.image ? <img src={item.image} alt="" className="w-12 h-12 object-cover rounded" /> : "-"}
                       </TableCell>
                       <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell>{parseFloat(item.price).toFixed(2)} TL</TableCell>
+                      <TableCell className={item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price) ? "text-red-600 font-bold" : ""}>
+                        {parseFloat(item.price).toFixed(2)} TL
+                      </TableCell>
+                      <TableCell>
+                        {item.originalPrice ? <span className="line-through text-muted-foreground">{parseFloat(item.originalPrice).toFixed(2)} TL</span> : "-"}
+                      </TableCell>
                       <TableCell>{categories.find(c => c.id === item.categoryId)?.name || "-"}</TableCell>
                       <TableCell>
                         {item.isKampanya ? <Badge className="bg-red-500">{item.kampanyaTag || "Kampanya"}</Badge> : "-"}
