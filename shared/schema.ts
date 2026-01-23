@@ -154,6 +154,21 @@ export const siteSettings = pgTable("site_settings", {
   value: text("value"),
 });
 
+// Cross-sell products table (products to show in basket for upselling)
+export const crossSellProducts = pgTable("cross_sell_products", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  menuItemId: varchar("menu_item_id").references(() => menuItems.id).notNull(),
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+});
+
+export const crossSellProductsRelations = relations(crossSellProducts, ({ one }) => ({
+  menuItem: one(menuItems, {
+    fields: [crossSellProducts.menuItemId],
+    references: [menuItems.id],
+  }),
+}));
+
 // Insert schemas
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertMenuItemSchema = createInsertSchema(menuItems).omit({ id: true });
@@ -163,6 +178,7 @@ export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, cre
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
 export const insertReviewSchema = createInsertSchema(reviews).omit({ id: true, createdAt: true });
 export const insertSiteSettingSchema = createInsertSchema(siteSettings).omit({ id: true });
+export const insertCrossSellProductSchema = createInsertSchema(crossSellProducts).omit({ id: true });
 
 // Types
 export type Category = typeof categories.$inferSelect;
@@ -188,6 +204,9 @@ export type InsertReview = z.infer<typeof insertReviewSchema>;
 
 export type SiteSetting = typeof siteSettings.$inferSelect;
 export type InsertSiteSetting = z.infer<typeof insertSiteSettingSchema>;
+
+export type CrossSellProduct = typeof crossSellProducts.$inferSelect;
+export type InsertCrossSellProduct = z.infer<typeof insertCrossSellProductSchema>;
 
 // Admin Users table
 export const adminUsers = pgTable("admin_users", {
