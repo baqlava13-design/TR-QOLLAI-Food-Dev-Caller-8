@@ -57,13 +57,14 @@ import {
   Upload,
   Type,
   Gift,
+  MapPin,
 } from "lucide-react";
 import { SiWhatsapp, SiFacebook, SiInstagram } from "react-icons/si";
 import { useTheme } from "@/lib/theme";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
-import type { Order, OrderItem, Category, MenuItem, Review, Customer } from "@shared/schema";
+import type { Order, OrderItem, Category, MenuItem, Review, Customer, Neighborhood } from "@shared/schema";
 
 interface OrderWithItems extends Order {
   items?: OrderItem[];
@@ -1374,6 +1375,277 @@ function CrossSellTab() {
   );
 }
 
+function NeighborhoodsTab() {
+  const { toast } = useToast();
+  const [showNew, setShowNew] = useState(false);
+  const [editingItem, setEditingItem] = useState<Neighborhood | null>(null);
+  const [newItem, setNewItem] = useState({
+    name: "",
+    minimumOrderAmount: "",
+    isActive: true,
+    sortOrder: 0,
+  });
+
+  const { data: neighborhoods = [], isLoading } = useQuery<Neighborhood[]>({
+    queryKey: ["/api/admin/neighborhoods"],
+    queryFn: async () => {
+      const token = localStorage.getItem("adminToken");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch("/api/admin/neighborhoods", { credentials: "include", headers });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const token = localStorage.getItem("adminToken");
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch("/api/admin/neighborhoods", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/neighborhoods"] });
+      setNewItem({ name: "", minimumOrderAmount: "", isActive: true, sortOrder: 0 });
+      setShowNew(false);
+      toast({ title: "Mahalle eklendi" });
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Mahalle eklenemedi", variant: "destructive" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const token = localStorage.getItem("adminToken");
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`/api/admin/neighborhoods/${id}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/neighborhoods"] });
+      setEditingItem(null);
+      toast({ title: "Mahalle güncellendi" });
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Mahalle güncellenemedi", variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const token = localStorage.getItem("adminToken");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      await fetch(`/api/admin/neighborhoods/${id}`, {
+        method: "DELETE",
+        headers,
+        credentials: "include",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/neighborhoods"] });
+      toast({ title: "Mahalle silindi" });
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Mahalle silinemedi", variant: "destructive" });
+    },
+  });
+
+  if (isLoading) {
+    return <div className="p-8 text-center">Yükleniyor...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold">Mahalle Yönetimi</h2>
+        <Button onClick={() => setShowNew(true)} data-testid="button-add-neighborhood">
+          <Plus className="h-4 w-4 mr-2" /> Yeni Mahalle
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MapPin className="h-5 w-5" /> Mahalleler ve Minimum Sipariş Tutarları
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {showNew && (
+            <div className="mb-6 p-4 border rounded-lg bg-muted/50 space-y-4">
+              <h3 className="font-semibold">Yeni Mahalle Ekle</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>Mahalle Adı</Label>
+                  <Input
+                    value={newItem.name}
+                    onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                    placeholder="Örn: Merkez Mahallesi"
+                    data-testid="input-neighborhood-name"
+                  />
+                </div>
+                <div>
+                  <Label>Minimum Sipariş Tutarı (TL)</Label>
+                  <Input
+                    type="number"
+                    value={newItem.minimumOrderAmount}
+                    onChange={(e) => setNewItem({ ...newItem, minimumOrderAmount: e.target.value })}
+                    placeholder="0"
+                    data-testid="input-neighborhood-min-order"
+                  />
+                </div>
+                <div className="flex items-end gap-2">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={newItem.isActive}
+                      onCheckedChange={(v) => setNewItem({ ...newItem, isActive: v })}
+                      data-testid="switch-neighborhood-active"
+                    />
+                    <Label>Aktif</Label>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => createMutation.mutate(newItem)}
+                  disabled={!newItem.name || createMutation.isPending}
+                  data-testid="button-save-neighborhood"
+                >
+                  <Save className="h-4 w-4 mr-2" /> Kaydet
+                </Button>
+                <Button variant="outline" onClick={() => setShowNew(false)}>
+                  İptal
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {neighborhoods.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              Henüz mahalle eklenmedi. Yeni mahalle ekleyerek teslimat bölgelerini tanımlayabilirsiniz.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Mahalle Adı</TableHead>
+                  <TableHead>Min. Sipariş Tutarı</TableHead>
+                  <TableHead>Durum</TableHead>
+                  <TableHead className="text-right">İşlemler</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {neighborhoods.map((neighborhood) => (
+                  <TableRow key={neighborhood.id} data-testid={`row-neighborhood-${neighborhood.id}`}>
+                    {editingItem?.id === neighborhood.id ? (
+                      <>
+                        <TableCell>
+                          <Input
+                            value={editingItem.name}
+                            onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                            data-testid="input-edit-neighborhood-name"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={editingItem.minimumOrderAmount || ""}
+                            onChange={(e) => setEditingItem({ ...editingItem, minimumOrderAmount: e.target.value })}
+                            data-testid="input-edit-neighborhood-min-order"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Switch
+                            checked={editingItem.isActive ?? true}
+                            onCheckedChange={(v) => setEditingItem({ ...editingItem, isActive: v })}
+                            data-testid="switch-edit-neighborhood-active"
+                          />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => updateMutation.mutate({
+                                id: editingItem.id,
+                                data: {
+                                  name: editingItem.name,
+                                  minimumOrderAmount: editingItem.minimumOrderAmount,
+                                  isActive: editingItem.isActive,
+                                },
+                              })}
+                              disabled={updateMutation.isPending}
+                              data-testid="button-update-neighborhood"
+                            >
+                              <Save className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setEditingItem(null)}>
+                              İptal
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </>
+                    ) : (
+                      <>
+                        <TableCell className="font-medium">{neighborhood.name}</TableCell>
+                        <TableCell>
+                          {neighborhood.minimumOrderAmount
+                            ? `${parseFloat(neighborhood.minimumOrderAmount).toFixed(2)} TL`
+                            : "Yok"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={neighborhood.isActive ? "default" : "secondary"}>
+                            {neighborhood.isActive ? "Aktif" : "Pasif"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => setEditingItem(neighborhood)}
+                              data-testid={`button-edit-neighborhood-${neighborhood.id}`}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => deleteMutation.mutate(neighborhood.id)}
+                              data-testid={`button-delete-neighborhood-${neighborhood.id}`}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function SettingsTab() {
   const { toast } = useToast();
   const [settings, setSettings] = useState<Record<string, string>>({
@@ -2350,7 +2622,7 @@ export default function Admin() {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="orders" className="gap-2">
               <ShoppingBag className="h-4 w-4" />
               <span className="hidden sm:inline">Siparisler</span>
@@ -2366,6 +2638,10 @@ export default function Admin() {
             <TabsTrigger value="categories" className="gap-2">
               <FolderOpen className="h-4 w-4" />
               <span className="hidden sm:inline">Kategoriler</span>
+            </TabsTrigger>
+            <TabsTrigger value="neighborhoods" className="gap-2">
+              <MapPin className="h-4 w-4" />
+              <span className="hidden sm:inline">Mahalleler</span>
             </TabsTrigger>
             <TabsTrigger value="cross-sell" className="gap-2">
               <Gift className="h-4 w-4" />
@@ -2395,6 +2671,10 @@ export default function Admin() {
 
           <TabsContent value="categories">
             <CategoriesTab />
+          </TabsContent>
+
+          <TabsContent value="neighborhoods">
+            <NeighborhoodsTab />
           </TabsContent>
 
           <TabsContent value="cross-sell">
