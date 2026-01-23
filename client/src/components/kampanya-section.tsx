@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Sparkles, Tag, Flame } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { useToast } from "@/hooks/use-toast";
 import type { MenuItem } from "@shared/schema";
@@ -60,60 +60,44 @@ export function KampanyaSection({ menuItems, isLoading }: KampanyaSectionProps) 
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
           {kampanyaItems.map((item) => (
             <Card 
               key={item.id} 
-              className="overflow-hidden group hover-elevate transition-all duration-300 border-2 border-red-200 dark:border-red-900/50 bg-gradient-to-br from-white to-red-50/50 dark:from-card dark:to-red-950/20"
+              className="overflow-hidden group hover-elevate transition-all duration-300 border border-red-200 dark:border-red-900/50"
               data-testid={`card-kampanya-${item.id}`}
             >
-              <div className="relative">
-                <div className="relative aspect-[16/9] overflow-hidden">
-                  <img
-                    src={item.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"}
-                    alt={item.name}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                  <div className="absolute top-3 left-3 flex gap-2">
-                    <Badge className="bg-red-600 text-white border-none gap-1 shadow-lg">
-                      <Tag className="h-3 w-3" />
-                      {item.kampanyaTag || "Kampanya"}
-                    </Badge>
-                    {item.isPopular && (
-                      <Badge className="bg-orange-500 text-white border-none gap-1 shadow-lg">
-                        <Flame className="h-3 w-3" />
-                        Populer
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="absolute bottom-3 left-3 right-3">
-                    <h3 className="text-lg md:text-xl font-bold text-white drop-shadow-lg">
-                      {item.name}
-                    </h3>
-                  </div>
-                </div>
+              <div className="relative aspect-square md:aspect-[4/3] overflow-hidden">
+                <img
+                  src={item.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80"}
+                  alt={item.name}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  loading="lazy"
+                />
+                <span 
+                  className="absolute top-1 left-1 md:top-3 md:left-3 z-50 bg-red-600 text-white text-[10px] md:text-xs font-bold px-1.5 py-0.5 md:px-3 md:py-1.5 rounded-md shadow-lg border md:border-2 border-white"
+                  data-testid={`badge-kampanya-${item.id}`}
+                >
+                  {item.kampanyaTag || "Kampanya"}
+                </span>
               </div>
-              <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+              <CardContent className="p-2 md:p-3">
+                <h3 className="font-semibold text-xs md:text-sm line-clamp-1 mb-1">{item.name}</h3>
+                <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-1 mb-2">
                   {item.description}
                 </p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-bold text-red-600">
-                      {parseFloat(item.price).toFixed(2)}
-                    </span>
-                    <span className="text-sm text-muted-foreground">TL</span>
-                  </div>
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-sm md:text-base font-bold text-red-600">
+                    {parseFloat(item.price).toFixed(2)} TL
+                  </span>
                   <Button 
                     onClick={() => handleAddToCart(item)}
+                    size="sm"
                     variant="destructive"
-                    className="gap-1"
+                    className="h-7 md:h-8 px-2 md:px-3 text-xs"
                     data-testid={`button-add-kampanya-${item.id}`}
                   >
-                    <Plus className="h-4 w-4" />
-                    Sepete Ekle
+                    <Plus className="h-3 w-3 md:h-4 md:w-4" />
                   </Button>
                 </div>
               </CardContent>
