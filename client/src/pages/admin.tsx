@@ -1217,7 +1217,7 @@ function CrossSellTab() {
     },
   });
 
-  const { data: menuItems = [], isLoading: loadingMenu } = useQuery({
+  const { data: menuItems = [], isLoading: loadingMenu } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu-items"],
   });
 

@@ -24,7 +24,7 @@ export function OrderForm() {
     queryKey: ["/api/settings"],
   });
 
-  const { data: crossSellProducts = [] } = useQuery({
+  const { data: crossSellProducts = [] } = useQuery<any[]>({
     queryKey: ["/api/cross-sell"],
   });
   
