@@ -26,22 +26,29 @@ export function generateWhatsAppOrderLink(
 
   const paymentText = paymentMethod === "cash" ? "Nakit" : "POS ile Kart";
 
-  const message = `
-*YENI SIPARIS*
-------------------------
-${orderLines.join("\n")}
-------------------------
-*Toplam: ${subtotal.toFixed(2)} TL*
-
-*Musteri Bilgileri:*
-Ad: ${customerName}
-Telefon: ${customerPhone}
-Adres: ${customerAddress}
-Odeme: ${paymentText}
-${notes ? `Not: ${notes}` : ""}
-------------------------
-Siparis zamani: ${new Date().toLocaleString("tr-TR")}
-`.trim();
+  // Build message with simple format - avoid special characters that may cause issues
+  const lines: string[] = [
+    "YENI SIPARIS",
+    "",
+    ...orderLines,
+    "",
+    `Toplam: ${subtotal.toFixed(2)} TL`,
+    "",
+    "Musteri Bilgileri:",
+    `Ad: ${customerName}`,
+    `Telefon: ${customerPhone}`,
+    `Adres: ${customerAddress}`,
+    `Odeme: ${paymentText}`,
+  ];
+  
+  if (notes && notes.trim()) {
+    lines.push(`Not: ${notes}`);
+  }
+  
+  lines.push("");
+  lines.push(`Siparis zamani: ${new Date().toLocaleString("tr-TR")}`);
+  
+  const message = lines.join("\n");
 
   const encodedMessage = encodeURIComponent(message);
   // Clean phone number - remove any non-digit characters and leading +
