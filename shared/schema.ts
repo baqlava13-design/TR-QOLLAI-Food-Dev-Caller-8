@@ -209,6 +209,19 @@ export type InsertSiteSetting = z.infer<typeof insertSiteSettingSchema>;
 export type CrossSellProduct = typeof crossSellProducts.$inferSelect;
 export type InsertCrossSellProduct = z.infer<typeof insertCrossSellProductSchema>;
 
+// Neighborhoods table
+export const neighborhoods = pgTable("neighborhoods", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  minimumOrderAmount: decimal("minimum_order_amount", { precision: 10, scale: 2 }).default("0"),
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+});
+
+export const insertNeighborhoodSchema = createInsertSchema(neighborhoods).omit({ id: true });
+export type Neighborhood = typeof neighborhoods.$inferSelect;
+export type InsertNeighborhood = z.infer<typeof insertNeighborhoodSchema>;
+
 // Admin Users table
 export const adminUsers = pgTable("admin_users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
