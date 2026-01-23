@@ -798,12 +798,22 @@ function MenuItemsTab() {
   };
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("POST", "/api/admin/menu-items", data),
+    mutationFn: (data: any) => {
+      const cleanedData = {
+        ...data,
+        categoryId: data.categoryId || null,
+        originalPrice: data.originalPrice || null,
+      };
+      return apiRequest("POST", "/api/admin/menu-items", cleanedData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/menu-items"] });
       setNewItem({ name: "", description: "", price: "", originalPrice: "", image: "", categoryId: "", isAvailable: true, isKampanya: false, kampanyaTag: "" });
       setShowNew(false);
       toast({ title: "Ürün eklendi" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Hata", description: "Ürün eklenemedi: " + error.message, variant: "destructive" });
     },
   });
 
