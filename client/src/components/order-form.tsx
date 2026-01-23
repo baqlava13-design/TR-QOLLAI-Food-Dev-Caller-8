@@ -575,7 +575,13 @@ export function OrderForm() {
                     type="tel"
                     placeholder="05XX XXX XXXX"
                     value={formData.customerPhone}
-                    onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
+                    onChange={(e) => {
+                      let value = e.target.value.replace(/[^0-9]/g, '');
+                      if (value.length > 0 && !value.startsWith('0')) {
+                        value = '0' + value;
+                      }
+                      setFormData({ ...formData, customerPhone: value });
+                    }}
                     required
                     data-testid="input-customer-phone"
                   />
