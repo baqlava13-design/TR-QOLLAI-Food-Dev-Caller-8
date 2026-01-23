@@ -44,7 +44,22 @@ Siparis zamani: ${new Date().toLocaleString("tr-TR")}
 `.trim();
 
   const encodedMessage = encodeURIComponent(message);
-  return `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+  // Clean phone number - remove any non-digit characters and leading +
+  const cleanPhone = phoneNumber.replace(/\D/g, "");
+  return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+}
+
+export function openWhatsAppLink(url: string): void {
+  // Create a temporary anchor element for more reliable opening across devices
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.target = "_blank";
+  anchor.rel = "noopener noreferrer";
+  
+  // This approach works better on mobile devices
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
 }
 
 export function generateCustomerConfirmationLink(
