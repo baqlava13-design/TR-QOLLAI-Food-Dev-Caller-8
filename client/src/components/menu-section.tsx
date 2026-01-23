@@ -212,9 +212,16 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
               <CardContent className="p-2 md:p-4">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-1 md:gap-2 mb-1 md:mb-2">
                   <h3 className="font-semibold text-sm md:text-lg line-clamp-1">{item.name}</h3>
-                  <span className="font-bold text-primary text-sm md:text-lg whitespace-nowrap">
-                    {parseFloat(item.price).toFixed(0)} TL
-                  </span>
+                  <div className="flex flex-col items-start md:items-end">
+                    {item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price) && (
+                      <span className="text-[10px] md:text-xs text-muted-foreground line-through">
+                        {parseFloat(item.originalPrice).toFixed(0)} TL
+                      </span>
+                    )}
+                    <span className={`font-bold text-sm md:text-lg whitespace-nowrap ${item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price) ? 'text-red-600' : 'text-primary'}`}>
+                      {parseFloat(item.price).toFixed(0)} TL
+                    </span>
+                  </div>
                 </div>
                 <p className="text-muted-foreground text-xs md:text-sm mb-2 md:mb-4 line-clamp-2 hidden md:block">
                   {item.description}
