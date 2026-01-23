@@ -653,8 +653,38 @@ function CategoriesTab() {
                 <Input value={newCategory.description} onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })} />
               </div>
               <div>
-                <Label>Resim URL</Label>
-                <Input value={newCategory.image} onChange={(e) => setNewCategory({ ...newCategory, image: e.target.value })} />
+                <Label>Resim</Label>
+                <div className="flex gap-2">
+                  <Input value={newCategory.image} onChange={(e) => setNewCategory({ ...newCategory, image: e.target.value })} placeholder="URL veya dosya yükle" className="flex-1" />
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const urlRes = await fetch("/api/uploads/request-url", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+                          });
+                          if (!urlRes.ok) throw new Error("URL alınamadı");
+                          const { uploadURL, objectPath } = await urlRes.json();
+                          await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+                          setNewCategory({ ...newCategory, image: objectPath });
+                          toast({ title: "Resim yüklendi" });
+                        } catch {
+                          toast({ title: "Hata", description: "Resim yüklenemedi", variant: "destructive" });
+                        }
+                      }}
+                      data-testid="input-new-category-image-file"
+                    />
+                    <Button type="button" variant="outline" size="icon" asChild><span><Upload className="h-4 w-4" /></span></Button>
+                  </label>
+                </div>
+                {newCategory.image && <img src={newCategory.image} alt="Önizleme" className="w-20 h-20 object-cover rounded mt-2" />}
               </div>
             </div>
             <div className="flex gap-2">
@@ -721,8 +751,38 @@ function CategoriesTab() {
                 <Input value={editingCategory.description || ""} onChange={(e) => setEditingCategory({ ...editingCategory, description: e.target.value })} />
               </div>
               <div>
-                <Label>Resim URL</Label>
-                <Input value={editingCategory.image || ""} onChange={(e) => setEditingCategory({ ...editingCategory, image: e.target.value })} />
+                <Label>Resim</Label>
+                <div className="flex gap-2">
+                  <Input value={editingCategory.image || ""} onChange={(e) => setEditingCategory({ ...editingCategory, image: e.target.value })} placeholder="URL veya dosya yükle" className="flex-1" />
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const urlRes = await fetch("/api/uploads/request-url", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+                          });
+                          if (!urlRes.ok) throw new Error("URL alınamadı");
+                          const { uploadURL, objectPath } = await urlRes.json();
+                          await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+                          setEditingCategory({ ...editingCategory, image: objectPath });
+                          toast({ title: "Resim yüklendi" });
+                        } catch {
+                          toast({ title: "Hata", description: "Resim yüklenemedi", variant: "destructive" });
+                        }
+                      }}
+                      data-testid="input-edit-category-image-file"
+                    />
+                    <Button type="button" variant="outline" size="icon" asChild><span><Upload className="h-4 w-4" /></span></Button>
+                  </label>
+                </div>
+                {editingCategory.image && <img src={editingCategory.image} alt="Önizleme" className="w-20 h-20 object-cover rounded mt-2" />}
               </div>
               <Button onClick={() => updateMutation.mutate({ id: editingCategory.id, data: editingCategory })}>
                 Kaydet
@@ -881,8 +941,38 @@ function MenuItemsTab() {
                 <Textarea value={newItem.description} onChange={(e) => setNewItem({ ...newItem, description: e.target.value })} />
               </div>
               <div>
-                <Label>Resim URL</Label>
-                <Input value={newItem.image} onChange={(e) => setNewItem({ ...newItem, image: e.target.value })} />
+                <Label>Resim</Label>
+                <div className="flex gap-2">
+                  <Input value={newItem.image} onChange={(e) => setNewItem({ ...newItem, image: e.target.value })} placeholder="URL veya dosya yükle" className="flex-1" />
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const urlRes = await fetch("/api/uploads/request-url", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+                          });
+                          if (!urlRes.ok) throw new Error("URL alınamadı");
+                          const { uploadURL, objectPath } = await urlRes.json();
+                          await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+                          setNewItem({ ...newItem, image: objectPath });
+                          toast({ title: "Resim yüklendi" });
+                        } catch {
+                          toast({ title: "Hata", description: "Resim yüklenemedi", variant: "destructive" });
+                        }
+                      }}
+                      data-testid="input-new-item-image-file"
+                    />
+                    <Button type="button" variant="outline" size="icon" asChild><span><Upload className="h-4 w-4" /></span></Button>
+                  </label>
+                </div>
+                {newItem.image && <img src={newItem.image} alt="Önizleme" className="w-20 h-20 object-cover rounded mt-2" />}
               </div>
               <div>
                 <Label>Kategori</Label>
@@ -1002,8 +1092,38 @@ function MenuItemsTab() {
                 <Textarea value={editingItem.description || ""} onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })} />
               </div>
               <div>
-                <Label>Resim URL</Label>
-                <Input value={editingItem.image || ""} onChange={(e) => setEditingItem({ ...editingItem, image: e.target.value })} />
+                <Label>Resim</Label>
+                <div className="flex gap-2">
+                  <Input value={editingItem.image || ""} onChange={(e) => setEditingItem({ ...editingItem, image: e.target.value })} placeholder="URL veya dosya yükle" className="flex-1" />
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const urlRes = await fetch("/api/uploads/request-url", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+                          });
+                          if (!urlRes.ok) throw new Error("URL alınamadı");
+                          const { uploadURL, objectPath } = await urlRes.json();
+                          await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+                          setEditingItem({ ...editingItem, image: objectPath });
+                          toast({ title: "Resim yüklendi" });
+                        } catch {
+                          toast({ title: "Hata", description: "Resim yüklenemedi", variant: "destructive" });
+                        }
+                      }}
+                      data-testid="input-edit-item-image-file"
+                    />
+                    <Button type="button" variant="outline" size="icon" asChild><span><Upload className="h-4 w-4" /></span></Button>
+                  </label>
+                </div>
+                {editingItem.image && <img src={editingItem.image} alt="Önizleme" className="w-20 h-20 object-cover rounded mt-2" />}
               </div>
               <div>
                 <Label>Kategori</Label>
