@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Minus, Plus, Trash2, ShoppingCart, CreditCard, Banknote, ArrowRight, AlertTriangle, History, ChevronDown, ChevronUp, Gift } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useCart } from "@/lib/cart";
-import { generateWhatsAppOrderLink, openWhatsAppLink } from "@/lib/whatsapp";
+import { generateWhatsAppOrderLink } from "@/lib/whatsapp";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -187,8 +187,8 @@ export function OrderForm() {
       whatsappNumber
     );
     
-    // Open WhatsApp link immediately (user gesture context)
-    openWhatsAppLink(whatsappLink);
+    // Open WhatsApp link directly
+    window.location.href = whatsappLink;
     
     // Then save order to database in background
     createOrderMutation.mutate({ ...formData, items });
@@ -222,7 +222,7 @@ export function OrderForm() {
       formData.notes,
       getWhatsAppNumber()
     );
-    openWhatsAppLink(whatsappLink);
+    window.location.href = whatsappLink;
   };
 
   return (
