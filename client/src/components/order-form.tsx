@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Minus, Plus, Trash2, ShoppingCart, CreditCard, Banknote, ArrowRight, AlertTriangle, History, ChevronDown, ChevronUp } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart, CreditCard, Banknote, ArrowRight, AlertTriangle, History, ChevronDown, ChevronUp, Gift } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useCart } from "@/lib/cart";
 import { generateWhatsAppOrderLink } from "@/lib/whatsapp";
@@ -17,11 +17,15 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { loadCustomerInfo, saveCustomerInfo, saveOrder, loadOrderHistory, type SavedOrder } from "@/lib/customer-storage";
 
 export function OrderForm() {
-  const { items, updateQuantity, removeItem, getSubtotal, getTotal, clearCart } = useCart();
+  const { items, updateQuantity, removeItem, getSubtotal, getTotal, clearCart, addItem } = useCart();
   const { toast } = useToast();
   
   const { data: settingsData = {} } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
+  });
+
+  const { data: crossSellProducts = [] } = useQuery({
+    queryKey: ["/api/cross-sell"],
   });
   
   const getWhatsAppNumber = () => {
@@ -364,6 +368,61 @@ export function OrderForm() {
                       </div>
                     </div>
                   ))}
+
+                  {/* Cross-sell / Upsell Section */}
+                  {crossSellProducts.length > 0 && crossSellProducts.filter((product: any) => !items.some(item => item.menuItem.id === product.menuItem?.id)).length > 0 && (
+                    <>
+                      <Separator />
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <Gift className="h-4 w-4" />
+                          <span>Bunları da eklemek ister misiniz?</span>
+                        </div>
+                        <div className="grid gap-2">
+                          {crossSellProducts
+                            .filter((product: any) => !items.some(item => item.menuItem.id === product.menuItem?.id))
+                            .slice(0, 3)
+                            .map((product: any) => (
+                              <div
+                                key={product.id}
+                                className="flex items-center justify-between p-2 rounded-lg bg-muted/50 border border-dashed"
+                                data-testid={`cross-sell-suggestion-${product.id}`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {product.menuItem?.image && (
+                                    <img
+                                      src={product.menuItem.image}
+                                      alt={product.menuItem?.name}
+                                      className="w-10 h-10 object-cover rounded"
+                                    />
+                                  )}
+                                  <div>
+                                    <p className="text-sm font-medium">{product.menuItem?.name}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      +{parseFloat(product.menuItem?.price || 0).toFixed(2)} TL
+                                    </p>
+                                  </div>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    if (product.menuItem) {
+                                      addItem(product.menuItem, 1, []);
+                                      toast({ title: `${product.menuItem.name} sepete eklendi` });
+                                    }
+                                  }}
+                                  data-testid={`button-add-cross-sell-${product.id}`}
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Ekle
+                                </Button>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   <Separator />
 
