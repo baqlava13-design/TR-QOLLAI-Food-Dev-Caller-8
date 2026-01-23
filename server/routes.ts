@@ -8,6 +8,7 @@ import {
   insertOrderSchema,
   insertOrderItemSchema,
   insertReviewSchema,
+  insertCrossSellProductSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
@@ -949,6 +950,65 @@ export async function registerRoutes(
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete review" });
+    }
+  });
+
+  // Cross-sell Products (Admin)
+  app.get("/api/admin/cross-sell", requireAdmin, async (req, res) => {
+    try {
+      const products = await storage.getCrossSellProducts();
+      res.json(products);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch cross-sell products" });
+    }
+  });
+
+  app.post("/api/admin/cross-sell", requireAdmin, async (req, res) => {
+    try {
+      const data = insertCrossSellProductSchema.parse(req.body);
+      const product = await storage.addCrossSellProduct(data);
+      res.status(201).json(product);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to add cross-sell product" });
+    }
+  });
+
+  app.patch("/api/admin/cross-sell/:id", requireAdmin, async (req, res) => {
+    try {
+      const partialSchema = insertCrossSellProductSchema.partial();
+      const data = partialSchema.parse(req.body);
+      const product = await storage.updateCrossSellProduct(req.params.id, data);
+      if (!product) {
+        return res.status(404).json({ error: "Cross-sell product not found" });
+      }
+      res.json(product);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update cross-sell product" });
+    }
+  });
+
+  app.delete("/api/admin/cross-sell/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.removeCrossSellProduct(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to remove cross-sell product" });
+    }
+  });
+
+  // Cross-sell Products (Public - for basket display)
+  app.get("/api/cross-sell", async (req, res) => {
+    try {
+      const products = await storage.getActiveCrossSellProducts();
+      res.json(products);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch cross-sell products" });
     }
   });
 

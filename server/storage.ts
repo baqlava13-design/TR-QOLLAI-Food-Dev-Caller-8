@@ -9,6 +9,7 @@ import {
   siteSettings,
   adminUsers,
   adminTokens,
+  crossSellProducts,
   type Category,
   type InsertCategory,
   type MenuItem,
@@ -27,6 +28,8 @@ import {
   type InsertSiteSetting,
   type AdminUser,
   type InsertAdminUser,
+  type CrossSellProduct,
+  type InsertCrossSellProduct,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, gte, and, sql, lt } from "drizzle-orm";
@@ -110,6 +113,13 @@ export interface IStorage {
     monthRevenue: number;
     totalCustomers: number;
   }>;
+
+  // Cross-sell Products
+  getCrossSellProducts(): Promise<(CrossSellProduct & { menuItem: MenuItem })[]>;
+  getActiveCrossSellProducts(): Promise<(CrossSellProduct & { menuItem: MenuItem })[]>;
+  addCrossSellProduct(data: InsertCrossSellProduct): Promise<CrossSellProduct>;
+  removeCrossSellProduct(id: string): Promise<boolean>;
+  updateCrossSellProduct(id: string, data: Partial<InsertCrossSellProduct>): Promise<CrossSellProduct | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -420,6 +430,53 @@ export class DatabaseStorage implements IStorage {
       monthRevenue,
       totalCustomers: allCustomers.length,
     };
+  }
+
+  // Cross-sell Products
+  async getCrossSellProducts(): Promise<(CrossSellProduct & { menuItem: MenuItem })[]> {
+    const results = await db
+      .select()
+      .from(crossSellProducts)
+      .leftJoin(menuItems, eq(crossSellProducts.menuItemId, menuItems.id))
+      .orderBy(crossSellProducts.sortOrder);
+    
+    return results
+      .filter(r => r.menu_items !== null)
+      .map(r => ({
+        ...r.cross_sell_products,
+        menuItem: r.menu_items!,
+      }));
+  }
+
+  async getActiveCrossSellProducts(): Promise<(CrossSellProduct & { menuItem: MenuItem })[]> {
+    const results = await db
+      .select()
+      .from(crossSellProducts)
+      .leftJoin(menuItems, eq(crossSellProducts.menuItemId, menuItems.id))
+      .where(eq(crossSellProducts.isActive, true))
+      .orderBy(crossSellProducts.sortOrder);
+    
+    return results
+      .filter(r => r.menu_items !== null && r.menu_items.isAvailable)
+      .map(r => ({
+        ...r.cross_sell_products,
+        menuItem: r.menu_items!,
+      }));
+  }
+
+  async addCrossSellProduct(data: InsertCrossSellProduct): Promise<CrossSellProduct> {
+    const [created] = await db.insert(crossSellProducts).values(data).returning();
+    return created;
+  }
+
+  async removeCrossSellProduct(id: string): Promise<boolean> {
+    await db.delete(crossSellProducts).where(eq(crossSellProducts.id, id));
+    return true;
+  }
+
+  async updateCrossSellProduct(id: string, data: Partial<InsertCrossSellProduct>): Promise<CrossSellProduct | undefined> {
+    const [updated] = await db.update(crossSellProducts).set(data).where(eq(crossSellProducts.id, id)).returning();
+    return updated || undefined;
   }
 }
 
