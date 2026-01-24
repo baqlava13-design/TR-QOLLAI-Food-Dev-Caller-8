@@ -211,7 +211,7 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
               </div>
               <CardContent className="p-2 md:p-4 flex flex-col flex-1">
                 <div className="mb-1 md:mb-2">
-                  <h3 className="font-semibold text-sm md:text-lg leading-tight mb-1">{item.name}</h3>
+                  <h3 className="font-semibold text-sm md:text-lg leading-tight min-h-[2.5rem] md:min-h-[3.5rem]">{item.name}</h3>
                   <div className="flex items-center gap-2">
                     {item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price) && (
                       <span className="text-[10px] md:text-xs text-muted-foreground line-through">
