@@ -184,7 +184,7 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
           {filteredItems.map((item) => (
             <Card
               key={item.id}
-              className="overflow-hidden group hover-elevate transition-all duration-300"
+              className="overflow-hidden group hover-elevate transition-all duration-300 flex flex-col h-full"
               data-testid={`card-menu-item-${item.id}`}
             >
               <div className="relative aspect-square md:aspect-[4/3] overflow-hidden">
@@ -211,8 +211,8 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
               </div>
               <CardContent className="p-2 md:p-4 flex flex-col h-full">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-1 md:gap-2 mb-1 md:mb-2">
-                  <h3 className="font-semibold text-sm md:text-lg leading-tight min-h-[2.5em] md:min-h-[1.75em]">{item.name}</h3>
-                  <div className="flex flex-col items-start md:items-end">
+                  <h3 className="font-semibold text-sm md:text-lg leading-tight">{item.name}</h3>
+                  <div className="flex flex-col items-start md:items-end flex-shrink-0">
                     {item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price) && (
                       <span className="text-[10px] md:text-xs text-muted-foreground line-through">
                         {parseFloat(item.originalPrice).toFixed(0)} TL
@@ -223,13 +223,13 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
                     </span>
                   </div>
                 </div>
-                <p className="text-muted-foreground text-xs md:text-sm mb-2 md:mb-4 line-clamp-2 hidden md:block">
+                <p className="text-muted-foreground text-xs md:text-sm mb-2 md:mb-4 line-clamp-2 hidden md:block flex-grow">
                   {item.description}
                 </p>
                 <Button
                   size="sm"
                   onClick={() => handleAddToCart(item)}
-                  className="w-full gap-1 md:gap-2 text-xs md:text-sm"
+                  className="w-full gap-1 md:gap-2 text-xs md:text-sm mt-auto"
                   data-testid={`button-add-to-cart-${item.id}`}
                 >
                   <Plus className="h-3 w-3 md:h-4 md:w-4" />
