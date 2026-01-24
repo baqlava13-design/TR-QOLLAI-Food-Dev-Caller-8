@@ -209,7 +209,7 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
                   </Badge>
                 )}
               </div>
-              <CardContent className="p-2 md:p-4 flex flex-col h-full">
+              <CardContent className="p-2 md:p-4 flex flex-col flex-1">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-1 md:gap-2 mb-1 md:mb-2">
                   <h3 className="font-semibold text-sm md:text-lg leading-tight">{item.name}</h3>
                   <div className="flex flex-col items-start md:items-end flex-shrink-0">
@@ -223,19 +223,21 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
                     </span>
                   </div>
                 </div>
-                <p className="text-muted-foreground text-xs md:text-sm mb-2 md:mb-4 line-clamp-2 hidden md:block flex-grow">
+                <p className="text-muted-foreground text-xs md:text-sm mb-2 md:mb-4 line-clamp-2 hidden md:block">
                   {item.description}
                 </p>
-                <Button
-                  size="sm"
-                  onClick={() => handleAddToCart(item)}
-                  className="w-full gap-1 md:gap-2 text-xs md:text-sm mt-auto"
-                  data-testid={`button-add-to-cart-${item.id}`}
-                >
-                  <Plus className="h-3 w-3 md:h-4 md:w-4" />
-                  <span className="hidden sm:inline">Sepete Ekle</span>
-                  <span className="sm:hidden">Ekle</span>
-                </Button>
+                <div className="mt-auto">
+                  <Button
+                    size="sm"
+                    onClick={() => handleAddToCart(item)}
+                    className="w-full gap-1 md:gap-2 text-xs md:text-sm"
+                    data-testid={`button-add-to-cart-${item.id}`}
+                  >
+                    <Plus className="h-3 w-3 md:h-4 md:w-4" />
+                    <span className="hidden sm:inline">Sepete Ekle</span>
+                    <span className="sm:hidden">Ekle</span>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
