@@ -393,7 +393,7 @@ export function OrderForm() {
                           className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg object-cover flex-shrink-0"
                         />
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium truncate text-sm">{item.menuItem.name}</h4>
+                          <h4 className="font-medium text-sm leading-tight">{item.menuItem.name}</h4>
                           <p className="text-xs sm:text-sm text-muted-foreground">
                             {parseFloat(item.menuItem.price).toFixed(2)} TL
                           </p>

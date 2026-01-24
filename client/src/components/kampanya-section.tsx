@@ -82,8 +82,8 @@ export function KampanyaSection({ menuItems, isLoading }: KampanyaSectionProps) 
                 </span>
               </div>
               <CardContent className="p-2 md:p-3">
-                <h3 className="font-semibold text-xs md:text-sm line-clamp-1 mb-1">{item.name}</h3>
-                <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-1 mb-2">
+                <h3 className="font-semibold text-xs md:text-sm leading-tight min-h-[2em] mb-1">{item.name}</h3>
+                <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-2 mb-2">
                   {item.description}
                 </p>
                 <div className="flex items-center justify-between gap-1">
