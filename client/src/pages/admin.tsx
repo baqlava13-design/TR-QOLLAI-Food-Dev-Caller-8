@@ -447,7 +447,7 @@ ${order.notes ? `Not: ${order.notes}` : ""}
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Bugun</p>
+                <p className="text-sm text-muted-foreground">Bugün</p>
                 <p className="text-2xl font-bold">{displayStats.todayOrders}</p>
               </div>
               <ShoppingBag className="h-8 w-8 text-primary opacity-50" />
@@ -1079,7 +1079,7 @@ function MenuItemsTab() {
                 <Input type="number" value={newItem.price} onChange={(e) => setNewItem({ ...newItem, price: e.target.value })} />
               </div>
               <div>
-                <Label>Orjinal Fiyat (TL) - Kampanya için</Label>
+                <Label>Orijinal Fiyat (TL) - Kampanya için</Label>
                 <Input type="number" value={newItem.originalPrice} onChange={(e) => setNewItem({ ...newItem, originalPrice: e.target.value })} placeholder="Kampanya öncesi fiyat" />
               </div>
               <div>
@@ -1163,7 +1163,7 @@ function MenuItemsTab() {
                     <TableHead>Resim</TableHead>
                     <SortableTableHead column="name" label="Ad" sortConfig={sortConfig} onSort={handleSort} />
                     <SortableTableHead column="price" label="Fiyat" sortConfig={sortConfig} onSort={handleSort} />
-                    <SortableTableHead column="originalPrice" label="Orjinal Fiyat" sortConfig={sortConfig} onSort={handleSort} />
+                    <SortableTableHead column="originalPrice" label="Orijinal Fiyat" sortConfig={sortConfig} onSort={handleSort} />
                     <SortableTableHead column="categoryId" label="Kategori" sortConfig={sortConfig} onSort={handleSort} />
                     <SortableTableHead column="isKampanya" label="Kampanya" sortConfig={sortConfig} onSort={handleSort} />
                     <SortableTableHead column="isAvailable" label="Durum" sortConfig={sortConfig} onSort={handleSort} />
@@ -1227,7 +1227,7 @@ function MenuItemsTab() {
                 <Input type="number" value={editingItem.price} onChange={(e) => setEditingItem({ ...editingItem, price: e.target.value })} />
               </div>
               <div>
-                <Label>Orjinal Fiyat (TL)</Label>
+                <Label>Orijinal Fiyat (TL)</Label>
                 <Input type="number" value={editingItem.originalPrice || ""} onChange={(e) => setEditingItem({ ...editingItem, originalPrice: e.target.value })} placeholder="Kampanya öncesi fiyat" />
               </div>
               <div className="md:col-span-2">
@@ -2060,7 +2060,7 @@ function SettingsTab() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>WhatsApp Numarasi (905xxxxxxxxx)</Label>
+                  <Label>WhatsApp Numarası (905xxxxxxxxx)</Label>
                   <Input
                     value={settings.whatsapp_number}
                     onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
@@ -2074,7 +2074,7 @@ function SettingsTab() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Image className="h-5 w-5" /> Sirket Logosu
+                  <Image className="h-5 w-5" /> Şirket Logosu
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -2253,7 +2253,7 @@ function SettingsTab() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Type className="h-5 w-5" /> Menu Bolumu Basligi (H2)
+                  <Type className="h-5 w-5" /> Menü Bölümü Başlığı (H2)
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -2293,12 +2293,12 @@ function SettingsTab() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Type className="h-5 w-5" /> Yorumlar Basligi (H2)
+                  <Type className="h-5 w-5" /> Yorumlar Başlığı (H2)
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Yorumlar Bolumu Basligi</Label>
+                  <Label>Yorumlar Bölümü Başlığı</Label>
                   <Input
                     value={settings.reviews_section_title}
                     onChange={(e) => setSettings({ ...settings, reviews_section_title: e.target.value })}
@@ -2313,7 +2313,7 @@ function SettingsTab() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Type className="h-5 w-5" /> Footer Logo Ismi
+                  <Type className="h-5 w-5" /> Footer Logo İsmi
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -2414,7 +2414,7 @@ function SettingsTab() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Type className="h-5 w-5" /> Calisma Saatleri - Hafta Ici
+                  <Type className="h-5 w-5" /> Çalışma Saatleri - Hafta İçi
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -2434,7 +2434,7 @@ function SettingsTab() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Type className="h-5 w-5" /> Calisma Saatleri - Hafta Sonu
+                  <Type className="h-5 w-5" /> Çalışma Saatleri - Hafta Sonu
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -2867,7 +2867,7 @@ export default function Admin() {
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-sm">DP</span>
               </div>
-              <span className="font-bold text-lg">Yonetim Paneli</span>
+              <span className="font-bold text-lg">Yönetim Paneli</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
