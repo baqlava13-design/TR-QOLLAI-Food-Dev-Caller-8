@@ -42,10 +42,10 @@ export async function seedDatabase() {
   // Seed categories
   const categoryData = [
     { name: "Ana Yemekler", description: "Lezzetli ana yemekler", sortOrder: 1, isActive: true },
-    { name: "Corbalar", description: "Sicak corbalar", sortOrder: 2, isActive: true },
+    { name: "Çorbalar", description: "Sıcak çorbalar", sortOrder: 2, isActive: true },
     { name: "Salatalar", description: "Taze salatalar", sortOrder: 3, isActive: true },
-    { name: "Tatlilar", description: "Tatli cesitleri", sortOrder: 4, isActive: true },
-    { name: "Icecekler", description: "Soguk ve sicak icecekler", sortOrder: 5, isActive: true },
+    { name: "Tatlılar", description: "Tatlı çeşitleri", sortOrder: 4, isActive: true },
+    { name: "İçecekler", description: "Soğuk ve sıcak içecekler", sortOrder: 5, isActive: true },
   ];
 
   const insertedCategories = await db.insert(categories).values(categoryData).returning();
@@ -55,19 +55,19 @@ export async function seedDatabase() {
 
   // Seed menu items
   const menuItemData = [
-    { name: "Izgara Kofte", description: "El yapimi kofte, yaninda pilav ve salata ile", price: "85.00", image: "https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Ana Yemekler"), isAvailable: true, isPopular: true, sortOrder: 1 },
-    { name: "Tavuk Sote", description: "Sebzeli tavuk sote, pilav esliginde", price: "75.00", image: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Ana Yemekler"), isAvailable: true, isPopular: true, sortOrder: 2 },
-    { name: "Et Doner", description: "Taze pide ekmegiyle et doner", price: "95.00", image: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Ana Yemekler"), isAvailable: true, isPopular: false, sortOrder: 3 },
-    { name: "Lahmacun", description: "Ince hamur, bol malzemeli lahmacun", price: "35.00", image: "https://images.unsplash.com/photo-1601924287811-e34f8e11585c?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Ana Yemekler"), isAvailable: true, isPopular: true, sortOrder: 4 },
-    { name: "Pide Cesitleri", description: "Kiymali, kasarli veya karisik pide", price: "65.00", image: "https://images.unsplash.com/photo-1579888944880-d98341245702?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Ana Yemekler"), isAvailable: true, isPopular: false, sortOrder: 5 },
-    { name: "Mercimek Corbasi", description: "Geleneksel ev yapimi mercimek corbasi", price: "25.00", image: "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Corbalar"), isAvailable: true, isPopular: true, sortOrder: 1 },
-    { name: "Ezogelin Corbasi", description: "Baharatli, lezzetli ezogelin", price: "25.00", image: "https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Corbalar"), isAvailable: true, isPopular: false, sortOrder: 2 },
-    { name: "Coban Salata", description: "Taze sebzelerle hazirlanan coban salata", price: "30.00", image: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Salatalar"), isAvailable: true, isPopular: false, sortOrder: 1 },
+    { name: "Izgara Köfte", description: "El yapımı köfte, yanında pilav ve salata ile", price: "85.00", image: "https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Ana Yemekler"), isAvailable: true, isPopular: true, sortOrder: 1 },
+    { name: "Tavuk Sote", description: "Sebzeli tavuk sote, pilav eşliğinde", price: "75.00", image: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Ana Yemekler"), isAvailable: true, isPopular: true, sortOrder: 2 },
+    { name: "Et Döner", description: "Taze pide ekmeğiyle et döner", price: "95.00", image: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Ana Yemekler"), isAvailable: true, isPopular: false, sortOrder: 3 },
+    { name: "Lahmacun", description: "İnce hamur, bol malzemeli lahmacun", price: "35.00", image: "https://images.unsplash.com/photo-1601924287811-e34f8e11585c?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Ana Yemekler"), isAvailable: true, isPopular: true, sortOrder: 4 },
+    { name: "Pide Çeşitleri", description: "Kıymalı, kaşarlı veya karışık pide", price: "65.00", image: "https://images.unsplash.com/photo-1579888944880-d98341245702?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Ana Yemekler"), isAvailable: true, isPopular: false, sortOrder: 5 },
+    { name: "Mercimek Çorbası", description: "Geleneksel ev yapımı mercimek çorbası", price: "25.00", image: "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Çorbalar"), isAvailable: true, isPopular: true, sortOrder: 1 },
+    { name: "Ezogelin Çorbası", description: "Baharatlı, lezzetli ezogelin", price: "25.00", image: "https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Çorbalar"), isAvailable: true, isPopular: false, sortOrder: 2 },
+    { name: "Çoban Salata", description: "Taze sebzelerle hazırlanan çoban salata", price: "30.00", image: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Salatalar"), isAvailable: true, isPopular: false, sortOrder: 1 },
     { name: "Sezar Salata", description: "Tavuklu sezar salata", price: "45.00", image: "https://images.unsplash.com/photo-1546793665-c74683f339c1?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Salatalar"), isAvailable: true, isPopular: false, sortOrder: 2 },
-    { name: "Kunefe", description: "Sicak servis edilen kunefe, kaymakli", price: "55.00", image: "https://images.unsplash.com/photo-1519676867240-f03562e64548?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Tatlilar"), isAvailable: true, isPopular: true, sortOrder: 1 },
-    { name: "Sutlac", description: "Firinlanmis sutlac", price: "35.00", image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Tatlilar"), isAvailable: true, isPopular: false, sortOrder: 2 },
-    { name: "Ayran", description: "Ev yapimi taze ayran", price: "10.00", image: "https://images.unsplash.com/photo-1571950006470-10a5a0b0a9ef?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Icecekler"), isAvailable: true, isPopular: false, sortOrder: 1 },
-    { name: "Turk Kahvesi", description: "Geleneksel Turk kahvesi", price: "20.00", image: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Icecekler"), isAvailable: true, isPopular: false, sortOrder: 2 },
+    { name: "Künefe", description: "Sıcak servis edilen künefe, kaymaklı", price: "55.00", image: "https://images.unsplash.com/photo-1519676867240-f03562e64548?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Tatlılar"), isAvailable: true, isPopular: true, sortOrder: 1 },
+    { name: "Sütlaç", description: "Fırınlanmış sütlaç", price: "35.00", image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("Tatlılar"), isAvailable: true, isPopular: false, sortOrder: 2 },
+    { name: "Ayran", description: "Ev yapımı taze ayran", price: "10.00", image: "https://images.unsplash.com/photo-1571950006470-10a5a0b0a9ef?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("İçecekler"), isAvailable: true, isPopular: false, sortOrder: 1 },
+    { name: "Türk Kahvesi", description: "Geleneksel Türk kahvesi", price: "20.00", image: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=400&q=80", categoryId: categoryMap.get("İçecekler"), isAvailable: true, isPopular: false, sortOrder: 2 },
   ];
 
   const insertedMenuItems = await db.insert(menuItems).values(menuItemData).returning();
@@ -75,12 +75,12 @@ export async function seedDatabase() {
 
   // Seed reviews
   const reviewData = [
-    { customerName: "Ahmet Y.", rating: 5, comment: "Harika lezzetler! Ozellikle izgara kofte muhteseḿdi. Teslimat da cok hizliydi, 25 dakikada geldi.", menuItemName: "Izgara Kofte", isApproved: true },
-    { customerName: "Fatma K.", rating: 5, comment: "Her hafta siparis veriyoruz. Hem lezzetli hem de fiyatlar uygun. WhatsApp'tan siparis vermek cok pratik.", menuItemName: "Lahmacun", isApproved: true },
-    { customerName: "Mehmet A.", rating: 4, comment: "Kunefe gercekten ev yapimi lezzette. Ailece cok begendik, tekrar siparis verecegiz.", menuItemName: "Kunefe", isApproved: true },
-    { customerName: "Zeynep D.", rating: 5, comment: "Is yerinde ogle yemegi icin ideal. Hizli teslimat ve lezzetli yemekler. Tesekkurler Lezzet Express!", menuItemName: "Tavuk Sote", isApproved: true },
-    { customerName: "Ali R.", rating: 5, comment: "Corbalari muthis taze ve sicak geliyor. Mercimek corbasi favori yemegim oldu. Kesinlikle tavsiye ederim.", menuItemName: "Mercimek Corbasi", isApproved: true },
-    { customerName: "Ayse B.", rating: 5, comment: "Misafirlerime ikram ettim, herkes bayildi. Sunum da cok guzeldi. En iyi tercihimiz!", menuItemName: "Et Doner", isApproved: true },
+    { customerName: "Ahmet Y.", rating: 5, comment: "Harika lezzetler! Özellikle ızgara köfte muhteşemdi. Teslimat da çok hızlıydı, 25 dakikada geldi.", menuItemName: "Izgara Köfte", isApproved: true },
+    { customerName: "Fatma K.", rating: 5, comment: "Her hafta sipariş veriyoruz. Hem lezzetli hem de fiyatlar uygun. WhatsApp'tan sipariş vermek çok pratik.", menuItemName: "Lahmacun", isApproved: true },
+    { customerName: "Mehmet A.", rating: 4, comment: "Künefe gerçekten ev yapımı lezzette. Ailece çok beğendik, tekrar sipariş vereceğiz.", menuItemName: "Künefe", isApproved: true },
+    { customerName: "Zeynep D.", rating: 5, comment: "İş yerinde öğle yemeği için ideal. Hızlı teslimat ve lezzetli yemekler. Teşekkürler Lezzet Express!", menuItemName: "Tavuk Sote", isApproved: true },
+    { customerName: "Ali R.", rating: 5, comment: "Çorbaları müthiş taze ve sıcak geliyor. Mercimek çorbası favori yemeğim oldu. Kesinlikle tavsiye ederim.", menuItemName: "Mercimek Çorbası", isApproved: true },
+    { customerName: "Ayşe B.", rating: 5, comment: "Misafirlerime ikram ettim, herkes bayıldı. Sunum da çok güzeldi. En iyi tercihimiz!", menuItemName: "Et Döner", isApproved: true },
   ];
 
   const insertedReviews = await db.insert(reviews).values(reviewData).returning();
@@ -88,18 +88,18 @@ export async function seedDatabase() {
 
   // Seed sample customers
   const customerData = [
-    { name: "Ahmet Yilmaz", phone: "5321234567", address: "Cumhuriyet Mah. Ataturk Cad. No: 15, Corlu" },
-    { name: "Fatma Demir", phone: "5329876543", address: "Kazimiye Mah. Istasyon Sok. No: 8/3, Corlu" },
-    { name: "Mehmet Kaya", phone: "5335556677", address: "Nusratiye Mah. Universite Cad. No: 22, Corlu" },
+    { name: "Ahmet Yılmaz", phone: "5321234567", address: "Cumhuriyet Mah. Atatürk Cad. No: 15, Çorlu" },
+    { name: "Fatma Demir", phone: "5329876543", address: "Kazımiye Mah. İstasyon Sok. No: 8/3, Çorlu" },
+    { name: "Mehmet Kaya", phone: "5335556677", address: "Nusratiye Mah. Üniversite Cad. No: 22, Çorlu" },
   ];
 
   const insertedCustomers = await db.insert(customers).values(customerData).returning();
   console.log(`Inserted ${insertedCustomers.length} customers`);
 
   // Find menu item IDs for orders
-  const kofte = insertedMenuItems.find(m => m.name === "Izgara Kofte");
+  const kofte = insertedMenuItems.find(m => m.name === "Izgara Köfte");
   const lahmacun = insertedMenuItems.find(m => m.name === "Lahmacun");
-  const mercimek = insertedMenuItems.find(m => m.name === "Mercimek Corbasi");
+  const mercimek = insertedMenuItems.find(m => m.name === "Mercimek Çorbası");
   const ayran = insertedMenuItems.find(m => m.name === "Ayran");
 
   // Seed sample orders with different statuses

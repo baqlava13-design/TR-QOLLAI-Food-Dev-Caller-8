@@ -101,7 +101,7 @@ function SortableTableHead({
   const isActive = sortConfig.key === column;
   return (
     <TableHead
-      className="cursor-pointer select-none hover:bg-muted/50"
+      className="cursor-pointer select-none hover-elevate"
       onClick={() => onSort(column)}
       data-testid={`sort-${column}`}
     >
@@ -637,7 +637,7 @@ ${order.notes ? `Not: ${order.notes}` : ""}
         <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Siparis #{selectedOrder.id.slice(0, 8)}</DialogTitle>
+              <DialogTitle>Sipariş #{selectedOrder.id.slice(0, 8)}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -871,7 +871,7 @@ function CategoriesTab() {
         <Dialog open={!!editingCategory} onOpenChange={() => setEditingCategory(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Kategori Duzenle</DialogTitle>
+              <DialogTitle>Kategori Düzenle</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -1215,7 +1215,7 @@ function MenuItemsTab() {
         <Dialog open={!!editingItem} onOpenChange={() => setEditingItem(null)}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Urun Duzenle</DialogTitle>
+              <DialogTitle>Ürün Düzenle</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
@@ -1381,7 +1381,7 @@ function ReviewsTab() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
       queryClient.invalidateQueries({ queryKey: ["/api/reviews"] });
       setEditingReview(null);
-      toast({ title: "Yorum guncellendi" });
+      toast({ title: "Yorum güncellendi" });
     },
   });
 
@@ -1398,7 +1398,7 @@ function ReviewsTab() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center flex-wrap gap-2">
-        <h2 className="text-xl font-bold">Musteri Yorumlari</h2>
+        <h2 className="text-xl font-bold">Müşteri Yorumları</h2>
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={() => handleExport("xlsx")} data-testid="button-reviews-export-excel">
             <Download className="h-4 w-4 mr-1" /> Excel
@@ -1468,11 +1468,11 @@ function ReviewsTab() {
         <Dialog open={!!editingReview} onOpenChange={() => setEditingReview(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Yorum Duzenle</DialogTitle>
+              <DialogTitle>Yorum Düzenle</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label>Musteri Adi</Label>
+                <Label>Müşteri Adı</Label>
                 <Input value={editingReview.customerName} onChange={(e) => setEditingReview({ ...editingReview, customerName: e.target.value })} />
               </div>
               <div>
@@ -2034,9 +2034,9 @@ function SettingsTab() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">Site Ayarlari</h2>
+        <h2 className="text-xl font-bold">Site Ayarları</h2>
         <Button onClick={handleSaveAll} className="gap-2">
-          <Save className="h-4 w-4" /> Tum Ayarlari Kaydet
+          <Save className="h-4 w-4" /> Tüm Ayarları Kaydet
         </Button>
       </div>
 
@@ -2046,7 +2046,7 @@ function SettingsTab() {
             <Settings className="h-4 w-4" /> Genel Ayarlar
           </TabsTrigger>
           <TabsTrigger value="text" className="gap-2">
-            <Type className="h-4 w-4" /> Metin Icerikleri
+            <Type className="h-4 w-4" /> Metin İçerikleri
           </TabsTrigger>
         </TabsList>
 
@@ -2055,7 +2055,7 @@ function SettingsTab() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <SiWhatsapp className="text-whatsapp" /> WhatsApp Ayarlari
+                  <SiWhatsapp className="text-whatsapp" /> WhatsApp Ayarları
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -2079,7 +2079,7 @@ function SettingsTab() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Logo Yukle</Label>
+                  <Label>Logo Yükle</Label>
                   <div className="flex gap-2">
                     <Input
                       type="file"
@@ -2116,7 +2116,7 @@ function SettingsTab() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Hero Resmi Yukle</Label>
+                  <Label>Hero Resmi Yükle</Label>
                   <div className="flex gap-2">
                     <Input
                       type="file"
@@ -2185,12 +2185,12 @@ function SettingsTab() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <ShoppingBag className="h-5 w-5" /> Minimum Siparis Tutari
+                  <ShoppingBag className="h-5 w-5" /> Minimum Sipariş Tutarı
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Minimum Siparis (TL)</Label>
+                  <Label>Minimum Sipariş (TL)</Label>
                   <Input
                     type="number"
                     value={settings.minimum_order_amount}
@@ -2199,7 +2199,7 @@ function SettingsTab() {
                     data-testid="input-minimum-order"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Musteri bu tutarin altinda siparis veremez
+                    Müşteri bu tutarın altında sipariş veremez
                   </p>
                 </div>
                 <Button onClick={() => handleSave("minimum_order_amount")} size="sm">Kaydet</Button>
@@ -2218,11 +2218,11 @@ function SettingsTab() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Ana Baslik</Label>
+                  <Label>Ana Başlık</Label>
                   <Input
                     value={settings.hero_title}
                     onChange={(e) => setSettings({ ...settings, hero_title: e.target.value })}
-                    placeholder="Siparis Kolay"
+                    placeholder="Sipariş Kolay"
                     data-testid="input-hero-title"
                   />
                 </div>
@@ -2238,7 +2238,7 @@ function SettingsTab() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Alt Baslik</Label>
+                  <Label>Alt Başlık</Label>
                   <Input
                     value={settings.hero_subtitle}
                     onChange={(e) => setSettings({ ...settings, hero_subtitle: e.target.value })}
@@ -2273,7 +2273,7 @@ function SettingsTab() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Type className="h-5 w-5" /> Nasil Calisir Basligi (H2)
+                  <Type className="h-5 w-5" /> Nasıl Çalışır Başlığı (H2)
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -2322,7 +2322,7 @@ function SettingsTab() {
                   <Input
                     value={settings.footer_logo_name}
                     onChange={(e) => setSettings({ ...settings, footer_logo_name: e.target.value })}
-                    placeholder="Siparis Kolay"
+                    placeholder="Sipariş Kolay"
                     data-testid="input-footer-logo-name"
                   />
                 </div>
@@ -2338,7 +2338,7 @@ function SettingsTab() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Footer Aciklama Metni</Label>
+                  <Label>Footer Açıklama Metni</Label>
                   <Textarea
                     value={settings.footer_text}
                     onChange={(e) => setSettings({ ...settings, footer_text: e.target.value })}
@@ -2354,7 +2354,7 @@ function SettingsTab() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Type className="h-5 w-5" /> Iletisim - Adres
+                  <Type className="h-5 w-5" /> İletişim - Adres
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -2374,12 +2374,12 @@ function SettingsTab() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Type className="h-5 w-5" /> Iletisim - Telefon
+                  <Type className="h-5 w-5" /> İletişim - Telefon
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Telefon Numarasi</Label>
+                  <Label>Telefon Numarası</Label>
                   <Input
                     value={settings.footer_phone}
                     onChange={(e) => setSettings({ ...settings, footer_phone: e.target.value })}
@@ -2394,7 +2394,7 @@ function SettingsTab() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Type className="h-5 w-5" /> Iletisim - E-posta
+                  <Type className="h-5 w-5" /> İletişim - E-posta
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -2886,7 +2886,7 @@ export default function Admin() {
           <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="orders" className="gap-2">
               <ShoppingBag className="h-4 w-4" />
-              <span className="hidden sm:inline">Siparisler</span>
+              <span className="hidden sm:inline">Siparişler</span>
             </TabsTrigger>
             <TabsTrigger value="customers" className="gap-2">
               <Users className="h-4 w-4" />
