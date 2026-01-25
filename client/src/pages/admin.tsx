@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useUpload } from "@/hooks/use-upload";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,6 +58,9 @@ import {
   Type,
   Gift,
   MapPin,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { SiWhatsapp, SiFacebook, SiInstagram } from "react-icons/si";
 import { useTheme } from "@/lib/theme";
@@ -78,6 +81,125 @@ interface DashboardStats {
   weekRevenue: number;
   monthRevenue: number;
   totalCustomers: number;
+}
+
+// Sortable table head component
+type SortDirection = "asc" | "desc" | null;
+type SortConfig = { key: string; direction: SortDirection };
+
+function SortableTableHead({
+  column,
+  label,
+  sortConfig,
+  onSort,
+}: {
+  column: string;
+  label: string;
+  sortConfig: SortConfig;
+  onSort: (column: string) => void;
+}) {
+  const isActive = sortConfig.key === column;
+  return (
+    <TableHead
+      className="cursor-pointer select-none hover:bg-muted/50"
+      onClick={() => onSort(column)}
+      data-testid={`sort-${column}`}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        {isActive ? (
+          sortConfig.direction === "asc" ? (
+            <ArrowUp className="h-4 w-4" />
+          ) : (
+            <ArrowDown className="h-4 w-4" />
+          )
+        ) : (
+          <ArrowUpDown className="h-4 w-4 opacity-30" />
+        )}
+      </div>
+    </TableHead>
+  );
+}
+
+type ColumnType = "string" | "number" | "boolean" | "date";
+type ColumnDef = ColumnType | { type: ColumnType; accessor?: (item: any) => any };
+type ColumnDefs = Record<string, ColumnDef>;
+
+function useSorting<T>(initialKey: string = "", initialDirection: SortDirection = null) {
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: initialKey, direction: initialDirection });
+
+  const handleSort = (key: string) => {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        if (prev.direction === "asc") return { key, direction: "desc" };
+        if (prev.direction === "desc") return { key: "", direction: null };
+        return { key, direction: "asc" };
+      }
+      return { key, direction: "asc" };
+    });
+  };
+
+  const sortData = useCallback((data: T[], columnDefs: ColumnDefs = {}) => {
+    if (!sortConfig.key || !sortConfig.direction) return data;
+    
+    const colDef = columnDefs[sortConfig.key];
+    const colType: ColumnType = typeof colDef === "object" ? colDef.type : (colDef || "string");
+    const accessor = typeof colDef === "object" && colDef.accessor ? colDef.accessor : (item: any) => getNestedValue(item, sortConfig.key);
+    
+    return [...data].sort((a, b) => {
+      const aVal = accessor(a);
+      const bVal = accessor(b);
+      
+      // Handle null/undefined
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return sortConfig.direction === "asc" ? 1 : -1;
+      if (bVal == null) return sortConfig.direction === "asc" ? -1 : 1;
+      
+      let comparison = 0;
+      
+      switch (colType) {
+        case "number": {
+          const aNum = parseFloat(String(aVal));
+          const bNum = parseFloat(String(bVal));
+          comparison = aNum - bNum;
+          break;
+        }
+        case "boolean": {
+          const aBool = aVal === true || aVal === "true" ? 1 : 0;
+          const bBool = bVal === true || bVal === "true" ? 1 : 0;
+          comparison = aBool - bBool;
+          break;
+        }
+        case "date": {
+          const aDate = aVal instanceof Date ? aVal : new Date(String(aVal));
+          const bDate = bVal instanceof Date ? bVal : new Date(String(bVal));
+          const aTime = aDate.getTime();
+          const bTime = bDate.getTime();
+          // Guard against invalid dates
+          if (isNaN(aTime) && isNaN(bTime)) {
+            comparison = 0;
+          } else if (isNaN(aTime)) {
+            comparison = 1; // Invalid dates sort last
+          } else if (isNaN(bTime)) {
+            comparison = -1;
+          } else {
+            comparison = aTime - bTime;
+          }
+          break;
+        }
+        default: // string
+          comparison = String(aVal).localeCompare(String(bVal), "tr");
+      }
+      
+      return sortConfig.direction === "asc" ? comparison : -comparison;
+    });
+  }, [sortConfig.key, sortConfig.direction]);
+
+  return { sortConfig, handleSort, sortData };
+}
+
+function getNestedValue(obj: any, path: string): any {
+  return path.split(".").reduce((acc, part) => acc?.[part], obj);
 }
 
 const statusLabels: Record<string, string> = {
@@ -190,6 +312,14 @@ function OrdersTab() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const { sortConfig, handleSort, sortData } = useSorting<OrderWithItems>("createdAt", "desc");
+  const orderColumnDefs: ColumnDefs = {
+    id: "string",
+    createdAt: "date",
+    customerName: "string",
+    total: "number",
+    status: "string",
+  };
 
   const { data: stats } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
@@ -243,7 +373,7 @@ function OrdersTab() {
     },
   });
 
-  const filteredOrders = orders.filter((order) => {
+  const filteredOrders = sortData(orders.filter((order) => {
     // Status filter
     if (filterStatus !== "all" && order.status !== filterStatus) return false;
     
@@ -266,7 +396,7 @@ function OrdersTab() {
     }
     
     return true;
-  });
+  }), orderColumnDefs);
 
   const clearDateFilters = () => {
     setStartDate("");
@@ -447,11 +577,11 @@ ${order.notes ? `Not: ${order.notes}` : ""}
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>No</TableHead>
-                    <TableHead>Tarih / Saat</TableHead>
-                    <TableHead>Müşteri</TableHead>
-                    <TableHead>Toplam</TableHead>
-                    <TableHead>Durum</TableHead>
+                    <SortableTableHead column="id" label="No" sortConfig={sortConfig} onSort={handleSort} />
+                    <SortableTableHead column="createdAt" label="Tarih / Saat" sortConfig={sortConfig} onSort={handleSort} />
+                    <SortableTableHead column="customerName" label="Müşteri" sortConfig={sortConfig} onSort={handleSort} />
+                    <SortableTableHead column="total" label="Toplam" sortConfig={sortConfig} onSort={handleSort} />
+                    <SortableTableHead column="status" label="Durum" sortConfig={sortConfig} onSort={handleSort} />
                     <TableHead>İşlem</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -542,6 +672,11 @@ function CategoriesTab() {
   const [showNew, setShowNew] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const { sortConfig, handleSort, sortData } = useSorting<Category>();
+  const categoryColumnDefs: ColumnDefs = {
+    name: "string",
+    description: "string",
+  };
 
   const { data: categories = [], isLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -700,14 +835,14 @@ function CategoriesTab() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Ad</TableHead>
-                  <TableHead>Açıklama</TableHead>
+                  <SortableTableHead column="name" label="Ad" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableTableHead column="description" label="Açıklama" sortConfig={sortConfig} onSort={handleSort} />
                   <TableHead>Resim</TableHead>
-                  <TableHead>Islem</TableHead>
+                  <TableHead>İşlem</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {categories.map((cat) => (
+                {sortData(categories, categoryColumnDefs).map((cat) => (
                   <TableRow key={cat.id}>
                     <TableCell className="font-medium">{cat.name}</TableCell>
                     <TableCell>{cat.description || "-"}</TableCell>
@@ -798,6 +933,7 @@ function MenuItemsTab() {
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const { sortConfig, handleSort, sortData } = useSorting<MenuItem>();
 
   const { data: items = [], isLoading } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu-items"],
@@ -806,6 +942,22 @@ function MenuItemsTab() {
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
+
+  const categoryMap = useMemo(() => {
+    return categories.reduce((acc, cat) => {
+      acc[cat.id] = cat.name;
+      return acc;
+    }, {} as Record<string, string>);
+  }, [categories]);
+
+  const menuItemColumnDefs: ColumnDefs = useMemo(() => ({
+    name: "string",
+    price: "number",
+    originalPrice: "number",
+    categoryId: { type: "string", accessor: (item: MenuItem) => categoryMap[item.categoryId ?? ""] || "" },
+    isKampanya: "boolean",
+    isAvailable: "boolean",
+  }), [categoryMap]);
 
   const handleExport = async (format: "csv" | "xlsx") => {
     try {
@@ -1009,17 +1161,17 @@ function MenuItemsTab() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Resim</TableHead>
-                    <TableHead>Ad</TableHead>
-                    <TableHead>Fiyat</TableHead>
-                    <TableHead>Orjinal Fiyat</TableHead>
-                    <TableHead>Kategori</TableHead>
-                    <TableHead>Kampanya</TableHead>
-                    <TableHead>Durum</TableHead>
+                    <SortableTableHead column="name" label="Ad" sortConfig={sortConfig} onSort={handleSort} />
+                    <SortableTableHead column="price" label="Fiyat" sortConfig={sortConfig} onSort={handleSort} />
+                    <SortableTableHead column="originalPrice" label="Orjinal Fiyat" sortConfig={sortConfig} onSort={handleSort} />
+                    <SortableTableHead column="categoryId" label="Kategori" sortConfig={sortConfig} onSort={handleSort} />
+                    <SortableTableHead column="isKampanya" label="Kampanya" sortConfig={sortConfig} onSort={handleSort} />
+                    <SortableTableHead column="isAvailable" label="Durum" sortConfig={sortConfig} onSort={handleSort} />
                     <TableHead>İşlem</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((item) => (
+                  {sortData(items, menuItemColumnDefs).map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>
                         {item.image ? <img src={item.image} alt="" className="w-12 h-12 object-cover rounded" /> : "-"}
@@ -1154,6 +1306,13 @@ function ReviewsTab() {
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const { sortConfig, handleSort, sortData } = useSorting<Review>();
+  const reviewColumnDefs: ColumnDefs = {
+    customerName: "string",
+    comment: "string",
+    rating: "number",
+    isApproved: "boolean",
+  };
 
   const { data: reviews = [], isLoading } = useQuery<Review[]>({
     queryKey: ["/api/admin/reviews"],
@@ -1264,15 +1423,15 @@ function ReviewsTab() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Musteri</TableHead>
-                  <TableHead>Yorum</TableHead>
-                  <TableHead>Puan</TableHead>
-                  <TableHead>Onayli</TableHead>
-                  <TableHead>Islem</TableHead>
+                  <SortableTableHead column="customerName" label="Müşteri" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableTableHead column="comment" label="Yorum" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableTableHead column="rating" label="Puan" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableTableHead column="isApproved" label="Onaylı" sortConfig={sortConfig} onSort={handleSort} />
+                  <TableHead>İşlem</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {reviews.map((review) => (
+                {sortData(reviews, reviewColumnDefs).map((review) => (
                   <TableRow key={review.id}>
                     <TableCell className="font-medium">{review.customerName}</TableCell>
                     <TableCell className="max-w-xs truncate">{review.comment}</TableCell>
@@ -1493,6 +1652,12 @@ function NeighborhoodsTab() {
     isActive: true,
     sortOrder: 0,
   });
+  const { sortConfig, handleSort, sortData } = useSorting<Neighborhood>();
+  const neighborhoodColumnDefs: ColumnDefs = {
+    name: "string",
+    minimumOrderAmount: "number",
+    isActive: "boolean",
+  };
 
   const { data: neighborhoods = [], isLoading } = useQuery<Neighborhood[]>({
     queryKey: ["/api/admin/neighborhoods"],
@@ -1652,14 +1817,14 @@ function NeighborhoodsTab() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Mahalle Adı</TableHead>
-                  <TableHead>Min. Sipariş Tutarı</TableHead>
-                  <TableHead>Durum</TableHead>
+                  <SortableTableHead column="name" label="Mahalle Adı" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableTableHead column="minimumOrderAmount" label="Min. Sipariş Tutarı" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableTableHead column="isActive" label="Durum" sortConfig={sortConfig} onSort={handleSort} />
                   <TableHead className="text-right">İşlemler</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {neighborhoods.map((neighborhood) => (
+                {sortData(neighborhoods, neighborhoodColumnDefs).map((neighborhood) => (
                   <TableRow key={neighborhood.id} data-testid={`row-neighborhood-${neighborhood.id}`}>
                     {editingItem?.id === neighborhood.id ? (
                       <>
@@ -2311,6 +2476,13 @@ function CustomersTab() {
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const { sortConfig, handleSort, sortData } = useSorting<CustomerWithStats>();
+  const customerColumnDefs: ColumnDefs = {
+    name: "string",
+    phone: "string",
+    orderCount: "number",
+    lastOrderDate: "date",
+  };
 
   const { data: customers = [], isLoading } = useQuery<CustomerWithStats[]>({
     queryKey: ["/api/admin/customers"],
@@ -2490,16 +2662,16 @@ function CustomersTab() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Ad Soyad</TableHead>
-                  <TableHead>Telefon</TableHead>
+                  <SortableTableHead column="name" label="Ad Soyad" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableTableHead column="phone" label="Telefon" sortConfig={sortConfig} onSort={handleSort} />
                   <TableHead>Adres</TableHead>
-                  <TableHead>Sipariş Sayısı</TableHead>
-                  <TableHead>Son Sipariş</TableHead>
+                  <SortableTableHead column="orderCount" label="Sipariş Sayısı" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableTableHead column="lastOrderDate" label="Son Sipariş" sortConfig={sortConfig} onSort={handleSort} />
                   <TableHead>İşlemler</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {customers.map((customer) => (
+                {sortData(customers, customerColumnDefs).map((customer) => (
                   <TableRow key={customer.id} data-testid={`row-customer-${customer.id}`}>
                     <TableCell className="font-medium">{customer.name}</TableCell>
                     <TableCell>{customer.phone}</TableCell>
