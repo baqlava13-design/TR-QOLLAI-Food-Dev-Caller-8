@@ -47,6 +47,7 @@ export function OrderForm() {
     firstName: "",
     lastName: "",
     customerPhone: "",
+    deliveryType: "delivery" as "delivery" | "pickup",
     mahalle: "",
     mahalleId: "",
     sokak: "",
@@ -67,13 +68,16 @@ export function OrderForm() {
   }, [neighborhoods, formData.mahalleId, formData.mahalle]);
   
   const minimumOrderAmount = useMemo(() => {
+    if (formData.deliveryType === "pickup") {
+      return 0;
+    }
     if (selectedNeighborhood && selectedNeighborhood.minimumOrderAmount) {
       return parseFloat(selectedNeighborhood.minimumOrderAmount);
     }
     return globalMinimumOrderAmount;
-  }, [selectedNeighborhood, globalMinimumOrderAmount]);
+  }, [selectedNeighborhood, globalMinimumOrderAmount, formData.deliveryType]);
   
-  const isBelowMinimum = minimumOrderAmount > 0 && currentTotal < minimumOrderAmount;
+  const isBelowMinimum = formData.deliveryType === "delivery" && minimumOrderAmount > 0 && currentTotal < minimumOrderAmount;
   const remainingAmount = minimumOrderAmount - currentTotal;
 
   const [orderHistory, setOrderHistory] = useState<SavedOrder[]>([]);
@@ -173,7 +177,9 @@ export function OrderForm() {
       return;
     }
 
-    if (!formData.firstName || !formData.lastName || !formData.customerPhone || !formData.mahalle || !formData.sokak || !formData.binaNo) {
+    const requiresAddress = formData.deliveryType === "delivery";
+    if (!formData.firstName || !formData.lastName || !formData.customerPhone || 
+        (requiresAddress && (!formData.mahalle || !formData.sokak || !formData.binaNo))) {
       toast({
         title: "Eksik bilgi",
         description: "Lütfen tüm zorunlu alanları doldurun.",
@@ -186,10 +192,10 @@ export function OrderForm() {
     saveCustomerInfo({
       name: getFullName(),
       phone: formData.customerPhone,
-      neighborhood: formData.mahalle,
-      street: formData.sokak,
-      buildingNo: formData.binaNo,
-      apartmentNo: formData.daireNo,
+      neighborhood: requiresAddress ? formData.mahalle : "",
+      street: requiresAddress ? formData.sokak : "",
+      buildingNo: requiresAddress ? formData.binaNo : "",
+      apartmentNo: requiresAddress ? formData.daireNo : "",
       notes: formData.notes,
     });
     
@@ -211,19 +217,21 @@ export function OrderForm() {
       items,
       getFullName(),
       formData.customerPhone,
-      getFullAddress(),
+      formData.deliveryType === "pickup" ? "" : getFullAddress(),
       formData.paymentMethod,
       formData.notes,
-      whatsappNumber
+      whatsappNumber,
+      formData.deliveryType
     );
     
     const message = generateOrderMessage(
       items,
       getFullName(),
       formData.customerPhone,
-      getFullAddress(),
+      formData.deliveryType === "pickup" ? "" : getFullAddress(),
       formData.paymentMethod,
-      formData.notes
+      formData.notes,
+      formData.deliveryType
     );
     
     // Set the link and message for display
@@ -245,7 +253,9 @@ export function OrderForm() {
       return;
     }
 
-    if (!formData.firstName || !formData.lastName || !formData.customerPhone || !formData.mahalle || !formData.sokak || !formData.binaNo) {
+    const requiresAddress = formData.deliveryType === "delivery";
+    if (!formData.firstName || !formData.lastName || !formData.customerPhone || 
+        (requiresAddress && (!formData.mahalle || !formData.sokak || !formData.binaNo))) {
       toast({
         title: "Eksik bilgi",
         description: "Lütfen tüm zorunlu alanları doldurun.",
@@ -258,10 +268,11 @@ export function OrderForm() {
       items,
       getFullName(),
       formData.customerPhone,
-      getFullAddress(),
+      formData.deliveryType === "pickup" ? "" : getFullAddress(),
       formData.paymentMethod,
       formData.notes,
-      getWhatsAppNumber()
+      getWhatsAppNumber(),
+      formData.deliveryType
     );
     window.location.href = whatsappLink;
   };
@@ -588,69 +599,110 @@ export function OrderForm() {
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Teslimat Adresi *</Label>
+                  <Label>Teslimat Türü *</Label>
+                  <RadioGroup
+                    value={formData.deliveryType}
+                    onValueChange={(value: "delivery" | "pickup") => setFormData({ ...formData, deliveryType: value })}
+                    className="grid grid-cols-2 gap-3"
+                    data-testid="radio-delivery-type"
+                  >
+                    <Label
+                      htmlFor="delivery"
+                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                        formData.deliveryType === "delivery"
+                          ? "border-primary bg-primary/5"
+                          : "border-border"
+                      }`}
+                    >
+                      <RadioGroupItem value="delivery" id="delivery" />
+                      <div>
+                        <p className="font-medium">Eve Teslim</p>
+                        <p className="text-xs text-muted-foreground">Adresinize teslim</p>
+                      </div>
+                    </Label>
+                    <Label
+                      htmlFor="pickup"
+                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                        formData.deliveryType === "pickup"
+                          ? "border-primary bg-primary/5"
+                          : "border-border"
+                      }`}
+                    >
+                      <RadioGroupItem value="pickup" id="pickup" />
+                      <div>
+                        <p className="font-medium">Gel Al</p>
+                        <p className="text-xs text-muted-foreground">Restorana gelin</p>
+                      </div>
+                    </Label>
+                  </RadioGroup>
+                </div>
+
+                {formData.deliveryType === "delivery" && (
                   <div className="space-y-3">
-                    {neighborhoods.length > 0 ? (
-                      <Select
-                        value={formData.mahalleId}
-                        onValueChange={(value) => {
-                          const neighborhood = neighborhoods.find(n => n.id === value);
-                          setFormData({ 
-                            ...formData, 
-                            mahalleId: value,
-                            mahalle: neighborhood?.name || ""
-                          });
-                        }}
-                      >
-                        <SelectTrigger data-testid="select-mahalle">
-                          <SelectValue placeholder="Mahalle seçin" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {neighborhoods.map((neighborhood) => (
-                            <SelectItem key={neighborhood.id} value={neighborhood.id}>
-                              {neighborhood.name}
-                              {neighborhood.minimumOrderAmount && parseFloat(neighborhood.minimumOrderAmount) > 0 && (
-                                <span className="text-muted-foreground ml-2">
-                                  (Min: {parseFloat(neighborhood.minimumOrderAmount).toFixed(0)} TL)
-                                </span>
-                              )}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
+                    <Label>Teslimat Adresi *</Label>
+                    <div className="space-y-3">
+                      {neighborhoods.length > 0 ? (
+                        <Select
+                          value={formData.mahalleId}
+                          onValueChange={(value) => {
+                            const neighborhood = neighborhoods.find(n => n.id === value);
+                            setFormData({ 
+                              ...formData, 
+                              mahalleId: value,
+                              mahalle: neighborhood?.name || ""
+                            });
+                          }}
+                        >
+                          <SelectTrigger data-testid="select-mahalle">
+                            <SelectValue placeholder="Mahalle seçin" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {neighborhoods.map((neighborhood) => (
+                              <SelectItem key={neighborhood.id} value={neighborhood.id}>
+                                {neighborhood.name}
+                                {neighborhood.minimumOrderAmount && parseFloat(neighborhood.minimumOrderAmount) > 0 && (
+                                  <span className="text-muted-foreground ml-2">
+                                    (Min: {parseFloat(neighborhood.minimumOrderAmount).toFixed(0)} TL)
+                                  </span>
+                                )}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          placeholder="Mahalle"
+                          value={formData.mahalle}
+                          onChange={(e) => setFormData({ ...formData, mahalle: e.target.value })}
+                          required
+                          data-testid="input-mahalle"
+                        />
+                      )}
                       <Input
-                        placeholder="Mahalle"
-                        value={formData.mahalle}
-                        onChange={(e) => setFormData({ ...formData, mahalle: e.target.value })}
+                        placeholder="Sokak / Cadde"
+                        value={formData.sokak}
+                        onChange={(e) => setFormData({ ...formData, sokak: e.target.value })}
                         required
-                        data-testid="input-mahalle"
+                        data-testid="input-sokak"
                       />
-                    )}
-                    <Input
-                      placeholder="Sokak / Cadde"
-                      value={formData.sokak}
-                      onChange={(e) => setFormData({ ...formData, sokak: e.target.value })}
-                      required
-                      data-testid="input-sokak"
-                    />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Input
-                        placeholder="Bina No"
-                        value={formData.binaNo}
-                        onChange={(e) => setFormData({ ...formData, binaNo: e.target.value })}
-                        required
-                        data-testid="input-bina-no"
-                      />
-                      <Input
-                        placeholder="Daire No"
-                        value={formData.daireNo}
-                        onChange={(e) => setFormData({ ...formData, daireNo: e.target.value })}
-                        data-testid="input-daire-no"
-                      />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Input
+                          placeholder="Bina No"
+                          value={formData.binaNo}
+                          onChange={(e) => setFormData({ ...formData, binaNo: e.target.value })}
+                          required
+                          data-testid="input-bina-no"
+                        />
+                        <Input
+                          placeholder="Daire No"
+                          value={formData.daireNo}
+                          onChange={(e) => setFormData({ ...formData, daireNo: e.target.value })}
+                          data-testid="input-daire-no"
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 <div className="space-y-3">
                   <Label>Ödeme Yöntemi *</Label>

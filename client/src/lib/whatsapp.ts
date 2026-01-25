@@ -26,7 +26,8 @@ export function generateOrderMessage(
   customerPhone: string,
   customerAddress: string,
   paymentMethod: "cash" | "pos",
-  notes?: string
+  notes?: string,
+  deliveryType?: "delivery" | "pickup"
 ): string {
   const orderItems = items.map((item) => {
     const name = cleanText(item.menuItem.name);
@@ -40,10 +41,17 @@ export function generateOrderMessage(
   }, 0);
 
   const paymentText = paymentMethod === "cash" ? "Nakit" : "POS";
+  const deliveryText = deliveryType === "pickup" ? "GEL AL" : "EVE TESLIM";
   const cleanName = cleanText(customerName);
   const cleanAddress = cleanText(customerAddress);
 
-  let message = `SIPARIS: ${orderItems} - Toplam: ${subtotal.toFixed(2)}TL - Ad: ${cleanName} - Tel: ${customerPhone} - Adres: ${cleanAddress} - Odeme: ${paymentText}`;
+  let message = `SIPARIS (${deliveryText}): ${orderItems} - Toplam: ${subtotal.toFixed(2)}TL - Ad: ${cleanName} - Tel: ${customerPhone}`;
+  
+  if (deliveryType !== "pickup" && cleanAddress) {
+    message += ` - Adres: ${cleanAddress}`;
+  }
+  
+  message += ` - Odeme: ${paymentText}`;
   
   if (notes && notes.trim()) {
     message += ` - Not: ${cleanText(notes)}`;
@@ -59,10 +67,11 @@ export function generateWhatsAppOrderLink(
   customerAddress: string,
   paymentMethod: "cash" | "pos",
   notes?: string,
-  businessPhone?: string
+  businessPhone?: string,
+  deliveryType?: "delivery" | "pickup"
 ): string {
   const phoneNumber = (businessPhone || DEFAULT_PHONE).replace(/\D/g, "");
-  const message = generateOrderMessage(items, customerName, customerPhone, customerAddress, paymentMethod, notes);
+  const message = generateOrderMessage(items, customerName, customerPhone, customerAddress, paymentMethod, notes, deliveryType);
   
   const encoded = encodeURIComponent(message);
   return `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encoded}`;
