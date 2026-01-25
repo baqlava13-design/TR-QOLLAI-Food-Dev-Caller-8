@@ -17,7 +17,7 @@ export function Footer() {
     queryKey: ["/api/settings"],
   });
 
-  const logoName = settings.footer_logo_name || "Kolay Siparis";
+  const logoName = settings.footer_logo_name || "Kolay Sipariş";
   const address = settings.footer_address || "Kılıçoğlu Vizyon Konutları, Esentepe, Çorlu";
   const phone = settings.footer_phone || "0555 123 4567";
   const email = settings.footer_email || "info@kolaysiparis.com";

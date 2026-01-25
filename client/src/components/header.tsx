@@ -50,18 +50,18 @@ export function Header() {
           {settings.company_logo ? (
             <img 
               src={settings.company_logo} 
-              alt={settings.footer_logo_name || "Kolay Siparis"} 
+              alt={settings.footer_logo_name || "Kolay Sipariş"} 
               className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover flex-shrink-0"
             />
           ) : (
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
               <span className="text-primary-foreground font-bold text-base sm:text-lg">
-                {(settings.footer_logo_name || "Kolay Siparis").split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase()}
+                {(settings.footer_logo_name || "Kolay Sipariş").split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase()}
               </span>
             </div>
           )}
           <span className="font-bold text-lg sm:text-xl text-foreground truncate">
-            {settings.footer_logo_name || "Kolay Siparis"}
+            {settings.footer_logo_name || "Kolay Sipariş"}
           </span>
         </a>
 
