@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/lib/theme";
 import { CartProvider } from "@/lib/cart";
+import { useBrandColors } from "@/hooks/use-brand-colors";
 import Home from "@/pages/home";
 import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
@@ -19,16 +20,23 @@ function Router() {
   );
 }
 
+function BrandColorApplicator({ children }: { children: React.ReactNode }) {
+  useBrandColors();
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <CartProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-          </TooltipProvider>
-        </CartProvider>
+        <BrandColorApplicator>
+          <CartProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </CartProvider>
+        </BrandColorApplicator>
       </ThemeProvider>
     </QueryClientProvider>
   );

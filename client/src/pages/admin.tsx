@@ -61,6 +61,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Palette,
 } from "lucide-react";
 import { SiWhatsapp, SiFacebook, SiInstagram } from "react-icons/si";
 import { useTheme } from "@/lib/theme";
@@ -1940,6 +1941,8 @@ function SettingsTab() {
     footer_hours_weekday: "",
     footer_hours_weekend: "",
     minimum_order_amount: "",
+    brand_primary_color: "",
+    brand_accent_color: "",
   });
 
   const { data: settingsData = [], isLoading } = useQuery({
@@ -1996,6 +1999,13 @@ function SettingsTab() {
   });
 
   const handleSave = (key: string) => {
+    if ((key === "brand_primary_color" || key === "brand_accent_color") && settings[key]) {
+      const hex = settings[key].trim();
+      if (!/^#[a-fA-F0-9]{6}$/.test(hex)) {
+        toast({ title: "Ongeldige kleurcode", description: "Gebruik een geldige hex kleurcode (bijv. #ff5500)", variant: "destructive" });
+        return;
+      }
+    }
     saveMutation.mutate({ key, value: settings[key] });
   };
 
@@ -2041,12 +2051,15 @@ function SettingsTab() {
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general" className="gap-2">
             <Settings className="h-4 w-4" /> Genel Ayarlar
           </TabsTrigger>
           <TabsTrigger value="text" className="gap-2">
             <Type className="h-4 w-4" /> Metin İçerikleri
+          </TabsTrigger>
+          <TabsTrigger value="brand" className="gap-2" data-testid="tab-brand-colors">
+            <Palette className="h-4 w-4" /> Huisstijl
           </TabsTrigger>
         </TabsList>
 
@@ -2448,6 +2461,117 @@ function SettingsTab() {
                   />
                 </div>
                 <Button onClick={() => handleSave("footer_hours_weekend")} size="sm">Kaydet</Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="brand" className="mt-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="h-5 w-5" /> Primaire Kleur
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Hoofd kleur (knoppen, links, accenten)</Label>
+                  <div className="flex items-center gap-3 mt-2">
+                    <input
+                      type="color"
+                      value={settings.brand_primary_color || "#d4500c"}
+                      onChange={(e) => setSettings({ ...settings, brand_primary_color: e.target.value })}
+                      className="h-10 w-16 cursor-pointer rounded border border-border"
+                      data-testid="input-brand-primary-color"
+                    />
+                    <Input
+                      value={settings.brand_primary_color || "#d4500c"}
+                      onChange={(e) => setSettings({ ...settings, brand_primary_color: e.target.value })}
+                      placeholder="#d4500c"
+                      className="flex-1"
+                      data-testid="input-brand-primary-hex"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Dit is de hoofdkleur van de website (knoppen, links, etc.)
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <div
+                    className="h-10 flex-1 rounded-md flex items-center justify-center text-sm font-medium text-white"
+                    style={{ backgroundColor: settings.brand_primary_color || "#d4500c" }}
+                    data-testid="preview-primary-color"
+                  >
+                    Voorbeeld
+                  </div>
+                </div>
+                <Button onClick={() => handleSave("brand_primary_color")} size="sm" data-testid="button-save-primary-color">Kaydet</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="h-5 w-5" /> Accent Kleur
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Secundaire kleur (accenten, highlights)</Label>
+                  <div className="flex items-center gap-3 mt-2">
+                    <input
+                      type="color"
+                      value={settings.brand_accent_color || "#27a844"}
+                      onChange={(e) => setSettings({ ...settings, brand_accent_color: e.target.value })}
+                      className="h-10 w-16 cursor-pointer rounded border border-border"
+                      data-testid="input-brand-accent-color"
+                    />
+                    <Input
+                      value={settings.brand_accent_color || "#27a844"}
+                      onChange={(e) => setSettings({ ...settings, brand_accent_color: e.target.value })}
+                      placeholder="#27a844"
+                      className="flex-1"
+                      data-testid="input-brand-accent-hex"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Dit is de accentkleur van de website (highlights, badges, etc.)
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <div
+                    className="h-10 flex-1 rounded-md flex items-center justify-center text-sm font-medium text-white"
+                    style={{ backgroundColor: settings.brand_accent_color || "#27a844" }}
+                    data-testid="preview-accent-color"
+                  >
+                    Voorbeeld
+                  </div>
+                </div>
+                <Button onClick={() => handleSave("brand_accent_color")} size="sm" data-testid="button-save-accent-color">Kaydet</Button>
+              </CardContent>
+            </Card>
+
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Eye className="h-5 w-5" /> Voorbeeld
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Na het opslaan worden de kleuren direct zichtbaar op de website.
+                </p>
+                <div className="flex flex-wrap gap-3 items-center">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-full" style={{ backgroundColor: settings.brand_primary_color || "#d4500c" }} data-testid="preview-primary-swatch" />
+                    <span className="text-sm text-muted-foreground">Primair</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-full" style={{ backgroundColor: settings.brand_accent_color || "#27a844" }} data-testid="preview-accent-swatch" />
+                    <span className="text-sm text-muted-foreground">Accent</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
