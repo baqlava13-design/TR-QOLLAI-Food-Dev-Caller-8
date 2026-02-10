@@ -32,7 +32,9 @@ import {
   Edit,
   Save,
   LogOut,
+  Settings,
 } from "lucide-react";
+import { Link } from "wouter";
 
 type OrderWithItems = Order & { items: OrderItem[] };
 
@@ -547,6 +549,11 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
             <Button size="sm" variant="ghost" onClick={resetAll} data-testid="button-reset">
               <RotateCcw className="w-4 h-4" />
             </Button>
+            <Link href="/admin">
+              <Button size="sm" variant="ghost" data-testid="button-admin-panel">
+                <Settings className="w-4 h-4" />
+              </Button>
+            </Link>
             <Button size="sm" variant="ghost" onClick={onLogout} data-testid="button-logout">
               <LogOut className="w-4 h-4" />
             </Button>
