@@ -73,9 +73,33 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
 import type { Order, OrderItem, Category, MenuItem, Review, Customer, Neighborhood } from "@shared/schema";
 
-function playNotificationSound() {
+let sharedAudioCtx: AudioContext | null = null;
+
+function getAudioContext(): AudioContext {
+  if (!sharedAudioCtx) {
+    sharedAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  }
+  return sharedAudioCtx;
+}
+
+function unlockAudio() {
+  const ctx = getAudioContext();
+  if (ctx.state === "suspended") {
+    ctx.resume();
+  }
+}
+
+if (typeof window !== "undefined") {
+  document.addEventListener("click", unlockAudio, { once: true });
+  document.addEventListener("keydown", unlockAudio, { once: true });
+}
+
+async function playNotificationSound() {
   try {
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const audioCtx = getAudioContext();
+    if (audioCtx.state === "suspended") {
+      await audioCtx.resume();
+    }
 
     const playTone = (freq: number, startTime: number, duration: number) => {
       const osc = audioCtx.createOscillator();
@@ -84,7 +108,7 @@ function playNotificationSound() {
       gain.connect(audioCtx.destination);
       osc.type = "sine";
       osc.frequency.setValueAtTime(freq, startTime);
-      gain.gain.setValueAtTime(0.3, startTime);
+      gain.gain.setValueAtTime(0.4, startTime);
       gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
       osc.start(startTime);
       osc.stop(startTime + duration);
@@ -92,8 +116,8 @@ function playNotificationSound() {
 
     const now = audioCtx.currentTime;
     playTone(880, now, 0.15);
-    playTone(1100, now + 0.15, 0.15);
-    playTone(1320, now + 0.3, 0.3);
+    playTone(1100, now + 0.18, 0.15);
+    playTone(1320, now + 0.36, 0.3);
   } catch (e) {
     console.warn("Could not play notification sound", e);
   }
@@ -616,7 +640,13 @@ ${order.notes ? `Not: ${order.notes}` : ""}
               size="icon"
               variant="ghost"
               className={`toggle-elevate ${notificationsEnabled ? "toggle-elevated" : ""}`}
-              onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+              onClick={() => {
+                const next = !notificationsEnabled;
+                setNotificationsEnabled(next);
+                if (next) {
+                  playNotificationSound();
+                }
+              }}
               data-testid="button-toggle-notifications"
             >
               {notificationsEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
