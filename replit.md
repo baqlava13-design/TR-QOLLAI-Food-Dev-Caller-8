@@ -105,6 +105,25 @@ All admin tables support CSV and Excel (.xlsx) export/import with Turkish column
 - **Import**: Creates new reviews (no duplicate checking)
 - **Endpoints**: GET `/api/admin/reviews/export/:format`, POST `/api/admin/reviews/import`
 
+### Phone Order Entry (Telefon Siparis Girisi)
+- **Route**: `/siparis` - Operator-facing phone order entry page
+- **Authentication**: Requires admin login (same credentials as admin panel)
+- **Features**:
+  - Caller ID / phone number lookup to identify customers
+  - Customer card with address and order history
+  - Create new customers or edit existing customer info
+  - Browse menu by category, search products
+  - Add items to cart, adjust quantities
+  - Re-order from previous orders with one click
+  - Payment method selection (Nakit / POS)
+  - Order notes
+  - Print dispatch slips (thermal printer format, 280px width)
+  - Print previous order slips
+- **API Endpoints**:
+  - GET `/api/customers/phone/:phone` (admin-protected) - Lookup customer by phone with order history
+  - GET `/api/customers/search?q=` (admin-protected) - Search customers by name or phone
+  - PATCH `/api/customers/:id` (admin-protected) - Update customer info
+
 ### Admin Authentication
 - Default credentials: admin/admin123
 - Password is automatically reset on server startup to ensure consistent access after deployments

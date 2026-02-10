@@ -226,6 +226,59 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/customers/phone/:phone", requireAdmin, async (req, res) => {
+    try {
+      const phone = req.params.phone;
+      const customer = await storage.getCustomerByPhone(phone);
+      if (!customer) {
+        return res.status(404).json({ error: "Customer not found" });
+      }
+      const customerOrders = await storage.getOrdersByCustomer(customer.id);
+      const ordersWithItems = await Promise.all(
+        customerOrders.map(async (order) => {
+          const items = await storage.getOrderItems(order.id);
+          return { ...order, items };
+        })
+      );
+      res.json({ customer, orders: ordersWithItems });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to lookup customer" });
+    }
+  });
+
+  app.get("/api/customers/search", requireAdmin, async (req, res) => {
+    try {
+      const q = (req.query.q as string || "").toLowerCase();
+      if (!q || q.length < 2) {
+        return res.json([]);
+      }
+      const allCustomers = await storage.getCustomers();
+      const filtered = allCustomers.filter(c =>
+        c.name.toLowerCase().includes(q) || c.phone.includes(q)
+      ).slice(0, 20);
+      res.json(filtered);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to search customers" });
+    }
+  });
+
+  app.patch("/api/customers/:id", requireAdmin, async (req, res) => {
+    try {
+      const partialSchema = insertCustomerSchema.partial();
+      const data = partialSchema.parse(req.body);
+      const customer = await storage.updateCustomer(req.params.id, data);
+      if (!customer) {
+        return res.status(404).json({ error: "Customer not found" });
+      }
+      res.json(customer);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update customer" });
+    }
+  });
+
   // Admin Customer Management
   app.get("/api/admin/customers", requireAdmin, async (req, res) => {
     try {
