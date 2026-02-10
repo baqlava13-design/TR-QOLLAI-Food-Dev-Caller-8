@@ -337,7 +337,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
   );
 }
 
-function OrdersTab() {
+function OrdersTab({ notificationsEnabled, setNotificationsEnabled }: { notificationsEnabled: boolean; setNotificationsEnabled: (v: boolean) => void }) {
   const { toast } = useToast();
   const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -612,6 +612,15 @@ ${order.notes ? `Not: ${order.notes}` : ""}
                 Temizle
               </Button>
             )}
+            <Button
+              size="icon"
+              variant="ghost"
+              className={`toggle-elevate ${notificationsEnabled ? "toggle-elevated" : ""}`}
+              onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+              data-testid="button-toggle-notifications"
+            >
+              {notificationsEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -3084,15 +3093,6 @@ export default function Admin() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              size="icon"
-              variant="ghost"
-              className={`toggle-elevate ${notificationsEnabled ? "toggle-elevated" : ""}`}
-              onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-              data-testid="button-toggle-notifications"
-            >
-              {notificationsEnabled ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
-            </Button>
             <Link href="/siparis">
               <Button size="icon" variant="ghost" data-testid="button-siparis-panel">
                 <Phone className="h-5 w-5" />
@@ -3151,7 +3151,7 @@ export default function Admin() {
           </TabsList>
 
           <TabsContent value="orders">
-            <OrdersTab />
+            <OrdersTab notificationsEnabled={notificationsEnabled} setNotificationsEnabled={setNotificationsEnabled} />
           </TabsContent>
 
           <TabsContent value="customers">
