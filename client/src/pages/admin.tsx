@@ -244,6 +244,7 @@ const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
   confirmed: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
   preparing: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+  out_for_delivery: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
   delivered: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
   cancelled: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
 };
@@ -579,6 +580,7 @@ ${order.notes ? `Not: ${order.notes}` : ""}
                   <SelectItem value="pending">Beklemede</SelectItem>
                   <SelectItem value="confirmed">Onaylandı</SelectItem>
                   <SelectItem value="preparing">Hazırlanıyor</SelectItem>
+                  <SelectItem value="out_for_delivery">Yola Çıktı</SelectItem>
                   <SelectItem value="delivered">Teslim Edildi</SelectItem>
                 </SelectContent>
               </Select>
@@ -651,6 +653,7 @@ ${order.notes ? `Not: ${order.notes}` : ""}
                             <SelectItem value="pending">Beklemede</SelectItem>
                             <SelectItem value="confirmed">Onaylandı</SelectItem>
                             <SelectItem value="preparing">Hazırlanıyor</SelectItem>
+                            <SelectItem value="out_for_delivery">Yola Çıktı</SelectItem>
                             <SelectItem value="delivered">Teslim Edildi</SelectItem>
                             <SelectItem value="cancelled">İptal</SelectItem>
                           </SelectContent>
