@@ -2060,7 +2060,7 @@ function SettingsTab() {
             <Type className="h-4 w-4" /> Metin İçerikleri
           </TabsTrigger>
           <TabsTrigger value="brand" className="gap-2" data-testid="tab-brand-colors">
-            <Palette className="h-4 w-4" /> Huisstijl
+            <Palette className="h-4 w-4" /> Kurumsal Kimlik
           </TabsTrigger>
         </TabsList>
 
@@ -2472,12 +2472,12 @@ function SettingsTab() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Palette className="h-5 w-5" /> Primaire Kleur
+                  <Palette className="h-5 w-5" /> Ana Renk
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Hoofd kleur (knoppen, links, accenten)</Label>
+                  <Label>Ana renk (butonlar, linkler, vurgular)</Label>
                   <div className="flex items-center gap-3 mt-2">
                     <input
                       type="color"
@@ -2495,7 +2495,7 @@ function SettingsTab() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Dit is de hoofdkleur van de website (knoppen, links, etc.)
+                    Web sitesinin ana rengidir (butonlar, linkler vb.)
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -2504,7 +2504,7 @@ function SettingsTab() {
                     style={{ backgroundColor: settings.brand_primary_color || "#d4500c" }}
                     data-testid="preview-primary-color"
                   >
-                    Voorbeeld
+                    Onizleme
                   </div>
                 </div>
                 <Button onClick={() => handleSave("brand_primary_color")} size="sm" data-testid="button-save-primary-color">Kaydet</Button>
@@ -2514,12 +2514,12 @@ function SettingsTab() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Palette className="h-5 w-5" /> Accent Kleur
+                  <Palette className="h-5 w-5" /> Vurgu Rengi
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Secundaire kleur (accenten, highlights)</Label>
+                  <Label>Ikincil renk (vurgular, onemli alanlar)</Label>
                   <div className="flex items-center gap-3 mt-2">
                     <input
                       type="color"
@@ -2537,7 +2537,7 @@ function SettingsTab() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Dit is de accentkleur van de website (highlights, badges, etc.)
+                    Web sitesinin vurgu rengidir (onemli alanlar, rozetler vb.)
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -2546,7 +2546,7 @@ function SettingsTab() {
                     style={{ backgroundColor: settings.brand_accent_color || "#27a844" }}
                     data-testid="preview-accent-color"
                   >
-                    Voorbeeld
+                    Onizleme
                   </div>
                 </div>
                 <Button onClick={() => handleSave("brand_accent_color")} size="sm" data-testid="button-save-accent-color">Kaydet</Button>
@@ -2556,21 +2556,21 @@ function SettingsTab() {
             <Card className="md:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5" /> Voorbeeld
+                  <Eye className="h-5 w-5" /> Onizleme
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Na het opslaan worden de kleuren direct zichtbaar op de website.
+                  Kaydettikten sonra renkler web sitesinde hemen gorunur olacaktir.
                 </p>
                 <div className="flex flex-wrap gap-3 items-center">
                   <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-full" style={{ backgroundColor: settings.brand_primary_color || "#d4500c" }} data-testid="preview-primary-swatch" />
-                    <span className="text-sm text-muted-foreground">Primair</span>
+                    <span className="text-sm text-muted-foreground">Ana Renk</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-full" style={{ backgroundColor: settings.brand_accent_color || "#27a844" }} data-testid="preview-accent-swatch" />
-                    <span className="text-sm text-muted-foreground">Accent</span>
+                    <span className="text-sm text-muted-foreground">Vurgu</span>
                   </div>
                 </div>
               </CardContent>
