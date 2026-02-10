@@ -62,6 +62,7 @@ import {
   ArrowUp,
   ArrowDown,
   Palette,
+  Phone,
 } from "lucide-react";
 import { SiWhatsapp, SiFacebook, SiInstagram } from "react-icons/si";
 import { useTheme } from "@/lib/theme";
@@ -2995,6 +2996,11 @@ export default function Admin() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Link href="/siparis">
+              <Button size="icon" variant="ghost" data-testid="button-siparis-panel">
+                <Phone className="h-5 w-5" />
+              </Button>
+            </Link>
             <Button size="icon" variant="ghost" onClick={toggleTheme}>
               {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
             </Button>
