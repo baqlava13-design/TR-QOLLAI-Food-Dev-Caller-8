@@ -101,23 +101,36 @@ async function playNotificationSound() {
       await audioCtx.resume();
     }
 
-    const playTone = (freq: number, startTime: number, duration: number) => {
+    const now = audioCtx.currentTime;
+
+    const strike = (freq: number, time: number, dur: number, vol: number) => {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain);
       gain.connect(audioCtx.destination);
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, startTime);
-      gain.gain.setValueAtTime(0.4, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-      osc.start(startTime);
-      osc.stop(startTime + duration);
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, time);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.98, time + dur);
+      gain.gain.setValueAtTime(vol, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+      osc.start(time);
+      osc.stop(time + dur);
+
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+      osc2.type = "sine";
+      osc2.frequency.setValueAtTime(freq * 2.76, time);
+      gain2.gain.setValueAtTime(vol * 0.3, time);
+      gain2.gain.exponentialRampToValueAtTime(0.001, time + dur * 0.5);
+      osc2.start(time);
+      osc2.stop(time + dur * 0.5);
     };
 
-    const now = audioCtx.currentTime;
-    playTone(880, now, 0.15);
-    playTone(1100, now + 0.18, 0.15);
-    playTone(1320, now + 0.36, 0.3);
+    strike(830, now, 0.8, 0.35);
+    strike(830, now + 0.25, 0.8, 0.2);
+    strike(1046, now + 0.6, 1.0, 0.3);
   } catch (e) {
     console.warn("Could not play notification sound", e);
   }
