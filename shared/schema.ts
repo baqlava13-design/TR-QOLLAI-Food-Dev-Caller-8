@@ -6,6 +6,7 @@ import { z } from "zod";
 // Enums
 export const orderStatusEnum = pgEnum("order_status", ["pending", "confirmed", "preparing", "delivered", "cancelled"]);
 export const paymentMethodEnum = pgEnum("payment_method", ["cash", "pos"]);
+export const deliveryTypeEnum = pgEnum("delivery_type", ["delivery", "pickup"]);
 
 // Categories table (with self-referencing for subcategories)
 export const categories = pgTable("categories", {
@@ -98,6 +99,7 @@ export const orders = pgTable("orders", {
   customerAddress: text("customer_address").notNull(),
   status: orderStatusEnum("status").default("pending"),
   paymentMethod: paymentMethodEnum("payment_method").default("cash"),
+  deliveryType: deliveryTypeEnum("delivery_type").default("delivery"),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   notes: text("notes"),
