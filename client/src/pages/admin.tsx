@@ -63,6 +63,8 @@ import {
   ArrowDown,
   Palette,
   Phone,
+  Bell,
+  BellOff,
 } from "lucide-react";
 import { SiWhatsapp, SiFacebook, SiInstagram } from "react-icons/si";
 import { useTheme } from "@/lib/theme";
@@ -70,6 +72,32 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
 import type { Order, OrderItem, Category, MenuItem, Review, Customer, Neighborhood } from "@shared/schema";
+
+function playNotificationSound() {
+  try {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+    const playTone = (freq: number, startTime: number, duration: number) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0.3, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    const now = audioCtx.currentTime;
+    playTone(880, now, 0.15);
+    playTone(1100, now + 0.15, 0.15);
+    playTone(1320, now + 0.3, 0.3);
+  } catch (e) {
+    console.warn("Could not play notification sound", e);
+  }
+}
 
 interface OrderWithItems extends Order {
   items?: OrderItem[];
@@ -2949,6 +2977,9 @@ export default function Admin() {
   const { theme, toggleTheme } = useTheme();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const knownOrderIdsRef = useRef<Set<string>>(new Set());
+  const [newOrderAlert, setNewOrderAlert] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
@@ -2963,6 +2994,42 @@ export default function Admin() {
       })
       .finally(() => setCheckingAuth(false));
   }, []);
+
+  useEffect(() => {
+    if (!isLoggedIn || !notificationsEnabled) return;
+
+    const checkNewOrders = async () => {
+      try {
+        const token = localStorage.getItem("adminToken");
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const res = await fetch("/api/orders", { credentials: "include", headers });
+        if (!res.ok) return;
+        const orders: Order[] = await res.json();
+        const currentIds = new Set(orders.map((o: Order) => o.id));
+
+        if (knownOrderIdsRef.current.size === 0) {
+          knownOrderIdsRef.current = currentIds;
+          return;
+        }
+
+        const newOrders = orders.filter((o: Order) => !knownOrderIdsRef.current.has(o.id));
+        if (newOrders.length > 0) {
+          playNotificationSound();
+          setNewOrderAlert(true);
+          setTimeout(() => setNewOrderAlert(false), 5000);
+        }
+
+        knownOrderIdsRef.current = currentIds;
+      } catch (e) {
+        // silently ignore
+      }
+    };
+
+    checkNewOrders();
+    const interval = setInterval(checkNewOrders, 10000);
+    return () => clearInterval(interval);
+  }, [isLoggedIn, notificationsEnabled]);
 
   const handleLogout = async () => {
     localStorage.removeItem("adminToken");
@@ -2996,6 +3063,15 @@ export default function Admin() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              size="icon"
+              variant="ghost"
+              className={`toggle-elevate ${notificationsEnabled ? "toggle-elevated" : ""}`}
+              onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+              data-testid="button-toggle-notifications"
+            >
+              {notificationsEnabled ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
+            </Button>
             <Link href="/siparis">
               <Button size="icon" variant="ghost" data-testid="button-siparis-panel">
                 <Phone className="h-5 w-5" />
@@ -3009,6 +3085,11 @@ export default function Admin() {
             </Button>
           </div>
         </div>
+        {newOrderAlert && (
+          <div className="bg-primary text-primary-foreground px-4 py-2 text-center text-sm font-medium animate-pulse" data-testid="alert-new-order">
+            Yeni siparis geldi!
+          </div>
+        )}
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -33,37 +33,9 @@ import {
   Save,
   LogOut,
   Settings,
-  Bell,
-  BellOff,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { Link } from "wouter";
-
-function playNotificationSound() {
-  try {
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-
-    const playTone = (freq: number, startTime: number, duration: number) => {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, startTime);
-      gain.gain.setValueAtTime(0.3, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-      osc.start(startTime);
-      osc.stop(startTime + duration);
-    };
-
-    const now = audioCtx.currentTime;
-    playTone(880, now, 0.15);
-    playTone(1100, now + 0.15, 0.15);
-    playTone(1320, now + 0.3, 0.3);
-  } catch (e) {
-    console.warn("Could not play notification sound", e);
-  }
-}
 
 function formatPhoneForWhatsApp(phone: string): string {
   let formatted = phone.replace(/\D/g, "");
@@ -196,10 +168,6 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [lastCreatedOrder, setLastCreatedOrder] = useState<Order | null>(null);
 
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const knownOrderIdsRef = useRef<Set<string>>(new Set());
-  const [newOrderAlert, setNewOrderAlert] = useState(false);
-
   const [newCustomerForm, setNewCustomerForm] = useState({
     name: "",
     phone: "",
@@ -221,42 +189,6 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
   const { data: siteSettings } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
   });
-
-  useEffect(() => {
-    if (!notificationsEnabled) return;
-
-    const checkNewOrders = async () => {
-      try {
-        const token = localStorage.getItem("adminToken");
-        const headers: Record<string, string> = {};
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-        const res = await fetch("/api/orders", { credentials: "include", headers });
-        if (!res.ok) return;
-        const orders: Order[] = await res.json();
-        const currentIds = new Set(orders.map((o: Order) => o.id));
-
-        if (knownOrderIdsRef.current.size === 0) {
-          knownOrderIdsRef.current = currentIds;
-          return;
-        }
-
-        const newOrders = orders.filter((o: Order) => !knownOrderIdsRef.current.has(o.id));
-        if (newOrders.length > 0) {
-          playNotificationSound();
-          setNewOrderAlert(true);
-          setTimeout(() => setNewOrderAlert(false), 5000);
-        }
-
-        knownOrderIdsRef.current = currentIds;
-      } catch (e) {
-        // silently ignore
-      }
-    };
-
-    checkNewOrders();
-    const interval = setInterval(checkNewOrders, 10000);
-    return () => clearInterval(interval);
-  }, [notificationsEnabled]);
 
   const filteredMenuItems = menuItems.filter((item) => {
     if (!item.isAvailable) return false;
@@ -415,7 +347,6 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
     },
     onSuccess: (order: Order) => {
       setLastCreatedOrder(order);
-      knownOrderIdsRef.current.add(order.id);
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       toast({ title: "Siparis olusturuldu", description: `Siparis No: ${order.id.slice(0, 8)}` });
       if (selectedCustomer) {
@@ -661,15 +592,6 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
                 {cart.length} urun - {cartTotal.toFixed(2)} TL
               </Badge>
             )}
-            <Button
-              size="sm"
-              variant="ghost"
-              className={`toggle-elevate ${notificationsEnabled ? "toggle-elevated" : ""}`}
-              onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-              data-testid="button-toggle-notifications"
-            >
-              {notificationsEnabled ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
-            </Button>
             <Button size="sm" variant="ghost" onClick={resetAll} data-testid="button-reset">
               <RotateCcw className="w-4 h-4" />
             </Button>
@@ -683,11 +605,6 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
             </Button>
           </div>
         </div>
-        {newOrderAlert && (
-          <div className="bg-primary text-primary-foreground px-4 py-2 text-center text-sm font-medium animate-pulse" data-testid="alert-new-order">
-            Yeni siparis geldi!
-          </div>
-        )}
       </div>
 
       <div className="max-w-7xl mx-auto p-4">
