@@ -151,6 +151,7 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
   const [cart, setCart] = useState<CartItemEntry[]>([]);
   const [orderNotes, setOrderNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "pos">("cash");
+  const [deliveryType, setDeliveryType] = useState<"delivery" | "pickup">("delivery");
   const [activeTab, setActiveTab] = useState("menu");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -305,9 +306,10 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
         customerId: selectedCustomer.id,
         customerName: selectedCustomer.name,
         customerPhone: selectedCustomer.phone,
-        customerAddress: selectedCustomer.address || "",
+        customerAddress: deliveryType === "pickup" ? "Gel Al" : (selectedCustomer.address || ""),
         status: "confirmed",
         paymentMethod,
+        deliveryType,
         subtotal: cartTotal.toFixed(2),
         total: cartTotal.toFixed(2),
         notes: orderNotes,
@@ -340,6 +342,7 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
     setCart([]);
     setOrderNotes("");
     setPaymentMethod("cash");
+    setDeliveryType("delivery");
     setLastCreatedOrder(null);
     setNewCustomerForm({ name: "", phone: "", mahalle: "", sokak: "", binaNo: "", daireNo: "", notes: "" });
   };
@@ -402,6 +405,7 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
           <p><span class="label">Telefon:</span> ${customerInfo?.phone || "-"}</p>
           <p><span class="label">Adres:</span> ${customerInfo?.address || [customerInfo?.mahalle, customerInfo?.sokak, customerInfo?.binaNo ? "No:" + customerInfo.binaNo : "", customerInfo?.daireNo ? "D:" + customerInfo.daireNo : ""].filter(Boolean).join(", ") || "-"}</p>
           <p><span class="label">Odeme:</span> ${paymentMethod === "cash" ? "Nakit" : "POS"}</p>
+          <p><span class="label">Teslimat:</span> ${deliveryType === "pickup" ? "Gel Al" : "Eve Teslim"}</p>
         </div>
         <table class="items">
           <thead><tr><th>Urun</th><th class="qty">Ad</th><th class="price">Fiyat</th></tr></thead>
@@ -475,6 +479,7 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
           <p><span class="label">Telefon:</span> ${order.customerPhone}</p>
           <p><span class="label">Adres:</span> ${order.customerAddress || "-"}</p>
           <p><span class="label">Odeme:</span> ${order.paymentMethod === "cash" ? "Nakit" : "POS"}</p>
+          <p><span class="label">Teslimat:</span> ${(order as any).deliveryType === "pickup" ? "Gel Al" : "Eve Teslim"}</p>
         </div>
         <table class="items">
           <thead><tr><th>Urun</th><th class="qty">Ad</th><th class="price">Fiyat</th></tr></thead>
@@ -913,6 +918,18 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                <div>
+                  <Label>Teslimat Tipi</Label>
+                  <Select value={deliveryType} onValueChange={(v) => setDeliveryType(v as "delivery" | "pickup")}>
+                    <SelectTrigger data-testid="select-delivery-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="delivery">Eve Teslim</SelectItem>
+                      <SelectItem value="pickup">Gel Al</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div>
                   <Label>Odeme Yontemi</Label>
                   <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as "cash" | "pos")}>
