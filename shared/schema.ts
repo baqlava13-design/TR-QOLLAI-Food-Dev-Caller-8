@@ -224,11 +224,14 @@ export const insertNeighborhoodSchema = createInsertSchema(neighborhoods).omit({
 export type Neighborhood = typeof neighborhoods.$inferSelect;
 export type InsertNeighborhood = z.infer<typeof insertNeighborhoodSchema>;
 
+export const userRoleEnum = pgEnum("user_role", ["admin", "operator"]);
+
 // Admin Users table
 export const adminUsers = pgTable("admin_users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  role: userRoleEnum("role").default("operator"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   lastLogin: timestamp("last_login"),
