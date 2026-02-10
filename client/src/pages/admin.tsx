@@ -65,6 +65,8 @@ import {
   Phone,
   Bell,
   BellOff,
+  Shield,
+  UserCog,
 } from "lucide-react";
 import { SiWhatsapp, SiFacebook, SiInstagram } from "react-icons/si";
 import { useTheme } from "@/lib/theme";
@@ -3045,6 +3047,249 @@ function CustomersTab() {
   );
 }
 
+interface AdminUserDisplay {
+  id: string;
+  username: string;
+  role: string | null;
+  isActive: boolean | null;
+  createdAt: string | null;
+  lastLogin: string | null;
+}
+
+function UsersTab() {
+  const { toast } = useToast();
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingUser, setEditingUser] = useState<AdminUserDisplay | null>(null);
+  const [formData, setFormData] = useState({ username: "", password: "", role: "operator", isActive: true });
+
+  const { data: users = [], isLoading } = useQuery<AdminUserDisplay[]>({
+    queryKey: ["/api/admin/users"],
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: { username: string; password: string; role: string; isActive: boolean }) => {
+      const res = await apiRequest("POST", "/api/admin/users", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "Kullanıcı oluşturuldu" });
+      setShowAddForm(false);
+      setFormData({ username: "", password: "", role: "operator", isActive: true });
+    },
+    onError: (error: any) => {
+      toast({ title: "Hata", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Record<string, any> }) => {
+      const res = await apiRequest("PATCH", `/api/admin/users/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "Kullanıcı güncellendi" });
+      setEditingUser(null);
+    },
+    onError: (error: any) => {
+      toast({ title: "Hata", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("DELETE", `/api/admin/users/${id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "Kullanıcı silindi" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Hata", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleCreate = () => {
+    if (!formData.username || !formData.password) {
+      toast({ title: "Kullanıcı adı ve şifre gerekli", variant: "destructive" });
+      return;
+    }
+    createMutation.mutate(formData);
+  };
+
+  const handleUpdate = () => {
+    if (!editingUser) return;
+    const data: Record<string, any> = {
+      username: editingUser.username,
+      role: editingUser.role,
+      isActive: editingUser.isActive,
+    };
+    if (formData.password) {
+      data.password = formData.password;
+    }
+    updateMutation.mutate({ id: editingUser.id, data });
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <CardTitle>Kullanıcılar</CardTitle>
+        <Button onClick={() => { setShowAddForm(true); setEditingUser(null); setFormData({ username: "", password: "", role: "operator", isActive: true }); }} data-testid="button-add-user">
+          <Plus className="h-4 w-4 mr-2" />
+          Yeni Kullanıcı
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {(showAddForm || editingUser) && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-base">{editingUser ? "Kullanıcı Düzenle" : "Yeni Kullanıcı"}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Kullanıcı Adı</Label>
+                  <Input
+                    value={editingUser ? editingUser.username : formData.username}
+                    onChange={(e) => editingUser ? setEditingUser({ ...editingUser, username: e.target.value }) : setFormData({ ...formData, username: e.target.value })}
+                    placeholder="Kullanıcı adı"
+                    data-testid="input-user-username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{editingUser ? "Yeni Şifre (boş bırakılırsa değişmez)" : "Şifre"}</Label>
+                  <Input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder={editingUser ? "Yeni şifre..." : "Şifre"}
+                    data-testid="input-user-password"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Rol</Label>
+                  <Select
+                    value={editingUser ? (editingUser.role || "operator") : formData.role}
+                    onValueChange={(v) => editingUser ? setEditingUser({ ...editingUser, role: v }) : setFormData({ ...formData, role: v })}
+                  >
+                    <SelectTrigger data-testid="select-user-role">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="operator">Operatör</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Durum</Label>
+                  <Select
+                    value={(editingUser ? editingUser.isActive : formData.isActive) ? "active" : "inactive"}
+                    onValueChange={(v) => {
+                      const active = v === "active";
+                      editingUser ? setEditingUser({ ...editingUser, isActive: active }) : setFormData({ ...formData, isActive: active });
+                    }}
+                  >
+                    <SelectTrigger data-testid="select-user-status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Aktif</SelectItem>
+                      <SelectItem value="inactive">Pasif</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => { setShowAddForm(false); setEditingUser(null); setFormData({ username: "", password: "", role: "operator", isActive: true }); }}>
+                  İptal
+                </Button>
+                <Button onClick={editingUser ? handleUpdate : handleCreate} disabled={createMutation.isPending || updateMutation.isPending} data-testid="button-save-user">
+                  <Save className="h-4 w-4 mr-2" />
+                  {editingUser ? "Güncelle" : "Oluştur"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {isLoading ? (
+          <div className="text-center py-8">Yükleniyor...</div>
+        ) : users.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">Kullanıcı yok</div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Kullanıcı Adı</TableHead>
+                <TableHead>Rol</TableHead>
+                <TableHead>Durum</TableHead>
+                <TableHead>Son Giriş</TableHead>
+                <TableHead>Oluşturulma</TableHead>
+                <TableHead>İşlemler</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id} data-testid={`row-user-${user.id}`}>
+                  <TableCell className="font-medium">{user.username}</TableCell>
+                  <TableCell>
+                    <Badge variant={user.role === "admin" ? "default" : "secondary"}>
+                      {user.role === "admin" ? "Admin" : "Operatör"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={user.isActive ? "default" : "secondary"} className={user.isActive ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"}>
+                      {user.isActive ? "Aktif" : "Pasif"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {user.lastLogin ? new Date(user.lastLogin).toLocaleString("tr-TR") : "-"}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString("tr-TR") : "-"}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                          setEditingUser(user);
+                          setShowAddForm(false);
+                          setFormData({ username: "", password: "", role: user.role || "operator", isActive: user.isActive !== false });
+                        }}
+                        data-testid={`button-edit-user-${user.id}`}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-destructive"
+                        onClick={() => {
+                          if (confirm("Bu kullanıcıyı silmek istediğinize emin misiniz?")) {
+                            deleteMutation.mutate(user.id);
+                          }
+                        }}
+                        data-testid={`button-delete-user-${user.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Admin() {
   const { theme, toggleTheme } = useTheme();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -3157,7 +3402,7 @@ export default function Admin() {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="orders" className="gap-2">
               <ShoppingBag className="h-4 w-4" />
               <span className="hidden sm:inline">Siparişler</span>
@@ -3185,6 +3430,10 @@ export default function Admin() {
             <TabsTrigger value="reviews" className="gap-2">
               <Star className="h-4 w-4" />
               <span className="hidden sm:inline">Yorumlar</span>
+            </TabsTrigger>
+            <TabsTrigger value="users" className="gap-2">
+              <UserCog className="h-4 w-4" />
+              <span className="hidden sm:inline">Kullanıcılar</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="gap-2">
               <Settings className="h-4 w-4" />
@@ -3218,6 +3467,10 @@ export default function Admin() {
 
           <TabsContent value="reviews">
             <ReviewsTab />
+          </TabsContent>
+
+          <TabsContent value="users">
+            <UsersTab />
           </TabsContent>
 
           <TabsContent value="settings">

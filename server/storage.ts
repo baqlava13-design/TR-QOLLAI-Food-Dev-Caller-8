@@ -92,7 +92,11 @@ export interface IStorage {
 
   // Admin Users
   getAdminByUsername(username: string): Promise<AdminUser | undefined>;
+  getAllAdminUsers(): Promise<AdminUser[]>;
+  getAdminUserById(id: string): Promise<AdminUser | undefined>;
   createAdminUser(admin: InsertAdminUser): Promise<AdminUser>;
+  updateAdminUser(id: string, data: Partial<InsertAdminUser>): Promise<AdminUser | undefined>;
+  deleteAdminUser(id: string): Promise<boolean>;
   updateAdminLastLogin(id: string): Promise<void>;
 
   // Admin Tokens
@@ -355,9 +359,29 @@ export class DatabaseStorage implements IStorage {
     return admin || undefined;
   }
 
+  async getAllAdminUsers(): Promise<AdminUser[]> {
+    return await db.select().from(adminUsers).orderBy(adminUsers.createdAt);
+  }
+
+  async getAdminUserById(id: string): Promise<AdminUser | undefined> {
+    const [admin] = await db.select().from(adminUsers).where(eq(adminUsers.id, id));
+    return admin || undefined;
+  }
+
   async createAdminUser(admin: InsertAdminUser): Promise<AdminUser> {
     const [created] = await db.insert(adminUsers).values(admin).returning();
     return created;
+  }
+
+  async updateAdminUser(id: string, data: Partial<InsertAdminUser>): Promise<AdminUser | undefined> {
+    const [updated] = await db.update(adminUsers).set(data).where(eq(adminUsers.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteAdminUser(id: string): Promise<boolean> {
+    await db.delete(adminTokens).where(eq(adminTokens.adminId, id));
+    const result = await db.delete(adminUsers).where(eq(adminUsers.id, id)).returning();
+    return result.length > 0;
   }
 
   async updateAdminLastLogin(id: string): Promise<void> {

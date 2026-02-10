@@ -44,6 +44,7 @@ declare module "express-session" {
   interface SessionData {
     adminId?: string;
     adminUsername?: string;
+    adminRole?: string;
   }
 }
 
@@ -59,6 +60,10 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     try {
       const tokenData = await storage.getAdminToken(token);
       if (tokenData && new Date(tokenData.expiresAt) > new Date()) {
+        if (!req.session.adminId) {
+          req.session.adminId = tokenData.adminId;
+          req.session.adminUsername = tokenData.username;
+        }
         return next();
       }
     } catch (error) {
@@ -72,6 +77,18 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
   }
   
   return res.status(401).json({ error: "Unauthorized" });
+};
+
+const requireAdminRole = async (req: Request, res: Response, next: NextFunction) => {
+  const adminId = req.session?.adminId;
+  if (!adminId) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  const admin = await storage.getAdminUserById(adminId);
+  if (!admin || admin.role !== "admin") {
+    return res.status(403).json({ error: "Admin role required" });
+  }
+  return next();
 };
 
 export async function registerRoutes(
@@ -919,6 +936,7 @@ export async function registerRoutes(
 
       req.session.adminId = admin.id;
       req.session.adminUsername = admin.username;
+      req.session.adminRole = admin.role || "operator";
       await storage.updateAdminLastLogin(admin.id);
 
       // Generate token for Authorization header auth (works in iframes)
@@ -934,7 +952,7 @@ export async function registerRoutes(
         if (err) {
           return res.status(500).json({ error: "Session save failed" });
         }
-        res.json({ success: true, username: admin.username, token });
+        res.json({ success: true, username: admin.username, role: admin.role || "operator", token });
       });
     } catch (error) {
       res.status(500).json({ error: "Login failed" });
@@ -950,8 +968,113 @@ export async function registerRoutes(
     });
   });
 
-  app.get("/api/admin/me", requireAdmin, (req, res) => {
+  app.get("/api/admin/me", requireAdmin, async (req, res) => {
+    const adminId = req.session.adminId;
+    if (adminId) {
+      const admin = await storage.getAdminUserById(adminId);
+      if (admin) {
+        return res.json({ username: admin.username, role: admin.role });
+      }
+    }
     res.json({ username: req.session.adminUsername });
+  });
+
+  // Admin User Management
+  app.get("/api/admin/users", requireAdmin, requireAdminRole, async (req, res) => {
+    try {
+      const users = await storage.getAllAdminUsers();
+      const sanitized = users.map(({ password, ...rest }) => rest);
+      res.json(sanitized);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  app.post("/api/admin/users", requireAdmin, requireAdminRole, async (req, res) => {
+    try {
+      const { username, password, role, isActive } = req.body;
+      if (!username || !password) {
+        return res.status(400).json({ error: "Username and password required" });
+      }
+      if (typeof username !== "string" || username.length < 3) {
+        return res.status(400).json({ error: "Username must be at least 3 characters" });
+      }
+      if (typeof password !== "string" || password.length < 4) {
+        return res.status(400).json({ error: "Password must be at least 4 characters" });
+      }
+      const validRoles = ["admin", "operator"];
+      if (role && !validRoles.includes(role)) {
+        return res.status(400).json({ error: "Invalid role" });
+      }
+      const existing = await storage.getAdminByUsername(username);
+      if (existing) {
+        return res.status(409).json({ error: "Username already exists" });
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = await storage.createAdminUser({
+        username,
+        password: hashedPassword,
+        role: role || "operator",
+        isActive: isActive !== false,
+      });
+      const { password: _, ...sanitized } = user;
+      res.json(sanitized);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create user" });
+    }
+  });
+
+  app.patch("/api/admin/users/:id", requireAdmin, requireAdminRole, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { username, password, role, isActive } = req.body;
+      const validRoles = ["admin", "operator"];
+      if (role !== undefined && !validRoles.includes(role)) {
+        return res.status(400).json({ error: "Invalid role" });
+      }
+      if (username !== undefined && (typeof username !== "string" || username.length < 3)) {
+        return res.status(400).json({ error: "Username must be at least 3 characters" });
+      }
+      if (password && (typeof password !== "string" || password.length < 4)) {
+        return res.status(400).json({ error: "Password must be at least 4 characters" });
+      }
+      if (username !== undefined) {
+        const existing = await storage.getAdminByUsername(username);
+        if (existing && existing.id !== id) {
+          return res.status(409).json({ error: "Username already exists" });
+        }
+      }
+      const updateData: Record<string, any> = {};
+      if (username !== undefined) updateData.username = username;
+      if (password) updateData.password = await bcrypt.hash(password, 10);
+      if (role !== undefined) updateData.role = role;
+      if (isActive !== undefined) updateData.isActive = isActive;
+
+      const updated = await storage.updateAdminUser(id, updateData);
+      if (!updated) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      const { password: _, ...sanitized } = updated;
+      res.json(sanitized);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", requireAdmin, requireAdminRole, async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (id === req.session.adminId) {
+        return res.status(400).json({ error: "Cannot delete your own account" });
+      }
+      const deleted = await storage.deleteAdminUser(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete user" });
+    }
   });
 
   // Admin Settings
