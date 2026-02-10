@@ -1002,7 +1002,7 @@ export async function registerRoutes(
       if (typeof password !== "string" || password.length < 4) {
         return res.status(400).json({ error: "Password must be at least 4 characters" });
       }
-      const validRoles = ["admin", "operator"];
+      const validRoles = ["admin", "manager", "operator"];
       if (role && !validRoles.includes(role)) {
         return res.status(400).json({ error: "Invalid role" });
       }
@@ -1028,7 +1028,7 @@ export async function registerRoutes(
     try {
       const { id } = req.params;
       const { username, password, role, isActive } = req.body;
-      const validRoles = ["admin", "operator"];
+      const validRoles = ["admin", "manager", "operator"];
       if (role !== undefined && !validRoles.includes(role)) {
         return res.status(400).json({ error: "Invalid role" });
       }

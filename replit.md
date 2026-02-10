@@ -131,3 +131,8 @@ All admin tables support CSV and Excel (.xlsx) export/import with Turkish column
 ### Admin Authentication
 - Default credentials: admin/admin123
 - Password is automatically reset on server startup to ensure consistent access after deployments
+- Three roles: admin (Yönetici), manager (Müdür), operator (Operatör)
+- Admin: Full access including user management
+- Manager: Menu management, order processing, customer viewing
+- Operator: View orders and update status only
+- User management UI uses dialog with radio card role selection and toggle switch for active status

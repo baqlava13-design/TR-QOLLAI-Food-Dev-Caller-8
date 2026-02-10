@@ -3056,15 +3056,70 @@ interface AdminUserDisplay {
   lastLogin: string | null;
 }
 
-function UsersTab() {
-  const { toast } = useToast();
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editingUser, setEditingUser] = useState<AdminUserDisplay | null>(null);
-  const [formData, setFormData] = useState({ username: "", password: "", role: "operator", isActive: true });
+const ROLE_CONFIG = [
+  {
+    value: "admin",
+    label: "Yönetici",
+    description: "Tam yetki: kullanıcılar, menü, siparişler, ayarlar",
+  },
+  {
+    value: "manager",
+    label: "Müdür",
+    description: "Menü yönetimi, sipariş işleme, müşteri görüntüleme",
+  },
+  {
+    value: "operator",
+    label: "Operatör",
+    description: "Sadece siparişleri görüntüleme ve durum güncelleme",
+  },
+];
 
-  const { data: users = [], isLoading } = useQuery<AdminUserDisplay[]>({
-    queryKey: ["/api/admin/users"],
-  });
+function getRoleBadgeStyle(role: string | null) {
+  switch (role) {
+    case "admin":
+      return "bg-primary/15 text-primary border-primary/30 dark:bg-primary/25 dark:text-primary";
+    case "manager":
+      return "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700";
+    default:
+      return "";
+  }
+}
+
+function getRoleLabel(role: string | null) {
+  const found = ROLE_CONFIG.find((r) => r.value === role);
+  return found ? found.label : "Operatör";
+}
+
+function UserFormDialog({
+  open,
+  onOpenChange,
+  editingUser,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  editingUser: AdminUserDisplay | null;
+}) {
+  const { toast } = useToast();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("operator");
+  const [isActive, setIsActive] = useState(true);
+
+  useEffect(() => {
+    if (open) {
+      if (editingUser) {
+        setUsername(editingUser.username);
+        setPassword("");
+        setRole(editingUser.role || "operator");
+        setIsActive(editingUser.isActive !== false);
+      } else {
+        setUsername("");
+        setPassword("");
+        setRole("operator");
+        setIsActive(true);
+      }
+    }
+  }, [open, editingUser]);
 
   const createMutation = useMutation({
     mutationFn: async (data: { username: string; password: string; role: string; isActive: boolean }) => {
@@ -3074,8 +3129,7 @@ function UsersTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({ title: "Kullanıcı oluşturuldu" });
-      setShowAddForm(false);
-      setFormData({ username: "", password: "", role: "operator", isActive: true });
+      onOpenChange(false);
     },
     onError: (error: any) => {
       toast({ title: "Hata", description: error.message, variant: "destructive" });
@@ -3090,11 +3144,125 @@ function UsersTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({ title: "Kullanıcı güncellendi" });
-      setEditingUser(null);
+      onOpenChange(false);
     },
     onError: (error: any) => {
       toast({ title: "Hata", description: error.message, variant: "destructive" });
     },
+  });
+
+  const handleSave = () => {
+    if (!username.trim()) {
+      toast({ title: "Kullanıcı adı gerekli", variant: "destructive" });
+      return;
+    }
+    if (!editingUser && !password) {
+      toast({ title: "Şifre gerekli", variant: "destructive" });
+      return;
+    }
+    if (editingUser) {
+      const data: Record<string, any> = { username, role, isActive };
+      if (password) data.password = password;
+      updateMutation.mutate({ id: editingUser.id, data });
+    } else {
+      createMutation.mutate({ username, password, role, isActive });
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{editingUser ? "Kullanıcı Düzenle" : "Yeni Kullanıcı"}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-5 pt-2">
+          <div className="space-y-2">
+            <Label htmlFor="user-username">Kullanıcı Adı</Label>
+            <Input
+              id="user-username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Kullanıcı adı"
+              data-testid="input-user-username"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="user-password">{editingUser ? "Şifre (boş bırakılırsa değişmez)" : "Şifre"}</Label>
+            <Input
+              id="user-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={editingUser ? "Yeni şifre..." : "Şifre"}
+              data-testid="input-user-password"
+            />
+          </div>
+          <div className="space-y-3">
+            <Label>Rol & Yetkilendirme</Label>
+            <div className="space-y-2">
+              {ROLE_CONFIG.map((r) => (
+                <button
+                  key={r.value}
+                  type="button"
+                  onClick={() => setRole(r.value)}
+                  className={`w-full text-left rounded-md border-2 p-3 transition-colors ${
+                    role === r.value
+                      ? "border-primary bg-primary/5 dark:bg-primary/10"
+                      : "border-border hover-elevate"
+                  }`}
+                  data-testid={`radio-role-${r.value}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                      role === r.value ? "border-primary" : "border-muted-foreground/40"
+                    }`}>
+                      {role === r.value && (
+                        <div className="h-2 w-2 rounded-full bg-primary" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-medium">{r.label}</div>
+                      <div className="text-sm text-muted-foreground">{r.description}</div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Switch
+              checked={isActive}
+              onCheckedChange={setIsActive}
+              data-testid="switch-user-active"
+            />
+            <Label>Aktif</Label>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} data-testid="button-cancel-user">
+              İptal
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={createMutation.isPending || updateMutation.isPending}
+              data-testid="button-save-user"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Kaydet
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function UsersTab() {
+  const { toast } = useToast();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<AdminUserDisplay | null>(null);
+
+  const { data: users = [], isLoading } = useQuery<AdminUserDisplay[]>({
+    queryKey: ["/api/admin/users"],
   });
 
   const deleteMutation = useMutation({
@@ -3111,110 +3279,19 @@ function UsersTab() {
     },
   });
 
-  const handleCreate = () => {
-    if (!formData.username || !formData.password) {
-      toast({ title: "Kullanıcı adı ve şifre gerekli", variant: "destructive" });
-      return;
-    }
-    createMutation.mutate(formData);
-  };
-
-  const handleUpdate = () => {
-    if (!editingUser) return;
-    const data: Record<string, any> = {
-      username: editingUser.username,
-      role: editingUser.role,
-      isActive: editingUser.isActive,
-    };
-    if (formData.password) {
-      data.password = formData.password;
-    }
-    updateMutation.mutate({ id: editingUser.id, data });
-  };
-
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-4">
-        <CardTitle>Kullanıcılar</CardTitle>
-        <Button onClick={() => { setShowAddForm(true); setEditingUser(null); setFormData({ username: "", password: "", role: "operator", isActive: true }); }} data-testid="button-add-user">
+        <CardTitle>Kullanıcı Yönetimi</CardTitle>
+        <Button
+          onClick={() => { setEditingUser(null); setDialogOpen(true); }}
+          data-testid="button-add-user"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Yeni Kullanıcı
         </Button>
       </CardHeader>
       <CardContent>
-        {(showAddForm || editingUser) && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="text-base">{editingUser ? "Kullanıcı Düzenle" : "Yeni Kullanıcı"}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Kullanıcı Adı</Label>
-                  <Input
-                    value={editingUser ? editingUser.username : formData.username}
-                    onChange={(e) => editingUser ? setEditingUser({ ...editingUser, username: e.target.value }) : setFormData({ ...formData, username: e.target.value })}
-                    placeholder="Kullanıcı adı"
-                    data-testid="input-user-username"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{editingUser ? "Yeni Şifre (boş bırakılırsa değişmez)" : "Şifre"}</Label>
-                  <Input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder={editingUser ? "Yeni şifre..." : "Şifre"}
-                    data-testid="input-user-password"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Rol</Label>
-                  <Select
-                    value={editingUser ? (editingUser.role || "operator") : formData.role}
-                    onValueChange={(v) => editingUser ? setEditingUser({ ...editingUser, role: v }) : setFormData({ ...formData, role: v })}
-                  >
-                    <SelectTrigger data-testid="select-user-role">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="operator">Operatör</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Durum</Label>
-                  <Select
-                    value={(editingUser ? editingUser.isActive : formData.isActive) ? "active" : "inactive"}
-                    onValueChange={(v) => {
-                      const active = v === "active";
-                      editingUser ? setEditingUser({ ...editingUser, isActive: active }) : setFormData({ ...formData, isActive: active });
-                    }}
-                  >
-                    <SelectTrigger data-testid="select-user-status">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Aktif</SelectItem>
-                      <SelectItem value="inactive">Pasif</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => { setShowAddForm(false); setEditingUser(null); setFormData({ username: "", password: "", role: "operator", isActive: true }); }}>
-                  İptal
-                </Button>
-                <Button onClick={editingUser ? handleUpdate : handleCreate} disabled={createMutation.isPending || updateMutation.isPending} data-testid="button-save-user">
-                  <Save className="h-4 w-4 mr-2" />
-                  {editingUser ? "Güncelle" : "Oluştur"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {isLoading ? (
           <div className="text-center py-8">Yükleniyor...</div>
         ) : users.length === 0 ? (
@@ -3227,8 +3304,7 @@ function UsersTab() {
                 <TableHead>Rol</TableHead>
                 <TableHead>Durum</TableHead>
                 <TableHead>Son Giriş</TableHead>
-                <TableHead>Oluşturulma</TableHead>
-                <TableHead>İşlemler</TableHead>
+                <TableHead className="text-right">İşlemler</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -3236,30 +3312,33 @@ function UsersTab() {
                 <TableRow key={user.id} data-testid={`row-user-${user.id}`}>
                   <TableCell className="font-medium">{user.username}</TableCell>
                   <TableCell>
-                    <Badge variant={user.role === "admin" ? "default" : "secondary"}>
-                      {user.role === "admin" ? "Admin" : "Operatör"}
+                    <Badge variant="outline" className={getRoleBadgeStyle(user.role)}>
+                      {getRoleLabel(user.role)}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={user.isActive ? "default" : "secondary"} className={user.isActive ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"}>
+                    <Badge
+                      variant="outline"
+                      className={
+                        user.isActive
+                          ? "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700"
+                          : "bg-red-100 text-red-700 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700"
+                      }
+                    >
                       {user.isActive ? "Aktif" : "Pasif"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
                     {user.lastLogin ? new Date(user.lastLogin).toLocaleString("tr-TR") : "-"}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString("tr-TR") : "-"}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
                       <Button
                         size="icon"
                         variant="ghost"
                         onClick={() => {
                           setEditingUser(user);
-                          setShowAddForm(false);
-                          setFormData({ username: "", password: "", role: user.role || "operator", isActive: user.isActive !== false });
+                          setDialogOpen(true);
                         }}
                         data-testid={`button-edit-user-${user.id}`}
                       >
@@ -3286,6 +3365,11 @@ function UsersTab() {
           </Table>
         )}
       </CardContent>
+      <UserFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        editingUser={editingUser}
+      />
     </Card>
   );
 }
