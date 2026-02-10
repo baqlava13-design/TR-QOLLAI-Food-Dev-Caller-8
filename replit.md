@@ -115,10 +115,14 @@ All admin tables support CSV and Excel (.xlsx) export/import with Turkish column
   - Browse menu by category, search products
   - Add items to cart, adjust quantities
   - Re-order from previous orders with one click
+  - Delivery type selection (Eve Teslim / Gel Al)
   - Payment method selection (Nakit / POS)
   - Order notes
   - Print dispatch slips (thermal printer format, 280px width)
   - Print previous order slips
+  - New order notification sound (bell chime via Web Audio API, toggleable)
+  - Automatic WhatsApp confirmation message to customer after order creation
+  - Manual WhatsApp resend button for customer notification
 - **API Endpoints**:
   - GET `/api/customers/phone/:phone` (admin-protected) - Lookup customer by phone with order history
   - GET `/api/customers/search?q=` (admin-protected) - Search customers by name or phone

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -33,8 +33,47 @@ import {
   Save,
   LogOut,
   Settings,
+  Bell,
+  BellOff,
 } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
 import { Link } from "wouter";
+
+function playNotificationSound() {
+  try {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+    const playTone = (freq: number, startTime: number, duration: number) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0.3, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    const now = audioCtx.currentTime;
+    playTone(880, now, 0.15);
+    playTone(1100, now + 0.15, 0.15);
+    playTone(1320, now + 0.3, 0.3);
+  } catch (e) {
+    console.warn("Could not play notification sound", e);
+  }
+}
+
+function formatPhoneForWhatsApp(phone: string): string {
+  let formatted = phone.replace(/\D/g, "");
+  if (formatted.startsWith("0")) {
+    formatted = "90" + formatted.substring(1);
+  } else if (!formatted.startsWith("90")) {
+    formatted = "90" + formatted;
+  }
+  return formatted;
+}
 
 type OrderWithItems = Order & { items: OrderItem[] };
 
@@ -157,6 +196,10 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [lastCreatedOrder, setLastCreatedOrder] = useState<Order | null>(null);
 
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const knownOrderIdsRef = useRef<Set<string>>(new Set());
+  const [newOrderAlert, setNewOrderAlert] = useState(false);
+
   const [newCustomerForm, setNewCustomerForm] = useState({
     name: "",
     phone: "",
@@ -178,6 +221,42 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
   const { data: siteSettings } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
   });
+
+  useEffect(() => {
+    if (!notificationsEnabled) return;
+
+    const checkNewOrders = async () => {
+      try {
+        const token = localStorage.getItem("adminToken");
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const res = await fetch("/api/orders", { credentials: "include", headers });
+        if (!res.ok) return;
+        const orders: Order[] = await res.json();
+        const currentIds = new Set(orders.map((o: Order) => o.id));
+
+        if (knownOrderIdsRef.current.size === 0) {
+          knownOrderIdsRef.current = currentIds;
+          return;
+        }
+
+        const newOrders = orders.filter((o: Order) => !knownOrderIdsRef.current.has(o.id));
+        if (newOrders.length > 0) {
+          playNotificationSound();
+          setNewOrderAlert(true);
+          setTimeout(() => setNewOrderAlert(false), 5000);
+        }
+
+        knownOrderIdsRef.current = currentIds;
+      } catch (e) {
+        // silently ignore
+      }
+    };
+
+    checkNewOrders();
+    const interval = setInterval(checkNewOrders, 10000);
+    return () => clearInterval(interval);
+  }, [notificationsEnabled]);
 
   const filteredMenuItems = menuItems.filter((item) => {
     if (!item.isAvailable) return false;
@@ -297,6 +376,21 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
     toast({ title: "Onceki siparis sepete eklendi" });
   };
 
+  const buildWhatsAppUrl = useCallback((customerPhone: string, itemsText: string, total: string, orderDeliveryType: string) => {
+    const phone = formatPhoneForWhatsApp(customerPhone);
+    const deliveryText = orderDeliveryType === "pickup" ? "Gel Al" : "Eve Teslim";
+    const storeName = siteSettings?.logo_text || siteSettings?.site_name || "Lezzet Express";
+    const message = `Merhaba! ${storeName} siparisiniz alindi.\n\nSiparis: ${itemsText}\nToplam: ${total} TL\nTeslimat: ${deliveryText}\n\nTahmini teslimat: 30-45 dk. Afiyet olsun!`;
+    const encoded = encodeURIComponent(message);
+    return `https://api.whatsapp.com/send?phone=${phone}&text=${encoded}`;
+  }, [siteSettings]);
+
+  const sendWhatsAppFromCart = useCallback((customerPhone: string, orderItems: CartItemEntry[], total: number, orderDeliveryType: string) => {
+    const itemsText = orderItems.map(i => `${i.quantity}x ${i.menuItemName}`).join(", ");
+    const url = buildWhatsAppUrl(customerPhone, itemsText, total.toFixed(2), orderDeliveryType);
+    window.open(url, "_blank");
+  }, [buildWhatsAppUrl]);
+
   const createOrderMutation = useMutation({
     mutationFn: async () => {
       if (!selectedCustomer) throw new Error("Musteri secilmedi");
@@ -321,8 +415,14 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
     },
     onSuccess: (order: Order) => {
       setLastCreatedOrder(order);
+      knownOrderIdsRef.current.add(order.id);
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       toast({ title: "Siparis olusturuldu", description: `Siparis No: ${order.id.slice(0, 8)}` });
+      if (selectedCustomer) {
+        const itemsText = cart.map(i => `${i.quantity}x ${i.menuItemName}`).join(", ");
+        const url = buildWhatsAppUrl(selectedCustomer.phone, itemsText, cartTotal.toFixed(2), deliveryType);
+        window.open(url, "_blank");
+      }
     },
     onError: (error: Error) => {
       toast({ title: "Hata", description: error.message, variant: "destructive" });
@@ -561,6 +661,15 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
                 {cart.length} urun - {cartTotal.toFixed(2)} TL
               </Badge>
             )}
+            <Button
+              size="sm"
+              variant="ghost"
+              className={`toggle-elevate ${notificationsEnabled ? "toggle-elevated" : ""}`}
+              onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+              data-testid="button-toggle-notifications"
+            >
+              {notificationsEnabled ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
+            </Button>
             <Button size="sm" variant="ghost" onClick={resetAll} data-testid="button-reset">
               <RotateCcw className="w-4 h-4" />
             </Button>
@@ -574,6 +683,11 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
             </Button>
           </div>
         </div>
+        {newOrderAlert && (
+          <div className="bg-primary text-primary-foreground px-4 py-2 text-center text-sm font-medium animate-pulse" data-testid="alert-new-order">
+            Yeni siparis geldi!
+          </div>
+        )}
       </div>
 
       <div className="max-w-7xl mx-auto p-4">
@@ -966,6 +1080,17 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
                     <Button variant="outline" onClick={() => printOrder()} data-testid="button-print-preview">
                       <Printer className="w-4 h-4 mr-2" />
                       Yazdir
+                    </Button>
+                  )}
+                  {lastCreatedOrder && selectedCustomer && (
+                    <Button
+                      variant="outline"
+                      className="w-full text-green-700 dark:text-green-400 border-green-300 dark:border-green-700"
+                      onClick={() => sendWhatsAppFromCart(selectedCustomer.phone, cart.length > 0 ? cart : [], cartTotal, deliveryType)}
+                      data-testid="button-whatsapp-customer"
+                    >
+                      <SiWhatsapp className="w-4 h-4 mr-2" />
+                      WhatsApp Mesaji Gonder
                     </Button>
                   )}
                 </div>
