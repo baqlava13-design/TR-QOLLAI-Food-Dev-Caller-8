@@ -174,6 +174,10 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
     queryKey: ["/api/categories"],
   });
 
+  const { data: siteSettings } = useQuery<Record<string, string>>({
+    queryKey: ["/api/settings"],
+  });
+
   const filteredMenuItems = menuItems.filter((item) => {
     if (!item.isAvailable) return false;
     const matchesCategory = selectedCategory === "all" || item.categoryId === selectedCategory;
@@ -385,7 +389,10 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
       </head>
       <body>
         <div class="header">
-          <h2>SIPARIS FISI</h2>
+          <h1 style="font-size:18px;font-weight:bold;margin-bottom:2px;">${siteSettings?.logo_name || "Siparis Kolay"}</h1>
+          ${siteSettings?.footer_phone ? `<p>${siteSettings.footer_phone}</p>` : ""}
+          ${siteSettings?.footer_address ? `<p style="font-size:10px;">${siteSettings.footer_address}</p>` : ""}
+          <p style="margin-top:4px;">- SIPARIS FISI -</p>
           <p>${new Date().toLocaleString("tr-TR")}</p>
           ${orderToPrint ? `<p>Siparis No: ${orderToPrint.id.slice(0, 8)}</p>` : ""}
           ${orderToPrint ? `<p>Durum: ${statusMap[orderToPrint.status || "pending"] || orderToPrint.status}</p>` : ""}
@@ -455,7 +462,10 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
       </head>
       <body>
         <div class="header">
-          <h2>SIPARIS FISI</h2>
+          <h1 style="font-size:18px;font-weight:bold;margin-bottom:2px;">${siteSettings?.logo_name || "Siparis Kolay"}</h1>
+          ${siteSettings?.footer_phone ? `<p>${siteSettings.footer_phone}</p>` : ""}
+          ${siteSettings?.footer_address ? `<p style="font-size:10px;">${siteSettings.footer_address}</p>` : ""}
+          <p style="margin-top:4px;">- SIPARIS FISI -</p>
           <p>${order.createdAt ? new Date(order.createdAt).toLocaleString("tr-TR") : ""}</p>
           <p>Siparis No: ${order.id.slice(0, 8)}</p>
           <p>Durum: ${statusMap[order.status || "pending"] || order.status}</p>
