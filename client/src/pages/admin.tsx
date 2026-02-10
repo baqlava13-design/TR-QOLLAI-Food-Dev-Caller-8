@@ -651,8 +651,7 @@ ${order.notes ? `Not: ${order.notes}` : ""}
             )}
             <Button
               size="icon"
-              variant="ghost"
-              className={`toggle-elevate ${notificationsEnabled ? "toggle-elevated" : ""}`}
+              variant={notificationsEnabled ? "default" : "ghost"}
               onClick={() => {
                 const next = !notificationsEnabled;
                 setNotificationsEnabled(next);
