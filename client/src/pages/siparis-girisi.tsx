@@ -424,6 +424,7 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
       </head>
       <body>
         <div class="header">
+          ${siteSettings?.company_logo ? `<img src="${siteSettings.company_logo}" alt="Logo" style="max-width:120px;max-height:60px;margin:0 auto 6px auto;display:block;" />` : ""}
           <h1 style="font-size:18px;font-weight:bold;margin-bottom:2px;">${siteSettings?.logo_name || "Siparis Kolay"}</h1>
           ${siteSettings?.footer_phone ? `<p>${siteSettings.footer_phone}</p>` : ""}
           ${siteSettings?.footer_address ? `<p style="font-size:10px;">${siteSettings.footer_address}</p>` : ""}
@@ -454,8 +455,15 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
       </html>
     `);
     printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+    const logoImg = printWindow.document.querySelector("img");
+    if (logoImg) {
+      logoImg.onload = () => { printWindow.focus(); printWindow.print(); };
+      logoImg.onerror = () => { printWindow.focus(); printWindow.print(); };
+      setTimeout(() => { printWindow.focus(); printWindow.print(); }, 3000);
+    } else {
+      printWindow.focus();
+      printWindow.print();
+    }
   };
 
   const printPreviousOrder = (order: OrderWithItems) => {
@@ -498,6 +506,7 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
       </head>
       <body>
         <div class="header">
+          ${siteSettings?.company_logo ? `<img src="${siteSettings.company_logo}" alt="Logo" style="max-width:120px;max-height:60px;margin:0 auto 6px auto;display:block;" />` : ""}
           <h1 style="font-size:18px;font-weight:bold;margin-bottom:2px;">${siteSettings?.logo_name || "Siparis Kolay"}</h1>
           ${siteSettings?.footer_phone ? `<p>${siteSettings.footer_phone}</p>` : ""}
           ${siteSettings?.footer_address ? `<p style="font-size:10px;">${siteSettings.footer_address}</p>` : ""}
@@ -528,8 +537,15 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
       </html>
     `);
     printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+    const logoImg2 = printWindow.document.querySelector("img");
+    if (logoImg2) {
+      logoImg2.onload = () => { printWindow.focus(); printWindow.print(); };
+      logoImg2.onerror = () => { printWindow.focus(); printWindow.print(); };
+      setTimeout(() => { printWindow.focus(); printWindow.print(); }, 3000);
+    } else {
+      printWindow.focus();
+      printWindow.print();
+    }
   };
 
   const startEditCustomer = () => {
