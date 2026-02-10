@@ -433,6 +433,21 @@ function OrdersTab() {
     setEndDate("");
   };
 
+  const sendWhatsAppToCustomer = (order: OrderWithItems) => {
+    let phone = (order.customerPhone || "").replace(/\D/g, "");
+    if (phone.startsWith("0")) {
+      phone = "90" + phone.substring(1);
+    } else if (!phone.startsWith("90")) {
+      phone = "90" + phone;
+    }
+    const itemsText = order.items?.map(i => `${i.quantity}x ${i.menuItemName}`).join(", ") || "";
+    const total = parseFloat(order.total).toFixed(2);
+    const deliveryText = (order as any).deliveryType === "pickup" ? "Gel Al" : "Eve Teslim";
+    const message = `Merhaba! Siparisiniz alindi.\n\nSiparis: ${itemsText}\nToplam: ${total} TL\nTeslimat: ${deliveryText}\n\nTahmini teslimat: 30-45 dk. Afiyet olsun!`;
+    const encoded = encodeURIComponent(message);
+    window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encoded}`, "_blank");
+  };
+
   const handlePrint = (order: OrderWithItems) => {
     const itemsText = order.items?.map(item => 
       `  ${item.quantity}x ${item.menuItemName} - ${parseFloat(item.totalPrice).toFixed(2)} TL`
@@ -645,6 +660,9 @@ ${order.notes ? `Not: ${order.notes}` : ""}
                         <div className="flex gap-1">
                           <Button size="icon" variant="ghost" onClick={() => setSelectedOrder(order)} data-testid={`button-view-order-${order.id}`}>
                             <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => sendWhatsAppToCustomer(order)} data-testid={`button-whatsapp-order-${order.id}`}>
+                            <SiWhatsapp className="h-4 w-4 text-green-600" />
                           </Button>
                           <Button size="icon" variant="ghost" onClick={() => handlePrint(order)} data-testid={`button-print-order-${order.id}`}>
                             <Printer className="h-4 w-4" />
