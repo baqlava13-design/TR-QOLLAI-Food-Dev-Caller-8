@@ -33,6 +33,7 @@ import {
   Save,
   LogOut,
   Settings,
+  LayoutDashboard,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { Link } from "wouter";
@@ -563,6 +564,12 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
                   <Plus className="w-4 h-4 mr-2" />
                   Yeni Siparis
                 </Button>
+                <Link href="/admin">
+                  <Button variant="outline" className="w-full" data-testid="button-go-admin">
+                    <LayoutDashboard className="w-4 h-4 mr-2" />
+                    Admin Paneli
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
