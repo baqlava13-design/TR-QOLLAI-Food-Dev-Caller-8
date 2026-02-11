@@ -488,32 +488,89 @@ function OrdersTab({ notificationsEnabled, setNotificationsEnabled }: { notifica
     window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encoded}`, "_blank");
   };
 
+  const { data: siteSettings } = useQuery<Record<string, string>>({
+    queryKey: ["/api/settings"],
+  });
+
   const handlePrint = (order: OrderWithItems) => {
-    const itemsText = order.items?.map(item => 
-      `  ${item.quantity}x ${item.menuItemName} - ${parseFloat(item.totalPrice).toFixed(2)} TL`
-    ).join('\n') || '';
-    
-    const printContent = `
-SIPARIS: #${order.id.slice(0, 8).toUpperCase()}
-Tarih: ${new Date(order.createdAt!).toLocaleString("tr-TR")}
+    const printWindow = window.open("", "_blank", "width=400,height=600");
+    if (!printWindow) return;
 
-MÜŞTERİ
-${order.customerName}
-${order.customerPhone}
-${order.customerAddress}
+    const statusMap: Record<string, string> = {
+      pending: "Beklemede",
+      confirmed: "Onaylandi",
+      preparing: "Hazirlaniyor",
+      out_for_delivery: "Yola Cikti",
+      delivered: "Teslim Edildi",
+      cancelled: "Iptal",
+    };
 
-ÜRÜNLER
-${itemsText}
+    const total = order.items?.reduce((sum, item) => sum + parseFloat(item.totalPrice), 0) || parseFloat(order.total);
 
-TOPLAM: ${parseFloat(order.total).toFixed(2)} TL
-Ödeme: ${order.paymentMethod === "cash" ? "Nakit" : "POS"}
-${order.notes ? `Not: ${order.notes}` : ""}
-    `;
-    
-    const printWindow = window.open("", "_blank");
-    if (printWindow) {
-      printWindow.document.write(`<pre style="font-family: monospace; font-size: 13px;">${printContent}</pre>`);
-      printWindow.document.close();
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Siparis Fisi</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Courier New', monospace; font-size: 12px; padding: 10px; width: 280px; }
+          .header { text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 8px; }
+          .info { margin-bottom: 8px; }
+          .info p { margin: 2px 0; }
+          .info .label { font-weight: bold; }
+          .items { width: 100%; border-collapse: collapse; margin: 8px 0; }
+          .items th, .items td { text-align: left; padding: 3px 0; }
+          .items th { border-bottom: 1px dashed #000; font-size: 11px; }
+          .items td { font-size: 11px; }
+          .items .qty { width: 30px; text-align: center; }
+          .items .price { text-align: right; width: 60px; }
+          .total { border-top: 1px dashed #000; padding-top: 6px; margin-top: 6px; font-weight: bold; font-size: 14px; text-align: right; }
+          .footer { text-align: center; margin-top: 10px; border-top: 1px dashed #000; padding-top: 8px; font-size: 10px; }
+          .notes { margin-top: 6px; padding: 4px; border: 1px dashed #000; font-size: 11px; }
+          @media print { body { width: 280px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          ${siteSettings?.company_logo ? `<img src="${siteSettings.company_logo}" alt="Logo" style="max-width:120px;max-height:60px;margin:0 auto 6px auto;display:block;" />` : ""}
+          <h1 style="font-size:18px;font-weight:bold;margin-bottom:2px;">${siteSettings?.logo_name || "Siparis Kolay"}</h1>
+          ${siteSettings?.footer_phone ? `<p>${siteSettings.footer_phone}</p>` : ""}
+          ${siteSettings?.footer_address ? `<p style="font-size:10px;">${siteSettings.footer_address}</p>` : ""}
+          <p style="margin-top:4px;">- SIPARIS FISI -</p>
+          <p>${order.createdAt ? new Date(order.createdAt).toLocaleString("tr-TR") : ""}</p>
+          <p>Siparis No: ${order.id.slice(0, 8)}</p>
+          <p>Durum: ${statusMap[order.status || "pending"] || order.status}</p>
+        </div>
+        <div class="info">
+          <p><span class="label">Musteri:</span> ${order.customerName}</p>
+          <p><span class="label">Telefon:</span> ${order.customerPhone}</p>
+          <p><span class="label">Adres:</span> ${order.customerAddress || "-"}</p>
+          <p><span class="label">Odeme:</span> ${order.paymentMethod === "cash" ? "Nakit" : "POS"}</p>
+          <p><span class="label">Teslimat:</span> ${(order as any).deliveryType === "pickup" ? "Gel Al" : "Eve Teslim"}</p>
+        </div>
+        <table class="items">
+          <thead><tr><th>Urun</th><th class="qty">Ad</th><th class="price">Fiyat</th></tr></thead>
+          <tbody>
+            ${(order.items || []).map((item) => `<tr><td>${item.menuItemName}</td><td class="qty">${item.quantity}</td><td class="price">${parseFloat(item.totalPrice).toFixed(2)} TL</td></tr>`).join("")}
+          </tbody>
+        </table>
+        <div class="total">TOPLAM: ${total.toFixed(2)} TL</div>
+        ${order.notes ? `<div class="notes"><strong>Not:</strong> ${order.notes}</div>` : ""}
+        <div class="footer">
+          <p>Afiyet olsun!</p>
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    const logoImg = printWindow.document.querySelector("img");
+    if (logoImg) {
+      logoImg.onload = () => { printWindow.focus(); printWindow.print(); };
+      logoImg.onerror = () => { printWindow.focus(); printWindow.print(); };
+      setTimeout(() => { printWindow.focus(); printWindow.print(); }, 3000);
+    } else {
+      printWindow.focus();
       printWindow.print();
     }
   };
