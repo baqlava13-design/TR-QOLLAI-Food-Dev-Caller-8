@@ -14,6 +14,11 @@ A multi-tenant SaaS platform for Turkish restaurant food delivery systems. Each 
 - **CRM Pipeline**: 5 stages (lead, pitched, trial, customer, churned) with color-coded UI
 - **Pitch Checklist**: 10 default items tracking sales process completion per tenant
 - **Routes**: `/api/superadmin/*` for platform management, `/api/*` for tenant-scoped operations
+- **Tenant URLs**: Two options supported:
+  - Clean path: `qollai.com/kebapci` (via `/:slug` catch-all route)
+  - Custom domain: `siparis.kebapci.com` (via `customDomain` field + hostname resolution)
+- **Domain Resolution**: `GET /api/resolve-domain?hostname=` resolves custom domains to tenant slugs
+- **Public API**: `/api/t/:slug/*` endpoints serve tenant data without admin auth (settings, categories, menu-items, reviews)
 
 ## User Preferences
 
