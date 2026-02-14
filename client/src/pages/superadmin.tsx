@@ -51,6 +51,7 @@ import {
   Building2,
   TrendingUp,
   ShoppingBag,
+  KeyRound,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useToast } from "@/hooks/use-toast";
@@ -483,6 +484,8 @@ export default function SuperAdmin() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [newTenant, setNewTenant] = useState({ name: "", slug: "", contactName: "", contactPhone: "", contactEmail: "", city: "", source: "other", status: "lead" });
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
 
   useEffect(() => {
     fetch("/api/superadmin/me", { credentials: "include" })
@@ -527,6 +530,33 @@ export default function SuperAdmin() {
     setIsLoggedIn(false);
   };
 
+  const handleChangePassword = async () => {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast({ title: "Passwords do not match", variant: "destructive" });
+      return;
+    }
+    if (passwordForm.newPassword.length < 6) {
+      toast({ title: "Password must be at least 6 characters", variant: "destructive" });
+      return;
+    }
+    try {
+      const res = await apiRequest("POST", "/api/superadmin/change-password", {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        toast({ title: data.error || "Failed to change password", variant: "destructive" });
+        return;
+      }
+      toast({ title: "Password changed successfully" });
+      setShowPasswordDialog(false);
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    } catch {
+      toast({ title: "Failed to change password", variant: "destructive" });
+    }
+  };
+
   if (checkingAuth) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>;
   if (!isLoggedIn) return <LoginForm onLogin={() => setIsLoggedIn(true)} />;
 
@@ -557,6 +587,10 @@ export default function SuperAdmin() {
           <div className="flex items-center gap-2">
             <Button size="icon" variant="ghost" onClick={toggleTheme} data-testid="button-theme">
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+            <Button variant="ghost" onClick={() => setShowPasswordDialog(true)} data-testid="button-change-password">
+              <KeyRound className="h-4 w-4 mr-1" />
+              Sifre
             </Button>
             <Button variant="ghost" onClick={handleLogout} data-testid="button-logout">
               <LogOut className="h-4 w-4 mr-1" />
@@ -763,6 +797,52 @@ export default function SuperAdmin() {
           </div>
         )}
       </main>
+
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sifre Degistir</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Mevcut Sifre</Label>
+              <Input
+                type="password"
+                value={passwordForm.currentPassword}
+                onChange={(e) => setPasswordForm(f => ({ ...f, currentPassword: e.target.value }))}
+                data-testid="input-current-password"
+              />
+            </div>
+            <div>
+              <Label>Yeni Sifre</Label>
+              <Input
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm(f => ({ ...f, newPassword: e.target.value }))}
+                data-testid="input-new-password"
+              />
+            </div>
+            <div>
+              <Label>Yeni Sifre (Tekrar)</Label>
+              <Input
+                type="password"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm(f => ({ ...f, confirmPassword: e.target.value }))}
+                data-testid="input-confirm-password"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setShowPasswordDialog(false); setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" }); }} data-testid="button-cancel-password">
+                Iptal
+              </Button>
+              <Button onClick={handleChangePassword} data-testid="button-save-password">
+                <Save className="h-4 w-4 mr-1" />
+                Kaydet
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

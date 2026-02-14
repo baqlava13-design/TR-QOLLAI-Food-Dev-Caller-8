@@ -61,6 +61,7 @@ export interface IStorage {
   // Superadmin
   getSuperadminByUsername(username: string): Promise<SuperadminUser | undefined>;
   createSuperadmin(username: string, password: string): Promise<SuperadminUser>;
+  updateSuperadminPassword(id: string, hashedPassword: string): Promise<void>;
 
   // Categories
   getCategories(tenantId?: string): Promise<Category[]>;
@@ -214,6 +215,10 @@ export class DatabaseStorage implements IStorage {
   async getSuperadminByUsername(username: string): Promise<SuperadminUser | undefined> {
     const [admin] = await db.select().from(superadminUsers).where(eq(superadminUsers.username, username));
     return admin || undefined;
+  }
+
+  async updateSuperadminPassword(id: string, hashedPassword: string): Promise<void> {
+    await db.update(superadminUsers).set({ password: hashedPassword }).where(eq(superadminUsers.id, id));
   }
 
   async createSuperadmin(username: string, password: string): Promise<SuperadminUser> {

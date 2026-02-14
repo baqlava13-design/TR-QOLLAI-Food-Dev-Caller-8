@@ -147,6 +147,31 @@ export function registerSuperadminRoutes(app: Express) {
     }
   });
 
+  app.post("/api/superadmin/change-password", requireSuperadmin, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: "Current and new password required" });
+      }
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: "New password must be at least 6 characters" });
+      }
+      const admin = await storage.getSuperadminByUsername(req.session.superadminUsername!);
+      if (!admin) {
+        return res.status(404).json({ error: "Admin not found" });
+      }
+      const valid = await bcrypt.compare(currentPassword, admin.password);
+      if (!valid) {
+        return res.status(401).json({ error: "Current password is incorrect" });
+      }
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await storage.updateSuperadminPassword(admin.id, hashedPassword);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to change password" });
+    }
+  });
+
   // Get tenant stats (orders count, revenue)
   app.get("/api/superadmin/tenants/:id/stats", requireSuperadmin, async (req, res) => {
     try {

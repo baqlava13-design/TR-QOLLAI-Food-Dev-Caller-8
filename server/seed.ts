@@ -5,19 +5,20 @@ import { eq } from "drizzle-orm";
 
 async function ensureSuperadmin() {
   const existing = await db.select().from(superadminUsers).where(eq(superadminUsers.username, "superadmin"));
-  const hashedPassword = await bcrypt.hash("qollai2024", 10);
+  const defaultPassword = process.env.SUPERADMIN_PASSWORD || "qollai2024";
+  const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
   if (existing.length === 0) {
     await db.insert(superadminUsers).values({
       username: "superadmin",
       password: hashedPassword,
     });
-    console.log("Created superadmin user: superadmin/qollai2024");
-  } else {
+    console.log("Created superadmin user: superadmin/" + defaultPassword);
+  } else if (process.env.SUPERADMIN_RESET === "true") {
     await db.update(superadminUsers)
       .set({ password: hashedPassword })
       .where(eq(superadminUsers.username, "superadmin"));
-    console.log("Updated superadmin password to qollai2024");
+    console.log("Superadmin password reset to: " + defaultPassword);
   }
 }
 
