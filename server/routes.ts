@@ -18,24 +18,20 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import express from "express";
-import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_integrations/object_storage";
+import {
+  isS3Configured,
+  uploadBuffer,
+  proxyS3Object,
+  ensureLocalUploadsDir,
+  saveLocalFile,
+  getLocalUploadsDir,
+  extractObjectKeyFromUrl,
+  deleteObject,
+} from "./s3-storage";
 
 const upload = multer({ storage: multer.memoryStorage() });
-const objectStorageService = new ObjectStorageService();
 
-const uploadsDir = path.join(process.cwd(), "public", "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-const diskStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, uniqueSuffix + ext);
-  },
-});
-const localUpload = multer({ storage: diskStorage });
+ensureLocalUploadsDir();
 
 // Image setting keys that should trigger old image deletion
 const IMAGE_SETTING_KEYS = ["hero_image", "company_logo"];
@@ -1094,12 +1090,18 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Key is required" });
       }
       
-      // If this is an image setting, delete the old image first
       if (IMAGE_SETTING_KEYS.includes(key)) {
         const oldSetting = await storage.getSetting(key);
-        if (oldSetting?.value && objectStorageService.isLocalObjectPath(oldSetting.value)) {
-          // Delete old image from object storage
-          await objectStorageService.deleteObject(oldSetting.value);
+        if (oldSetting?.value) {
+          try {
+            const s3Key = extractObjectKeyFromUrl(oldSetting.value);
+            if (isS3Configured() && s3Key) {
+              await deleteObject(s3Key);
+            } else if (oldSetting.value.startsWith("/uploads/")) {
+              const localPath = path.join(getLocalUploadsDir(), path.basename(oldSetting.value));
+              if (fs.existsSync(localPath)) fs.unlinkSync(localPath);
+            }
+          } catch {}
         }
       }
       
@@ -1349,25 +1351,30 @@ export async function registerRoutes(
     }
   });
 
-  // Serve uploaded files statically
-  app.use("/uploads", express.static(uploadsDir));
+  app.use("/uploads", express.static(getLocalUploadsDir()));
 
-  // Local file upload endpoint (fallback when object storage fails)
-  app.post("/api/uploads/local", localUpload.single("file"), (req, res) => {
+  app.post("/api/uploads/local", upload.single("file"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
       }
-      const filePath = `/uploads/${req.file.filename}`;
-      res.json({ path: filePath });
+
+      if (isS3Configured()) {
+        const result = await uploadBuffer(
+          req.file.buffer,
+          req.file.originalname,
+          req.file.mimetype
+        );
+        res.json({ path: result.publicUrl });
+      } else {
+        const result = saveLocalFile(req.file.buffer, req.file.originalname);
+        res.json({ path: result.filePath });
+      }
     } catch (error) {
-      console.error("Local upload error:", error);
+      console.error("Upload error:", error);
       res.status(500).json({ error: "Failed to upload file" });
     }
   });
-
-  // Register object storage routes for file uploads
-  registerObjectStorageRoutes(app);
 
   return httpServer;
 }

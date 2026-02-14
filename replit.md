@@ -45,12 +45,31 @@ Preferred communication style: Simple, everyday language.
 
 ### Environment Variables
 - `DATABASE_URL`: PostgreSQL connection string (required)
+- `SESSION_SECRET`: Session encryption key (required in production)
 - `VITE_WHATSAPP_PHONE`: WhatsApp business number for order integration (optional, has default)
+- `S3_ENDPOINT`: S3-compatible endpoint URL (e.g., https://s3.amazonaws.com, https://<account>.r2.cloudflarestorage.com)
+- `S3_REGION`: S3 region (default: "auto")
+- `S3_BUCKET`: S3 bucket name
+- `S3_ACCESS_KEY_ID`: S3 access key
+- `S3_SECRET_ACCESS_KEY`: S3 secret key
+- `S3_PUBLIC_URL`: Public base URL for serving uploaded files (optional)
+- `S3_FORCE_PATH_STYLE`: Set to "true" for MinIO or path-style S3 endpoints (optional)
+
+### Portability & Stateless Architecture
+- **Database**: PostgreSQL with Drizzle ORM - fully portable, no vendor lock-in
+- **Sessions**: Stored in PostgreSQL via connect-pg-simple - stateless server
+- **File Uploads**: Dual-mode storage via `server/s3-storage.ts`:
+  - When S3 env vars are set: uploads go to S3-compatible storage (AWS S3, Cloudflare R2, MinIO, etc.)
+  - When S3 not configured: falls back to local disk storage (`public/uploads/`)
+  - Upload endpoint `/api/uploads/local` handles both modes transparently
+- **Trust Proxy**: Enabled for reverse proxy setups (Railway, Render, etc.)
+- **Secure Cookies**: Automatically enabled in production mode
 
 ### Build & Deployment
 - Development: `npm run dev` runs Vite dev server with Express backend
 - Production: `npm run build` creates optimized bundle, `npm start` serves static files
 - Build script in `script/build.ts` bundles server with esbuild, client with Vite
+- Portable to Railway, Render, Fly.io, or any Node.js hosting with PostgreSQL
 
 ## External Dependencies
 

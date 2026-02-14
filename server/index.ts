@@ -8,7 +8,12 @@ import { createServer } from "http";
 import { seedDatabase } from "./seed";
 
 const app = express();
+app.set("trust proxy", 1);
 const httpServer = createServer(app);
+
+if (process.env.NODE_ENV === "production" && !process.env.SESSION_SECRET) {
+  console.warn("WARNING: SESSION_SECRET not set in production. Using fallback key. Set SESSION_SECRET for security.");
+}
 
 // PostgreSQL session store
 const PgSession = connectPgSimple(session);
@@ -27,7 +32,7 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
