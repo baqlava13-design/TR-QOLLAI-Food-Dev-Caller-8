@@ -203,15 +203,77 @@ export function registerSuperadminRoutes(app: Express) {
   app.patch("/api/superadmin/tenants/:id/pilot", requireSuperadmin, async (req, res) => {
     try {
       const { logoUrl, heroImages, pilotMenuItems, demoReady } = req.body;
+      const tenant = await storage.getTenantById(req.params.id);
+      if (!tenant) return res.status(404).json({ error: "Tenant not found" });
+
       const updateData: any = {};
       if (logoUrl !== undefined) updateData.logoUrl = logoUrl;
       if (heroImages !== undefined) updateData.heroImages = heroImages;
       if (pilotMenuItems !== undefined) updateData.pilotMenuItems = pilotMenuItems;
       if (demoReady !== undefined) updateData.demoReady = demoReady;
-      const tenant = await storage.updateTenant(req.params.id, updateData);
-      if (!tenant) return res.status(404).json({ error: "Tenant not found" });
-      res.json(tenant);
+
+      const shouldSeedData = pilotMenuItems && pilotMenuItems.length > 0;
+
+      if (shouldSeedData) {
+        const existingCategories = await storage.getCategories(tenant.id);
+        const existingMenuItems = await storage.getMenuItems(tenant.id);
+        for (const item of existingMenuItems) {
+          await storage.deleteMenuItem(item.id, tenant.id);
+        }
+        for (const cat of existingCategories) {
+          await storage.deleteCategory(cat.id, tenant.id);
+        }
+
+        const cat = await storage.createCategory({
+          name: "Menu",
+          tenantId: tenant.id,
+          isActive: true,
+          sortOrder: 0,
+        });
+
+        for (let i = 0; i < pilotMenuItems.length; i++) {
+          const item = pilotMenuItems[i];
+          await storage.createMenuItem({
+            tenantId: tenant.id,
+            name: item.name,
+            description: item.description || "",
+            price: item.price || "0",
+            image: item.image || "",
+            categoryId: cat.id,
+            isAvailable: true,
+            isPopular: i < 2,
+            sortOrder: i,
+          });
+        }
+
+        const settingsToSeed: Record<string, string> = {};
+        if (logoUrl) settingsToSeed.company_logo = logoUrl;
+        if (heroImages && heroImages.length > 0) settingsToSeed.hero_image = heroImages[0];
+        settingsToSeed.hero_title = tenant.name;
+        settingsToSeed.hero_subtitle = tenant.city
+          ? `${tenant.city} - Online Siparis Sistemi`
+          : "Online Siparis Sistemi";
+        settingsToSeed.footer_logo_name = tenant.name;
+        if (tenant.contactPhone) {
+          const phone = tenant.contactPhone.replace(/\D/g, "");
+          settingsToSeed.whatsapp_number = phone;
+          settingsToSeed.footer_phone = tenant.contactPhone;
+        }
+        if (tenant.address) settingsToSeed.footer_address = tenant.address;
+        if (tenant.city) settingsToSeed.footer_address = `${tenant.address || ""} ${tenant.city}`.trim();
+
+        for (const [key, value] of Object.entries(settingsToSeed)) {
+          await storage.setSetting(key, value, tenant.id);
+        }
+
+        updateData.menuSeeded = true;
+        updateData.demoReady = true;
+      }
+
+      const updated = await storage.updateTenant(tenant.id, updateData);
+      res.json(updated);
     } catch (error) {
+      console.error("Failed to update pilot data:", error);
       res.status(500).json({ error: "Failed to update pilot data" });
     }
   });

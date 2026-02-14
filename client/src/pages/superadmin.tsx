@@ -58,6 +58,10 @@ import {
   Rocket,
   Utensils,
   X,
+  Copy,
+  MonitorSmartphone,
+  Settings,
+  PhoneCall,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useToast } from "@/hooks/use-toast";
@@ -792,6 +796,75 @@ function PilotConfig({ tenant, onUpdate }: { tenant: Tenant; onUpdate: () => voi
             </Card>
           ))}
         </div>
+
+        {/* Demo Access Links */}
+        {tenant.demoReady && (
+          <>
+            <Separator />
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold flex items-center gap-1">
+                <MonitorSmartphone className="h-3.5 w-3.5" />
+                Demo Access
+              </Label>
+              <div className="grid gap-2 text-sm">
+                <div className="flex items-center justify-between gap-2 p-2 rounded-md border">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <ExternalLink className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                    <span className="text-muted-foreground">Customer Website:</span>
+                    <code className="text-xs truncate">/p/{tenant.slug}</code>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/p/${tenant.slug}`); }} data-testid="button-copy-pilot-url">
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                    <Button size="sm" variant="outline" asChild>
+                      <a href={`/p/${tenant.slug}`} target="_blank" rel="noopener noreferrer" data-testid="link-open-pilot">
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-2 p-2 rounded-md border">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Settings className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                    <span className="text-muted-foreground">Admin Panel:</span>
+                    <code className="text-xs">/admin</code>
+                  </div>
+                  <Button size="sm" variant="outline" asChild>
+                    <a href="/admin" target="_blank" rel="noopener noreferrer" data-testid="link-open-admin">
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between gap-2 p-2 rounded-md border">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <PhoneCall className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                    <span className="text-muted-foreground">Phone Orders:</span>
+                    <code className="text-xs">/siparis</code>
+                  </div>
+                  <Button size="sm" variant="outline" asChild>
+                    <a href="/siparis" target="_blank" rel="noopener noreferrer" data-testid="link-open-siparis">
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </Button>
+                </div>
+                <div className="p-2 rounded-md border bg-muted/30">
+                  <div className="flex items-center gap-2 mb-1">
+                    <KeyRound className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-muted-foreground text-xs">Admin Login Credentials</span>
+                  </div>
+                  <div className="flex items-center gap-4 pl-5">
+                    <span className="text-xs">Username: <code className="font-bold">admin_{tenant.slug}</code></span>
+                    <span className="text-xs">Password: <code className="font-bold">admin123</code></span>
+                    <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(`admin_${tenant.slug}`); }} data-testid="button-copy-username">
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Activate Tenant */}
         {canActivate && (

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useQuery, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { Utensils } from "lucide-react";
@@ -10,115 +10,103 @@ import { HowItWorks } from "@/components/how-it-works";
 import { Reviews } from "@/components/reviews";
 import { OrderForm } from "@/components/order-form";
 import { Footer } from "@/components/footer";
-import type { PilotMenuItem, MenuItem, Category } from "@shared/schema";
+import type { MenuItem, Category, Review } from "@shared/schema";
 
-interface PilotData {
+interface PilotTenantInfo {
   name: string;
   slug: string;
   logoUrl: string | null;
   heroImages: string[];
-  pilotMenuItems: PilotMenuItem[];
   contactPhone: string | null;
   city: string | null;
   address: string | null;
 }
 
-function pilotToMenuItems(pilotItems: PilotMenuItem[]): MenuItem[] {
-  return pilotItems.map((item, i) => ({
-    id: `pilot-${i}`,
-    name: item.name,
-    tenantId: null,
-    description: item.description || "",
-    price: item.price || "0",
-    originalPrice: null,
-    image: item.image || null,
-    categoryId: "pilot-cat-1",
-    isAvailable: true,
-    isPopular: i < 2,
-    isKampanya: false,
-    kampanyaTag: null,
-    sortOrder: i,
-  }));
+function PilotInnerApp({ slug }: { slug: string }) {
+  const apiBase = `/api/t/${slug}`;
+
+  const { data: categories = [], isLoading: catLoading } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+    queryFn: async () => {
+      const res = await fetch(`${apiBase}/categories`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  const { data: menuItems = [], isLoading: menuLoading } = useQuery<MenuItem[]>({
+    queryKey: ["/api/menu-items"],
+    queryFn: async () => {
+      const res = await fetch(`${apiBase}/menu-items`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  const { data: reviews = [], isLoading: reviewsLoading } = useQuery<Review[]>({
+    queryKey: ["/api/reviews"],
+    queryFn: async () => {
+      const res = await fetch(`${apiBase}/reviews`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  const isLoading = catLoading || menuLoading;
+
+  return (
+    <div className="min-h-screen bg-background overflow-x-hidden" data-testid="page-pilot">
+      <Header />
+      <main>
+        <Hero />
+        <MenuSection
+          categories={categories}
+          menuItems={menuItems}
+          isLoading={isLoading}
+        />
+        <HowItWorks />
+        <Reviews reviews={reviews} isLoading={reviewsLoading} />
+        <OrderForm />
+      </main>
+      <Footer />
+    </div>
+  );
 }
 
-function pilotToCategories(): Category[] {
-  return [
-    { id: "pilot-cat-1", name: "Menu", tenantId: null, description: "Restaurant menu", image: null, parentId: null, sortOrder: 0, isActive: true },
-  ];
-}
-
-function pilotToSettings(data: PilotData): Record<string, string> {
-  return {
-    footer_logo_name: data.name,
-    company_logo: data.logoUrl || "",
-    hero_image: data.heroImages?.[0] || "",
-    hero_title: data.name,
-    hero_subtitle: data.city ? `${data.city} - Online Siparis Sistemi` : "Online Siparis Sistemi",
-    whatsapp_number: data.contactPhone?.replace(/\D/g, "") || "",
-    footer_address: data.address || data.city || "",
-    footer_phone: data.contactPhone || "",
-    footer_email: "",
-    footer_text: `${data.name} - Qollai ile siparis sistemi`,
-    menu_section_title: "Lezzetli Secenekler",
-    how_it_works_title: "Siparis Vermek Cok Kolay",
-    reviews_section_title: "Musterilerimiz Ne Diyor?",
-    minimum_order_amount: "0",
-  };
-}
-
-function PilotAppContent({ data }: { data: PilotData }) {
-  const menuItems = useMemo(() => pilotToMenuItems(data.pilotMenuItems), [data.pilotMenuItems]);
-  const categories = useMemo(() => pilotToCategories(), []);
+function PilotAppContent({ slug }: { slug: string }) {
+  const apiBase = `/api/t/${slug}`;
 
   const pilotQueryClient = useMemo(() => {
-    const client = new QueryClient({
+    return new QueryClient({
       defaultOptions: {
         queries: {
-          staleTime: Infinity,
+          staleTime: 30000,
           refetchOnWindowFocus: false,
-          retry: false,
+          retry: 1,
           queryFn: async ({ queryKey }) => {
             const key = queryKey[0] as string;
-            if (key === "/api/settings") return pilotToSettings(data);
-            if (key === "/api/categories") return categories;
-            if (key === "/api/menu-items") return menuItems;
-            if (key === "/api/reviews") return [];
-            if (key === "/api/cross-sell") return [];
-            if (key === "/api/neighborhoods") return [];
-            return [];
+            let url = key;
+            if (key === "/api/settings") url = `${apiBase}/settings`;
+            else if (key === "/api/categories") url = `${apiBase}/categories`;
+            else if (key === "/api/menu-items") url = `${apiBase}/menu-items`;
+            else if (key === "/api/reviews") url = `${apiBase}/reviews`;
+            else if (key === "/api/cross-sell") return [];
+            else if (key === "/api/neighborhoods") return [];
+            else return [];
+
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`Failed to fetch ${key}`);
+            return res.json();
           },
         },
       },
     });
-
-    client.setQueryData(["/api/settings"], pilotToSettings(data));
-    client.setQueryData(["/api/categories"], categories);
-    client.setQueryData(["/api/menu-items"], menuItems);
-    client.setQueryData(["/api/reviews"], []);
-    client.setQueryData(["/api/cross-sell"], []);
-    client.setQueryData(["/api/neighborhoods"], []);
-
-    return client;
-  }, [data, menuItems, categories]);
+  }, [slug, apiBase]);
 
   return (
     <QueryClientProvider client={pilotQueryClient}>
       <CartProvider>
-        <div className="min-h-screen bg-background overflow-x-hidden" data-testid="page-pilot">
-          <Header />
-          <main>
-            <Hero />
-            <MenuSection
-              categories={categories}
-              menuItems={menuItems}
-              isLoading={false}
-            />
-            <HowItWorks />
-            <Reviews reviews={[]} isLoading={false} />
-            <OrderForm />
-          </main>
-          <Footer />
-        </div>
+        <PilotInnerApp slug={slug} />
       </CartProvider>
     </QueryClientProvider>
   );
@@ -128,7 +116,7 @@ export default function PilotPage() {
   const [, params] = useRoute("/p/:slug");
   const slug = params?.slug || "";
 
-  const { data, isLoading, error } = useQuery<PilotData>({
+  const { data, isLoading, error } = useQuery<PilotTenantInfo>({
     queryKey: ["/api/pilot", slug],
     queryFn: async () => {
       const res = await fetch(`/api/pilot/${slug}`);
@@ -161,5 +149,5 @@ export default function PilotPage() {
     );
   }
 
-  return <PilotAppContent data={data} />;
+  return <PilotAppContent slug={slug} />;
 }

@@ -1480,5 +1480,55 @@ export async function registerRoutes(
     }
   });
 
+  // ==================== TENANT-SCOPED PUBLIC ENDPOINTS (for pilot pages) ====================
+
+  app.get("/api/t/:slug/settings", async (req, res) => {
+    try {
+      const tenant = await storage.getTenantBySlug(req.params.slug);
+      if (!tenant) return res.status(404).json({ error: "Tenant not found" });
+      const settings = await storage.getAllSettings(tenant.id);
+      const settingsMap: Record<string, string> = {};
+      settings.forEach(s => {
+        if (s.value) settingsMap[s.key] = s.value;
+      });
+      res.json(settingsMap);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch settings" });
+    }
+  });
+
+  app.get("/api/t/:slug/categories", async (req, res) => {
+    try {
+      const tenant = await storage.getTenantBySlug(req.params.slug);
+      if (!tenant) return res.status(404).json({ error: "Tenant not found" });
+      const cats = await storage.getCategories(tenant.id);
+      res.json(cats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch categories" });
+    }
+  });
+
+  app.get("/api/t/:slug/menu-items", async (req, res) => {
+    try {
+      const tenant = await storage.getTenantBySlug(req.params.slug);
+      if (!tenant) return res.status(404).json({ error: "Tenant not found" });
+      const items = await storage.getMenuItems(tenant.id);
+      res.json(items);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch menu items" });
+    }
+  });
+
+  app.get("/api/t/:slug/reviews", async (req, res) => {
+    try {
+      const tenant = await storage.getTenantBySlug(req.params.slug);
+      if (!tenant) return res.status(404).json({ error: "Tenant not found" });
+      const revs = await storage.getApprovedReviews(tenant.id);
+      res.json(revs);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch reviews" });
+    }
+  });
+
   return httpServer;
 }
