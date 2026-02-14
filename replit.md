@@ -1,8 +1,19 @@
-# Lezzet Express - WhatsApp Food Delivery Website
+# QOLLAI - Multi-Tenant SaaS Food Delivery Platform
 
 ## Overview
 
-A Turkish food delivery single-page application built for a restaurant in Çorlu, Turkey. The platform enables customers to browse menus, build shopping carts, and submit orders via WhatsApp integration. It features a customer-facing storefront with menu browsing, cart management, and an admin dashboard for order management and analytics.
+A multi-tenant SaaS platform for Turkish restaurant food delivery systems. Each tenant (restaurant) gets an isolated phone order entry system with customer lookup, order history, menu management, delivery type selection, WhatsApp notifications, print receipts, admin panel with role-based access, channel profit analysis, and full CRM pipeline for managing 100-200 restaurant customers through Lead, Pitched, Trial, Customer, Churned stages.
+
+### Multi-Tenant Architecture
+- **Isolation**: Row-level tenant isolation via `tenant_id` column on all business tables
+- **Tenants table**: Doubles as CRM leads with pipeline stages, pitch checklist, contact info
+- **Superadmin**: Platform-level management at `/superadmin` (credentials: superadmin/qollai2024)
+- **Tenant Admin**: Per-tenant admin at `/admin` (default credentials: admin/admin123 per tenant)
+- **Database Tables**: `tenants`, `superadmin_users` for platform management
+- **Session**: `tenantId` stored in session and admin tokens for request-scoped isolation
+- **CRM Pipeline**: 5 stages (lead, pitched, trial, customer, churned) with color-coded UI
+- **Pitch Checklist**: 10 default items tracking sales process completion per tenant
+- **Routes**: `/api/superadmin/*` for platform management, `/api/*` for tenant-scoped operations
 
 ## User Preferences
 

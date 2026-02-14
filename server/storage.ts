@@ -10,6 +10,11 @@ import {
   adminUsers,
   adminTokens,
   crossSellProducts,
+  tenants,
+  superadminUsers,
+  neighborhoods,
+  profitChannels,
+  dailyChannelRevenues,
   type Category,
   type InsertCategory,
   type MenuItem,
@@ -30,54 +35,67 @@ import {
   type InsertAdminUser,
   type CrossSellProduct,
   type InsertCrossSellProduct,
-  neighborhoods,
   type Neighborhood,
   type InsertNeighborhood,
-  profitChannels,
-  dailyChannelRevenues,
   type ProfitChannel,
   type InsertProfitChannel,
   type DailyChannelRevenue,
   type InsertDailyChannelRevenue,
+  type Tenant,
+  type InsertTenant,
+  type SuperadminUser,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, gte, and, sql, lt } from "drizzle-orm";
 
 export interface IStorage {
+  // Tenants
+  getTenants(): Promise<Tenant[]>;
+  getTenantById(id: string): Promise<Tenant | undefined>;
+  getTenantBySlug(slug: string): Promise<Tenant | undefined>;
+  createTenant(tenant: InsertTenant): Promise<Tenant>;
+  updateTenant(id: string, data: Partial<InsertTenant>): Promise<Tenant | undefined>;
+  deleteTenant(id: string): Promise<boolean>;
+  getTenantsByStatus(status: string): Promise<Tenant[]>;
+
+  // Superadmin
+  getSuperadminByUsername(username: string): Promise<SuperadminUser | undefined>;
+  createSuperadmin(username: string, password: string): Promise<SuperadminUser>;
+
   // Categories
-  getCategories(): Promise<Category[]>;
+  getCategories(tenantId?: string): Promise<Category[]>;
   getCategoryById(id: string): Promise<Category | undefined>;
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category | undefined>;
   deleteCategory(id: string): Promise<boolean>;
 
   // Menu Items
-  getMenuItems(): Promise<MenuItem[]>;
+  getMenuItems(tenantId?: string): Promise<MenuItem[]>;
   getMenuItemById(id: string): Promise<MenuItem | undefined>;
-  getMenuItemsByCategory(categoryId: string): Promise<MenuItem[]>;
+  getMenuItemsByCategory(categoryId: string, tenantId?: string): Promise<MenuItem[]>;
   createMenuItem(menuItem: InsertMenuItem): Promise<MenuItem>;
   updateMenuItem(id: string, menuItem: Partial<InsertMenuItem>): Promise<MenuItem | undefined>;
   deleteMenuItem(id: string): Promise<boolean>;
 
   // Upsell Options
-  getUpsellOptions(): Promise<UpsellOption[]>;
-  getUpsellOptionsByMenuItem(menuItemId: string): Promise<UpsellOption[]>;
+  getUpsellOptions(tenantId?: string): Promise<UpsellOption[]>;
+  getUpsellOptionsByMenuItem(menuItemId: string, tenantId?: string): Promise<UpsellOption[]>;
   createUpsellOption(upsellOption: InsertUpsellOption): Promise<UpsellOption>;
 
   // Customers
-  getCustomers(): Promise<Customer[]>;
+  getCustomers(tenantId?: string): Promise<Customer[]>;
   getCustomerById(id: string): Promise<Customer | undefined>;
-  getCustomerByPhone(phone: string): Promise<Customer | undefined>;
+  getCustomerByPhone(phone: string, tenantId?: string): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
   deleteCustomer(id: string): Promise<boolean>;
-  getCustomersWithStats(): Promise<(Customer & { orderCount: number; lastOrderDate: Date | null })[]>;
+  getCustomersWithStats(tenantId?: string): Promise<(Customer & { orderCount: number; lastOrderDate: Date | null })[]>;
 
   // Orders
-  getOrders(): Promise<Order[]>;
+  getOrders(tenantId?: string): Promise<Order[]>;
   getOrderById(id: string): Promise<Order | undefined>;
-  getOrdersByCustomer(customerId: string): Promise<Order[]>;
-  getOrdersByStatus(status: string): Promise<Order[]>;
+  getOrdersByCustomer(customerId: string, tenantId?: string): Promise<Order[]>;
+  getOrdersByStatus(status: string, tenantId?: string): Promise<Order[]>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
   deleteOrder(id: string): Promise<boolean>;
@@ -87,18 +105,18 @@ export interface IStorage {
   createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
 
   // Reviews
-  getReviews(): Promise<Review[]>;
-  getApprovedReviews(): Promise<Review[]>;
+  getReviews(tenantId?: string): Promise<Review[]>;
+  getApprovedReviews(tenantId?: string): Promise<Review[]>;
   createReview(review: InsertReview): Promise<Review>;
 
   // Site Settings
-  getSetting(key: string): Promise<SiteSetting | undefined>;
-  getAllSettings(): Promise<SiteSetting[]>;
-  setSetting(key: string, value: string): Promise<SiteSetting>;
+  getSetting(key: string, tenantId?: string): Promise<SiteSetting | undefined>;
+  getAllSettings(tenantId?: string): Promise<SiteSetting[]>;
+  setSetting(key: string, value: string, tenantId?: string): Promise<SiteSetting>;
 
   // Admin Users
-  getAdminByUsername(username: string): Promise<AdminUser | undefined>;
-  getAllAdminUsers(): Promise<AdminUser[]>;
+  getAdminByUsername(username: string, tenantId?: string): Promise<AdminUser | undefined>;
+  getAllAdminUsers(tenantId?: string): Promise<AdminUser[]>;
   getAdminUserById(id: string): Promise<AdminUser | undefined>;
   createAdminUser(admin: InsertAdminUser): Promise<AdminUser>;
   updateAdminUser(id: string, data: Partial<InsertAdminUser>): Promise<AdminUser | undefined>;
@@ -106,18 +124,18 @@ export interface IStorage {
   updateAdminLastLogin(id: string): Promise<void>;
 
   // Admin Tokens
-  getAdminToken(token: string): Promise<{ adminId: string; username: string; expiresAt: Date } | undefined>;
-  createAdminToken(token: string, adminId: string, username: string, expiresAt: Date): Promise<void>;
+  getAdminToken(token: string): Promise<{ adminId: string; username: string; tenantId: string | null; expiresAt: Date } | undefined>;
+  createAdminToken(token: string, adminId: string, username: string, expiresAt: Date, tenantId?: string): Promise<void>;
   deleteAdminToken(token: string): Promise<void>;
   cleanupExpiredTokens(): Promise<void>;
 
   // Reviews - Admin
   updateReview(id: string, data: Partial<InsertReview>): Promise<Review | undefined>;
   deleteReview(id: string): Promise<boolean>;
-  getAllReviews(): Promise<Review[]>;
+  getAllReviews(tenantId?: string): Promise<Review[]>;
 
   // Dashboard Stats
-  getDashboardStats(): Promise<{
+  getDashboardStats(tenantId?: string): Promise<{
     todayOrders: number;
     confirmedOrders: number;
     deliveredOrders: number;
@@ -128,37 +146,86 @@ export interface IStorage {
   }>;
 
   // Cross-sell Products
-  getCrossSellProducts(): Promise<(CrossSellProduct & { menuItem: MenuItem })[]>;
-  getActiveCrossSellProducts(): Promise<(CrossSellProduct & { menuItem: MenuItem })[]>;
+  getCrossSellProducts(tenantId?: string): Promise<(CrossSellProduct & { menuItem: MenuItem })[]>;
+  getActiveCrossSellProducts(tenantId?: string): Promise<(CrossSellProduct & { menuItem: MenuItem })[]>;
   addCrossSellProduct(data: InsertCrossSellProduct): Promise<CrossSellProduct>;
   removeCrossSellProduct(id: string): Promise<boolean>;
   updateCrossSellProduct(id: string, data: Partial<InsertCrossSellProduct>): Promise<CrossSellProduct | undefined>;
 
   // Neighborhoods
-  getNeighborhoods(): Promise<Neighborhood[]>;
-  getActiveNeighborhoods(): Promise<Neighborhood[]>;
+  getNeighborhoods(tenantId?: string): Promise<Neighborhood[]>;
+  getActiveNeighborhoods(tenantId?: string): Promise<Neighborhood[]>;
   getNeighborhoodById(id: string): Promise<Neighborhood | undefined>;
   createNeighborhood(neighborhood: InsertNeighborhood): Promise<Neighborhood>;
   updateNeighborhood(id: string, neighborhood: Partial<InsertNeighborhood>): Promise<Neighborhood | undefined>;
   deleteNeighborhood(id: string): Promise<boolean>;
 
   // Profit Channels
-  getProfitChannels(): Promise<ProfitChannel[]>;
+  getProfitChannels(tenantId?: string): Promise<ProfitChannel[]>;
   getProfitChannelById(id: string): Promise<ProfitChannel | undefined>;
   createProfitChannel(channel: InsertProfitChannel): Promise<ProfitChannel>;
   updateProfitChannel(id: string, channel: Partial<InsertProfitChannel>): Promise<ProfitChannel | undefined>;
   deleteProfitChannel(id: string): Promise<boolean>;
 
   // Daily Channel Revenues
-  getDailyRevenues(date: string): Promise<DailyChannelRevenue[]>;
-  getDailyRevenuesByRange(startDate: string, endDate: string): Promise<DailyChannelRevenue[]>;
+  getDailyRevenues(date: string, tenantId?: string): Promise<DailyChannelRevenue[]>;
+  getDailyRevenuesByRange(startDate: string, endDate: string, tenantId?: string): Promise<DailyChannelRevenue[]>;
   upsertDailyRevenue(data: InsertDailyChannelRevenue): Promise<DailyChannelRevenue>;
   deleteDailyRevenue(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
+  // Tenants
+  async getTenants(): Promise<Tenant[]> {
+    return db.select().from(tenants).orderBy(desc(tenants.createdAt));
+  }
+
+  async getTenantById(id: string): Promise<Tenant | undefined> {
+    const [tenant] = await db.select().from(tenants).where(eq(tenants.id, id));
+    return tenant || undefined;
+  }
+
+  async getTenantBySlug(slug: string): Promise<Tenant | undefined> {
+    const [tenant] = await db.select().from(tenants).where(eq(tenants.slug, slug));
+    return tenant || undefined;
+  }
+
+  async createTenant(tenant: InsertTenant): Promise<Tenant> {
+    const [created] = await db.insert(tenants).values(tenant as any).returning();
+    return created;
+  }
+
+  async updateTenant(id: string, data: Partial<InsertTenant>): Promise<Tenant | undefined> {
+    const updateData = { ...data, updatedAt: new Date() } as any;
+    const [updated] = await db.update(tenants).set(updateData).where(eq(tenants.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteTenant(id: string): Promise<boolean> {
+    const result = await db.delete(tenants).where(eq(tenants.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getTenantsByStatus(status: string): Promise<Tenant[]> {
+    return db.select().from(tenants).where(eq(tenants.status, status as any)).orderBy(desc(tenants.createdAt));
+  }
+
+  // Superadmin
+  async getSuperadminByUsername(username: string): Promise<SuperadminUser | undefined> {
+    const [admin] = await db.select().from(superadminUsers).where(eq(superadminUsers.username, username));
+    return admin || undefined;
+  }
+
+  async createSuperadmin(username: string, password: string): Promise<SuperadminUser> {
+    const [created] = await db.insert(superadminUsers).values({ username, password }).returning();
+    return created;
+  }
+
   // Categories
-  async getCategories(): Promise<Category[]> {
+  async getCategories(tenantId?: string): Promise<Category[]> {
+    if (tenantId) {
+      return db.select().from(categories).where(eq(categories.tenantId, tenantId)).orderBy(categories.sortOrder);
+    }
     return db.select().from(categories).orderBy(categories.sortOrder);
   }
 
@@ -183,7 +250,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Menu Items
-  async getMenuItems(): Promise<MenuItem[]> {
+  async getMenuItems(tenantId?: string): Promise<MenuItem[]> {
+    if (tenantId) {
+      return db.select().from(menuItems).where(eq(menuItems.tenantId, tenantId)).orderBy(menuItems.sortOrder);
+    }
     return db.select().from(menuItems).orderBy(menuItems.sortOrder);
   }
 
@@ -192,7 +262,10 @@ export class DatabaseStorage implements IStorage {
     return item || undefined;
   }
 
-  async getMenuItemsByCategory(categoryId: string): Promise<MenuItem[]> {
+  async getMenuItemsByCategory(categoryId: string, tenantId?: string): Promise<MenuItem[]> {
+    if (tenantId) {
+      return db.select().from(menuItems).where(and(eq(menuItems.categoryId, categoryId), eq(menuItems.tenantId, tenantId))).orderBy(menuItems.sortOrder);
+    }
     return db.select().from(menuItems).where(eq(menuItems.categoryId, categoryId)).orderBy(menuItems.sortOrder);
   }
 
@@ -207,23 +280,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteMenuItem(id: string): Promise<boolean> {
-    // First, set menuItemId to null in order_items that reference this menu item
     await db.update(orderItems).set({ menuItemId: null }).where(eq(orderItems.menuItemId, id));
-    // Delete upsell options associated with this menu item
     await db.delete(upsellOptions).where(eq(upsellOptions.menuItemId, id));
-    // Delete cross-sell products associated with this menu item
     await db.delete(crossSellProducts).where(eq(crossSellProducts.menuItemId, id));
-    // Now delete the menu item
     await db.delete(menuItems).where(eq(menuItems.id, id));
     return true;
   }
 
   // Upsell Options
-  async getUpsellOptions(): Promise<UpsellOption[]> {
+  async getUpsellOptions(tenantId?: string): Promise<UpsellOption[]> {
+    if (tenantId) {
+      return db.select().from(upsellOptions).where(eq(upsellOptions.tenantId, tenantId));
+    }
     return db.select().from(upsellOptions);
   }
 
-  async getUpsellOptionsByMenuItem(menuItemId: string): Promise<UpsellOption[]> {
+  async getUpsellOptionsByMenuItem(menuItemId: string, tenantId?: string): Promise<UpsellOption[]> {
+    if (tenantId) {
+      return db.select().from(upsellOptions).where(and(eq(upsellOptions.menuItemId, menuItemId), eq(upsellOptions.tenantId, tenantId)));
+    }
     return db.select().from(upsellOptions).where(eq(upsellOptions.menuItemId, menuItemId));
   }
 
@@ -233,7 +308,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Customers
-  async getCustomers(): Promise<Customer[]> {
+  async getCustomers(tenantId?: string): Promise<Customer[]> {
+    if (tenantId) {
+      return db.select().from(customers).where(eq(customers.tenantId, tenantId)).orderBy(desc(customers.createdAt));
+    }
     return db.select().from(customers).orderBy(desc(customers.createdAt));
   }
 
@@ -242,7 +320,11 @@ export class DatabaseStorage implements IStorage {
     return customer || undefined;
   }
 
-  async getCustomerByPhone(phone: string): Promise<Customer | undefined> {
+  async getCustomerByPhone(phone: string, tenantId?: string): Promise<Customer | undefined> {
+    if (tenantId) {
+      const [customer] = await db.select().from(customers).where(and(eq(customers.phone, phone), eq(customers.tenantId, tenantId)));
+      return customer || undefined;
+    }
     const [customer] = await db.select().from(customers).where(eq(customers.phone, phone));
     return customer || undefined;
   }
@@ -258,21 +340,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCustomer(id: string): Promise<boolean> {
-    // First delete order items for orders belonging to this customer
     const customerOrders = await db.select().from(orders).where(eq(orders.customerId, id));
     for (const order of customerOrders) {
       await db.delete(orderItems).where(eq(orderItems.orderId, order.id));
     }
-    // Then delete the orders
     await db.delete(orders).where(eq(orders.customerId, id));
-    // Finally delete the customer
     await db.delete(customers).where(eq(customers.id, id));
     return true;
   }
 
-  async getCustomersWithStats(): Promise<(Customer & { orderCount: number; lastOrderDate: Date | null })[]> {
-    const allCustomers = await db.select().from(customers).orderBy(desc(customers.createdAt));
-    const allOrders = await db.select().from(orders);
+  async getCustomersWithStats(tenantId?: string): Promise<(Customer & { orderCount: number; lastOrderDate: Date | null })[]> {
+    const allCustomers = tenantId
+      ? await db.select().from(customers).where(eq(customers.tenantId, tenantId)).orderBy(desc(customers.createdAt))
+      : await db.select().from(customers).orderBy(desc(customers.createdAt));
+    const allOrders = tenantId
+      ? await db.select().from(orders).where(eq(orders.tenantId, tenantId))
+      : await db.select().from(orders);
     
     return allCustomers.map(customer => {
       const customerOrders = allOrders.filter(o => o.customerId === customer.id);
@@ -289,7 +372,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Orders
-  async getOrders(): Promise<Order[]> {
+  async getOrders(tenantId?: string): Promise<Order[]> {
+    if (tenantId) {
+      return db.select().from(orders).where(eq(orders.tenantId, tenantId)).orderBy(desc(orders.createdAt));
+    }
     return db.select().from(orders).orderBy(desc(orders.createdAt));
   }
 
@@ -298,11 +384,17 @@ export class DatabaseStorage implements IStorage {
     return order || undefined;
   }
 
-  async getOrdersByCustomer(customerId: string): Promise<Order[]> {
+  async getOrdersByCustomer(customerId: string, tenantId?: string): Promise<Order[]> {
+    if (tenantId) {
+      return db.select().from(orders).where(and(eq(orders.customerId, customerId), eq(orders.tenantId, tenantId))).orderBy(desc(orders.createdAt));
+    }
     return db.select().from(orders).where(eq(orders.customerId, customerId)).orderBy(desc(orders.createdAt));
   }
 
-  async getOrdersByStatus(status: string): Promise<Order[]> {
+  async getOrdersByStatus(status: string, tenantId?: string): Promise<Order[]> {
+    if (tenantId) {
+      return db.select().from(orders).where(and(eq(orders.status, status as any), eq(orders.tenantId, tenantId))).orderBy(desc(orders.createdAt));
+    }
     return db.select().from(orders).where(eq(orders.status, status as any)).orderBy(desc(orders.createdAt));
   }
 
@@ -339,11 +431,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Reviews
-  async getReviews(): Promise<Review[]> {
+  async getReviews(tenantId?: string): Promise<Review[]> {
+    if (tenantId) {
+      return db.select().from(reviews).where(eq(reviews.tenantId, tenantId)).orderBy(desc(reviews.createdAt));
+    }
     return db.select().from(reviews).orderBy(desc(reviews.createdAt));
   }
 
-  async getApprovedReviews(): Promise<Review[]> {
+  async getApprovedReviews(tenantId?: string): Promise<Review[]> {
+    if (tenantId) {
+      return db.select().from(reviews).where(and(eq(reviews.isApproved, true), eq(reviews.tenantId, tenantId))).orderBy(desc(reviews.createdAt));
+    }
     return db.select().from(reviews).where(eq(reviews.isApproved, true)).orderBy(desc(reviews.createdAt));
   }
 
@@ -353,32 +451,50 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Site Settings
-  async getSetting(key: string): Promise<SiteSetting | undefined> {
+  async getSetting(key: string, tenantId?: string): Promise<SiteSetting | undefined> {
+    if (tenantId) {
+      const [setting] = await db.select().from(siteSettings).where(and(eq(siteSettings.key, key), eq(siteSettings.tenantId, tenantId)));
+      return setting || undefined;
+    }
     const [setting] = await db.select().from(siteSettings).where(eq(siteSettings.key, key));
     return setting || undefined;
   }
 
-  async getAllSettings(): Promise<SiteSetting[]> {
+  async getAllSettings(tenantId?: string): Promise<SiteSetting[]> {
+    if (tenantId) {
+      return db.select().from(siteSettings).where(eq(siteSettings.tenantId, tenantId));
+    }
     return db.select().from(siteSettings);
   }
 
-  async setSetting(key: string, value: string): Promise<SiteSetting> {
-    const existing = await this.getSetting(key);
+  async setSetting(key: string, value: string, tenantId?: string): Promise<SiteSetting> {
+    const existing = await this.getSetting(key, tenantId);
     if (existing) {
-      const [updated] = await db.update(siteSettings).set({ value }).where(eq(siteSettings.key, key)).returning();
+      const [updated] = await db.update(siteSettings).set({ value }).where(eq(siteSettings.id, existing.id)).returning();
       return updated;
     }
-    const [created] = await db.insert(siteSettings).values({ key, value }).returning();
+    const insertData: any = { key, value };
+    if (tenantId) {
+      insertData.tenantId = tenantId;
+    }
+    const [created] = await db.insert(siteSettings).values(insertData).returning();
     return created;
   }
 
   // Admin Users
-  async getAdminByUsername(username: string): Promise<AdminUser | undefined> {
+  async getAdminByUsername(username: string, tenantId?: string): Promise<AdminUser | undefined> {
+    if (tenantId) {
+      const [admin] = await db.select().from(adminUsers).where(and(eq(adminUsers.username, username), eq(adminUsers.tenantId, tenantId)));
+      return admin || undefined;
+    }
     const [admin] = await db.select().from(adminUsers).where(eq(adminUsers.username, username));
     return admin || undefined;
   }
 
-  async getAllAdminUsers(): Promise<AdminUser[]> {
+  async getAllAdminUsers(tenantId?: string): Promise<AdminUser[]> {
+    if (tenantId) {
+      return await db.select().from(adminUsers).where(eq(adminUsers.tenantId, tenantId)).orderBy(adminUsers.createdAt);
+    }
     return await db.select().from(adminUsers).orderBy(adminUsers.createdAt);
   }
 
@@ -408,18 +524,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Admin Tokens
-  async getAdminToken(token: string): Promise<{ adminId: string; username: string; expiresAt: Date } | undefined> {
+  async getAdminToken(token: string): Promise<{ adminId: string; username: string; tenantId: string | null; expiresAt: Date } | undefined> {
     const [tokenData] = await db.select().from(adminTokens).where(eq(adminTokens.token, token));
     if (!tokenData) return undefined;
     return {
       adminId: tokenData.adminId,
       username: tokenData.username,
+      tenantId: tokenData.tenantId,
       expiresAt: tokenData.expiresAt,
     };
   }
 
-  async createAdminToken(token: string, adminId: string, username: string, expiresAt: Date): Promise<void> {
-    await db.insert(adminTokens).values({ token, adminId, username, expiresAt });
+  async createAdminToken(token: string, adminId: string, username: string, expiresAt: Date, tenantId?: string): Promise<void> {
+    const tokenData: any = { token, adminId, username, expiresAt };
+    if (tenantId) {
+      tokenData.tenantId = tenantId;
+    }
+    await db.insert(adminTokens).values(tokenData);
   }
 
   async deleteAdminToken(token: string): Promise<void> {
@@ -431,7 +552,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Reviews - Admin
-  async getAllReviews(): Promise<Review[]> {
+  async getAllReviews(tenantId?: string): Promise<Review[]> {
+    if (tenantId) {
+      return db.select().from(reviews).where(eq(reviews.tenantId, tenantId)).orderBy(desc(reviews.createdAt));
+    }
     return db.select().from(reviews).orderBy(desc(reviews.createdAt));
   }
 
@@ -446,7 +570,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Dashboard Stats
-  async getDashboardStats(): Promise<{
+  async getDashboardStats(tenantId?: string): Promise<{
     todayOrders: number;
     confirmedOrders: number;
     deliveredOrders: number;
@@ -461,9 +585,12 @@ export class DatabaseStorage implements IStorage {
     weekStart.setDate(weekStart.getDate() - 7);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Get all orders for calculations
-    const allOrders = await db.select().from(orders);
-    const allCustomers = await db.select().from(customers);
+    const allOrders = tenantId
+      ? await db.select().from(orders).where(eq(orders.tenantId, tenantId))
+      : await db.select().from(orders);
+    const allCustomers = tenantId
+      ? await db.select().from(customers).where(eq(customers.tenantId, tenantId))
+      : await db.select().from(customers);
 
     const todayOrders = allOrders.filter(o => o.createdAt && new Date(o.createdAt) >= todayStart);
     const confirmedOrders = allOrders.filter(o => o.status === "confirmed" || o.status === "preparing");
@@ -489,12 +616,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Cross-sell Products
-  async getCrossSellProducts(): Promise<(CrossSellProduct & { menuItem: MenuItem })[]> {
-    const results = await db
+  async getCrossSellProducts(tenantId?: string): Promise<(CrossSellProduct & { menuItem: MenuItem })[]> {
+    const query = db
       .select()
       .from(crossSellProducts)
-      .leftJoin(menuItems, eq(crossSellProducts.menuItemId, menuItems.id))
-      .orderBy(crossSellProducts.sortOrder);
+      .leftJoin(menuItems, eq(crossSellProducts.menuItemId, menuItems.id));
+
+    const results = tenantId
+      ? await query.where(eq(crossSellProducts.tenantId, tenantId)).orderBy(crossSellProducts.sortOrder)
+      : await query.orderBy(crossSellProducts.sortOrder);
     
     return results
       .filter(r => r.menu_items !== null)
@@ -504,13 +634,17 @@ export class DatabaseStorage implements IStorage {
       }));
   }
 
-  async getActiveCrossSellProducts(): Promise<(CrossSellProduct & { menuItem: MenuItem })[]> {
-    const results = await db
+  async getActiveCrossSellProducts(tenantId?: string): Promise<(CrossSellProduct & { menuItem: MenuItem })[]> {
+    const query = db
       .select()
       .from(crossSellProducts)
-      .leftJoin(menuItems, eq(crossSellProducts.menuItemId, menuItems.id))
-      .where(eq(crossSellProducts.isActive, true))
-      .orderBy(crossSellProducts.sortOrder);
+      .leftJoin(menuItems, eq(crossSellProducts.menuItemId, menuItems.id));
+
+    const whereCondition = tenantId
+      ? and(eq(crossSellProducts.isActive, true), eq(crossSellProducts.tenantId, tenantId))
+      : eq(crossSellProducts.isActive, true);
+
+    const results = await query.where(whereCondition).orderBy(crossSellProducts.sortOrder);
     
     return results
       .filter(r => r.menu_items !== null && r.menu_items.isAvailable)
@@ -536,11 +670,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Neighborhoods
-  async getNeighborhoods(): Promise<Neighborhood[]> {
+  async getNeighborhoods(tenantId?: string): Promise<Neighborhood[]> {
+    if (tenantId) {
+      return db.select().from(neighborhoods).where(eq(neighborhoods.tenantId, tenantId)).orderBy(neighborhoods.sortOrder);
+    }
     return db.select().from(neighborhoods).orderBy(neighborhoods.sortOrder);
   }
 
-  async getActiveNeighborhoods(): Promise<Neighborhood[]> {
+  async getActiveNeighborhoods(tenantId?: string): Promise<Neighborhood[]> {
+    if (tenantId) {
+      return db.select().from(neighborhoods).where(and(eq(neighborhoods.isActive, true), eq(neighborhoods.tenantId, tenantId))).orderBy(neighborhoods.sortOrder);
+    }
     return db.select().from(neighborhoods).where(eq(neighborhoods.isActive, true)).orderBy(neighborhoods.sortOrder);
   }
 
@@ -565,7 +705,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Profit Channels
-  async getProfitChannels(): Promise<ProfitChannel[]> {
+  async getProfitChannels(tenantId?: string): Promise<ProfitChannel[]> {
+    if (tenantId) {
+      return db.select().from(profitChannels).where(eq(profitChannels.tenantId, tenantId)).orderBy(profitChannels.sortOrder);
+    }
     return db.select().from(profitChannels).orderBy(profitChannels.sortOrder);
   }
 
@@ -590,11 +733,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Daily Channel Revenues
-  async getDailyRevenues(date: string): Promise<DailyChannelRevenue[]> {
+  async getDailyRevenues(date: string, tenantId?: string): Promise<DailyChannelRevenue[]> {
+    if (tenantId) {
+      return db.select().from(dailyChannelRevenues).where(and(eq(dailyChannelRevenues.date, date), eq(dailyChannelRevenues.tenantId, tenantId)));
+    }
     return db.select().from(dailyChannelRevenues).where(eq(dailyChannelRevenues.date, date));
   }
 
-  async getDailyRevenuesByRange(startDate: string, endDate: string): Promise<DailyChannelRevenue[]> {
+  async getDailyRevenuesByRange(startDate: string, endDate: string, tenantId?: string): Promise<DailyChannelRevenue[]> {
+    if (tenantId) {
+      return db.select().from(dailyChannelRevenues)
+        .where(and(
+          gte(dailyChannelRevenues.date, startDate),
+          lt(dailyChannelRevenues.date, endDate),
+          eq(dailyChannelRevenues.tenantId, tenantId)
+        ));
+    }
     return db.select().from(dailyChannelRevenues)
       .where(and(
         gte(dailyChannelRevenues.date, startDate),
@@ -603,11 +757,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertDailyRevenue(data: InsertDailyChannelRevenue): Promise<DailyChannelRevenue> {
+    const conditions = [
+      eq(dailyChannelRevenues.channelId, data.channelId),
+      eq(dailyChannelRevenues.date, data.date),
+    ];
+    if (data.tenantId) {
+      conditions.push(eq(dailyChannelRevenues.tenantId, data.tenantId));
+    }
     const existing = await db.select().from(dailyChannelRevenues)
-      .where(and(
-        eq(dailyChannelRevenues.channelId, data.channelId),
-        eq(dailyChannelRevenues.date, data.date)
-      ));
+      .where(and(...conditions));
     if (existing.length > 0) {
       const [updated] = await db.update(dailyChannelRevenues)
         .set({ revenue: data.revenue, orderCount: data.orderCount })

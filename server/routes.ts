@@ -41,6 +41,9 @@ declare module "express-session" {
     adminId?: string;
     adminUsername?: string;
     adminRole?: string;
+    tenantId?: string;
+    superadminId?: string;
+    superadminUsername?: string;
   }
 }
 
@@ -49,7 +52,6 @@ const generateToken = () => {
 };
 
 const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
-  // Check Authorization header first
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
@@ -59,6 +61,7 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
         if (!req.session.adminId) {
           req.session.adminId = tokenData.adminId;
           req.session.adminUsername = tokenData.username;
+          req.session.tenantId = tokenData.tenantId || undefined;
         }
         return next();
       }
@@ -67,12 +70,15 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     }
   }
   
-  // Fallback to session
   if (req.session?.adminId) {
     return next();
   }
   
   return res.status(401).json({ error: "Unauthorized" });
+};
+
+const getTenantId = (req: Request): string | undefined => {
+  return req.session?.tenantId;
 };
 
 const requireAdminRole = async (req: Request, res: Response, next: NextFunction) => {
@@ -933,12 +939,12 @@ export async function registerRoutes(
       req.session.adminId = admin.id;
       req.session.adminUsername = admin.username;
       req.session.adminRole = admin.role || "operator";
+      req.session.tenantId = admin.tenantId || undefined;
       await storage.updateAdminLastLogin(admin.id);
 
-      // Generate token for Authorization header auth (works in iframes)
       const token = generateToken();
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-      await storage.createAdminToken(token, admin.id, admin.username, expiresAt);
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await storage.createAdminToken(token, admin.id, admin.username, expiresAt, admin.tenantId || undefined);
       
       // Cleanup expired tokens periodically
       await storage.cleanupExpiredTokens();
