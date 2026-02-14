@@ -7,9 +7,10 @@ import { HowItWorks } from "@/components/how-it-works";
 import { Reviews } from "@/components/reviews";
 import { OrderForm } from "@/components/order-form";
 import { Footer } from "@/components/footer";
+import { CustomDomainResolver } from "@/pages/tenant-site";
 import type { Category, MenuItem, Review } from "@shared/schema";
 
-export default function Home() {
+function HomeContent() {
   const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
@@ -43,4 +44,27 @@ export default function Home() {
       <Footer />
     </div>
   );
+}
+
+export default function Home() {
+  const domainCheck = useQuery<{ tenant: { slug: string } | null }>({
+    queryKey: ["/api/resolve-domain-check"],
+    queryFn: async () => {
+      const hostname = window.location.hostname.toLowerCase().replace(/^www\./, "");
+      const res = await fetch(`/api/resolve-domain?hostname=${encodeURIComponent(hostname)}`);
+      return res.json();
+    },
+    staleTime: Infinity,
+    retry: false,
+  });
+
+  if (domainCheck.isLoading) {
+    return <HomeContent />;
+  }
+
+  if (domainCheck.data?.tenant?.slug) {
+    return <CustomDomainResolver />;
+  }
+
+  return <HomeContent />;
 }

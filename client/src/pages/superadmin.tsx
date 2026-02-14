@@ -236,6 +236,7 @@ function TenantDetail({ tenant, onBack, onUpdate }: { tenant: Tenant; onBack: ()
     contactEmail: tenant.contactEmail || "",
     city: tenant.city || "",
     address: tenant.address || "",
+    customDomain: tenant.customDomain || "",
     status: tenant.status || "lead",
     source: tenant.source || "other",
     notes: tenant.notes || "",
@@ -408,6 +409,11 @@ function TenantDetail({ tenant, onBack, onUpdate }: { tenant: Tenant; onBack: ()
                   <Input value={form.address} onChange={(e) => setForm(f => ({ ...f, address: e.target.value }))} data-testid="input-address" />
                 </div>
                 <div>
+                  <Label>Custom Domain</Label>
+                  <Input placeholder="siparis.kebapci.com" value={form.customDomain} onChange={(e) => setForm(f => ({ ...f, customDomain: e.target.value.toLowerCase().replace(/^www\./, "") }))} data-testid="input-custom-domain" />
+                  <p className="text-xs text-muted-foreground mt-1">Customer's own domain (without www). CNAME must point to your app.</p>
+                </div>
+                <div>
                   <Label>Notes</Label>
                   <Textarea value={form.notes} onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))} data-testid="input-notes" />
                 </div>
@@ -453,6 +459,17 @@ function TenantDetail({ tenant, onBack, onUpdate }: { tenant: Tenant; onBack: ()
                   <span className="text-muted-foreground">Next Follow-up</span>
                   <span>{tenant.nextFollowupAt ? new Date(tenant.nextFollowupAt).toLocaleDateString("tr-TR") : "-"}</span>
                 </div>
+                <Separator />
+                <div className="flex justify-between flex-wrap gap-1">
+                  <span className="text-muted-foreground">Public URL</span>
+                  <span className="text-xs font-mono">/{tenant.slug}</span>
+                </div>
+                {tenant.customDomain && (
+                  <div className="flex justify-between flex-wrap gap-1">
+                    <span className="text-muted-foreground">Custom Domain</span>
+                    <span className="text-xs font-mono">{tenant.customDomain}</span>
+                  </div>
+                )}
                 <Separator />
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Demo Ready</span>
@@ -811,19 +828,31 @@ function PilotConfig({ tenant, onUpdate }: { tenant: Tenant; onUpdate: () => voi
                   <div className="flex items-center gap-2 min-w-0">
                     <ExternalLink className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
                     <span className="text-muted-foreground">Customer Website:</span>
-                    <code className="text-xs truncate">/p/{tenant.slug}</code>
+                    <code className="text-xs truncate">/{tenant.slug}</code>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/p/${tenant.slug}`); }} data-testid="button-copy-pilot-url">
+                    <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/${tenant.slug}`); }} data-testid="button-copy-pilot-url">
                       <Copy className="h-3 w-3" />
                     </Button>
                     <Button size="sm" variant="outline" asChild>
-                      <a href={`/p/${tenant.slug}`} target="_blank" rel="noopener noreferrer" data-testid="link-open-pilot">
+                      <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" data-testid="link-open-pilot">
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     </Button>
                   </div>
                 </div>
+                {tenant.customDomain && (
+                  <div className="flex items-center justify-between gap-2 p-2 rounded-md border">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <ExternalLink className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                      <span className="text-muted-foreground">Custom Domain:</span>
+                      <code className="text-xs truncate">{tenant.customDomain}</code>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(`https://${tenant.customDomain}`); }} data-testid="button-copy-custom-domain">
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
                 <div className="flex items-center justify-between gap-2 p-2 rounded-md border">
                   <div className="flex items-center gap-2 min-w-0">
                     <Settings className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />

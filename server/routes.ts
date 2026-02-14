@@ -1480,6 +1480,20 @@ export async function registerRoutes(
     }
   });
 
+  // ==================== DOMAIN RESOLUTION ====================
+
+  app.get("/api/resolve-domain", async (req, res) => {
+    try {
+      const hostname = (req.query.hostname as string || req.hostname || "").toLowerCase().replace(/^www\./, "");
+      if (!hostname) return res.json({ tenant: null });
+      const tenant = await storage.getTenantByDomain(hostname);
+      if (!tenant || !tenant.isActive) return res.json({ tenant: null });
+      res.json({ tenant: { id: tenant.id, name: tenant.name, slug: tenant.slug, customDomain: tenant.customDomain } });
+    } catch (error) {
+      res.json({ tenant: null });
+    }
+  });
+
   // ==================== TENANT-SCOPED PUBLIC ENDPOINTS (for pilot pages) ====================
 
   app.get("/api/t/:slug/settings", async (req, res) => {

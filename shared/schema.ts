@@ -40,6 +40,7 @@ export const tenants = pgTable("tenants", {
   menuSeeded: boolean("menu_seeded").default(false),
   pitchChecklist: jsonb("pitch_checklist").$type<Record<string, boolean>>().default({}),
   pilotMenuItems: jsonb("pilot_menu_items").$type<PilotMenuItem[]>().default([]),
+  customDomain: text("custom_domain"),
   monthlyFee: decimal("monthly_fee", { precision: 10, scale: 2 }),
   trialEndsAt: timestamp("trial_ends_at"),
   isActive: boolean("is_active").default(true),

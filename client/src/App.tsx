@@ -11,6 +11,7 @@ import Admin from "@/pages/admin";
 import SiparisGirisi from "@/pages/siparis-girisi";
 import SuperAdmin from "@/pages/superadmin";
 import PilotPage from "@/pages/pilot";
+import TenantSitePage from "@/pages/tenant-site";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/admin" component={Admin} />
       <Route path="/superadmin" component={SuperAdmin} />
       <Route path="/p/:slug" component={PilotPage} />
+      <Route path="/:slug" component={TenantSitePage} />
       <Route component={NotFound} />
     </Switch>
   );
