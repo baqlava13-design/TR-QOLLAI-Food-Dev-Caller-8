@@ -2,15 +2,34 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 import bcrypt from "bcryptjs";
 
+const generateToken = () => {
+  return "sa_" + Math.random().toString(36).substring(2) + Date.now().toString(36);
+};
+
+const superadminTokens = new Map<string, { adminId: string; username: string; expiresAt: Date }>();
+
 const requireSuperadmin = async (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer sa_")) {
+    const token = authHeader.slice(7);
+    const tokenData = superadminTokens.get(token);
+    if (tokenData && new Date(tokenData.expiresAt) > new Date()) {
+      (req as any).superadminId = tokenData.adminId;
+      (req as any).superadminUsername = tokenData.username;
+      return next();
+    }
+  }
+
   if (req.session?.superadminId) {
+    (req as any).superadminId = req.session.superadminId;
+    (req as any).superadminUsername = req.session.superadminUsername;
     return next();
   }
+
   return res.status(401).json({ error: "Unauthorized" });
 };
 
 export function registerSuperadminRoutes(app: Express) {
-  // Superadmin login
   app.post("/api/superadmin/login", async (req, res) => {
     try {
       const { username, password } = req.body;
@@ -25,25 +44,25 @@ export function registerSuperadminRoutes(app: Express) {
       if (!valid) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
+
+      const token = generateToken();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      superadminTokens.set(token, { adminId: admin.id, username: admin.username, expiresAt });
+
       req.session.superadminId = admin.id;
       req.session.superadminUsername = admin.username;
-      req.session.save((err) => {
-        if (err) {
-          return res.status(500).json({ error: "Session save failed" });
-        }
-        res.json({ id: admin.id, username: admin.username });
+      req.session.save(() => {
+        res.json({ id: admin.id, username: admin.username, token });
       });
     } catch (error) {
       res.status(500).json({ error: "Login failed" });
     }
   });
 
-  // Check superadmin auth
   app.get("/api/superadmin/me", requireSuperadmin, (req, res) => {
-    res.json({ id: req.session.superadminId, username: req.session.superadminUsername });
+    res.json({ id: (req as any).superadminId, username: (req as any).superadminUsername });
   });
 
-  // Superadmin logout
   app.post("/api/superadmin/logout", (req, res) => {
     req.session.superadminId = undefined;
     req.session.superadminUsername = undefined;
@@ -122,7 +141,6 @@ export function registerSuperadminRoutes(app: Express) {
     }
   });
 
-  // Pipeline filter
   app.get("/api/superadmin/tenants/status/:status", requireSuperadmin, async (req, res) => {
     try {
       const tenants = await storage.getTenantsByStatus(req.params.status);
@@ -132,7 +150,6 @@ export function registerSuperadminRoutes(app: Express) {
     }
   });
 
-  // Update pitch checklist
   app.patch("/api/superadmin/tenants/:id/checklist", requireSuperadmin, async (req, res) => {
     try {
       const tenant = await storage.getTenantById(req.params.id);
@@ -156,7 +173,7 @@ export function registerSuperadminRoutes(app: Express) {
       if (newPassword.length < 6) {
         return res.status(400).json({ error: "New password must be at least 6 characters" });
       }
-      const admin = await storage.getSuperadminByUsername(req.session.superadminUsername!);
+      const admin = await storage.getSuperadminByUsername((req as any).superadminUsername);
       if (!admin) {
         return res.status(404).json({ error: "Admin not found" });
       }
@@ -172,7 +189,6 @@ export function registerSuperadminRoutes(app: Express) {
     }
   });
 
-  // Get tenant stats (orders count, revenue)
   app.get("/api/superadmin/tenants/:id/stats", requireSuperadmin, async (req, res) => {
     try {
       const stats = await storage.getDashboardStats(req.params.id);

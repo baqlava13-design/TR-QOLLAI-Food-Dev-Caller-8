@@ -76,6 +76,35 @@ const SOURCE_OPTIONS = [
   { value: "other", label: "Other" },
 ];
 
+function getSuperadminHeaders(): Record<string, string> {
+  const token = localStorage.getItem("superadminToken");
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+  return {};
+}
+
+async function superadminFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const headers = { ...getSuperadminHeaders(), ...(options.headers as Record<string, string> || {}) };
+  return fetch(url, { ...options, headers, credentials: "include" });
+}
+
+async function superadminRequest(method: string, url: string, data?: unknown): Promise<Response> {
+  const headers: Record<string, string> = { ...getSuperadminHeaders() };
+  if (data) headers["Content-Type"] = "application/json";
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: data ? JSON.stringify(data) : undefined,
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const text = (await res.text()) || res.statusText;
+    throw new Error(`${res.status}: ${text}`);
+  }
+  return res;
+}
+
 function LoginForm({ onLogin }: { onLogin: () => void }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -87,7 +116,10 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
       const res = await apiRequest("POST", "/api/superadmin/login", { username, password });
       return res.json();
     },
-    onSuccess: () => onLogin(),
+    onSuccess: (data: { token: string }) => {
+      localStorage.setItem("superadminToken", data.token);
+      onLogin();
+    },
     onError: () => setError("Invalid credentials"),
   });
 
@@ -208,7 +240,7 @@ function TenantDetail({ tenant, onBack, onUpdate }: { tenant: Tenant; onBack: ()
   const { data: stats } = useQuery<{ todayOrders: number; todayRevenue: number; totalCustomers: number }>({
     queryKey: ["/api/superadmin/tenants", tenant.id, "stats"],
     queryFn: async () => {
-      const res = await fetch(`/api/superadmin/tenants/${tenant.id}/stats`, { credentials: "include" });
+      const res = await superadminFetch(`/api/superadmin/tenants/${tenant.id}/stats`);
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },
@@ -216,7 +248,7 @@ function TenantDetail({ tenant, onBack, onUpdate }: { tenant: Tenant; onBack: ()
 
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
-      const res = await apiRequest("PATCH", `/api/superadmin/tenants/${tenant.id}`, data);
+      const res = await superadminRequest("PATCH", `/api/superadmin/tenants/${tenant.id}`, data);
       return res.json();
     },
     onSuccess: () => {
@@ -229,7 +261,7 @@ function TenantDetail({ tenant, onBack, onUpdate }: { tenant: Tenant; onBack: ()
 
   const checklistMutation = useMutation({
     mutationFn: async (data: Record<string, boolean>) => {
-      const res = await apiRequest("PATCH", `/api/superadmin/tenants/${tenant.id}/checklist`, data);
+      const res = await superadminRequest("PATCH", `/api/superadmin/tenants/${tenant.id}/checklist`, data);
       return res.json();
     },
     onSuccess: () => {
@@ -488,7 +520,9 @@ export default function SuperAdmin() {
   const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
 
   useEffect(() => {
-    fetch("/api/superadmin/me", { credentials: "include" })
+    const token = localStorage.getItem("superadminToken");
+    if (!token) { setCheckingAuth(false); return; }
+    superadminFetch("/api/superadmin/me")
       .then(r => { if (r.ok) setIsLoggedIn(true); setCheckingAuth(false); })
       .catch(() => setCheckingAuth(false));
   }, []);
@@ -496,11 +530,16 @@ export default function SuperAdmin() {
   const { data: tenants = [], isLoading } = useQuery<Tenant[]>({
     queryKey: ["/api/superadmin/tenants"],
     enabled: isLoggedIn,
+    queryFn: async () => {
+      const res = await superadminFetch("/api/superadmin/tenants");
+      if (!res.ok) throw new Error("Failed to fetch tenants");
+      return res.json();
+    },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof newTenant) => {
-      const res = await apiRequest("POST", "/api/superadmin/tenants", data);
+      const res = await superadminRequest("POST", "/api/superadmin/tenants", data);
       return res.json();
     },
     onSuccess: () => {
@@ -516,7 +555,7 @@ export default function SuperAdmin() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/superadmin/tenants/${id}`);
+      await superadminRequest("DELETE", `/api/superadmin/tenants/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/superadmin/tenants"] });
@@ -526,6 +565,7 @@ export default function SuperAdmin() {
   });
 
   const handleLogout = async () => {
+    localStorage.removeItem("superadminToken");
     await fetch("/api/superadmin/logout", { method: "POST", credentials: "include" });
     setIsLoggedIn(false);
   };
@@ -540,15 +580,11 @@ export default function SuperAdmin() {
       return;
     }
     try {
-      const res = await apiRequest("POST", "/api/superadmin/change-password", {
+      const res = await superadminRequest("POST", "/api/superadmin/change-password", {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
       });
-      if (!res.ok) {
-        const data = await res.json();
-        toast({ title: data.error || "Failed to change password", variant: "destructive" });
-        return;
-      }
+      const data = await res.json();
       toast({ title: "Password changed successfully" });
       setShowPasswordDialog(false);
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
