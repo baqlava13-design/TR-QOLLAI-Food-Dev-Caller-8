@@ -1269,6 +1269,95 @@ export async function registerRoutes(
     }
   });
 
+  // Profit Channels
+  app.get("/api/admin/profit-channels", requireAdmin, async (req, res) => {
+    try {
+      const channels = await storage.getProfitChannels();
+      res.json(channels);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch profit channels" });
+    }
+  });
+
+  app.post("/api/admin/profit-channels", requireAdmin, async (req, res) => {
+    try {
+      const channel = await storage.createProfitChannel(req.body);
+      res.status(201).json(channel);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create profit channel" });
+    }
+  });
+
+  app.patch("/api/admin/profit-channels/:id", requireAdmin, async (req, res) => {
+    try {
+      const channel = await storage.updateProfitChannel(req.params.id, req.body);
+      if (!channel) return res.status(404).json({ error: "Channel not found" });
+      res.json(channel);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update profit channel" });
+    }
+  });
+
+  app.delete("/api/admin/profit-channels/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteProfitChannel(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete profit channel" });
+    }
+  });
+
+  // Daily Channel Revenues
+  app.get("/api/admin/daily-revenues", requireAdmin, async (req, res) => {
+    try {
+      const { date, startDate, endDate } = req.query;
+      if (startDate && endDate) {
+        const revenues = await storage.getDailyRevenuesByRange(startDate as string, endDate as string);
+        return res.json(revenues);
+      }
+      const revenues = await storage.getDailyRevenues(date as string || new Date().toISOString().split("T")[0]);
+      res.json(revenues);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch daily revenues" });
+    }
+  });
+
+  app.post("/api/admin/daily-revenues", requireAdmin, async (req, res) => {
+    try {
+      const revenue = await storage.upsertDailyRevenue(req.body);
+      res.status(201).json(revenue);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to save daily revenue" });
+    }
+  });
+
+  app.delete("/api/admin/daily-revenues/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteDailyRevenue(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete daily revenue" });
+    }
+  });
+
+  // Qollao own-platform daily revenue auto-calculation from orders
+  app.get("/api/admin/qollao-daily-revenue", requireAdmin, async (req, res) => {
+    try {
+      const { date } = req.query;
+      const targetDate = (date as string) || new Date().toISOString().split("T")[0];
+      const allOrders = await storage.getOrders();
+      const dayOrders = allOrders.filter(o => {
+        if (!o.createdAt) return false;
+        const orderDate = new Date(o.createdAt).toISOString().split("T")[0];
+        return orderDate === targetDate && o.status !== "cancelled";
+      });
+      const revenue = dayOrders.reduce((sum, o) => sum + parseFloat(o.total), 0);
+      res.json({ date: targetDate, revenue: revenue.toFixed(2), orderCount: dayOrders.length });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to calculate Qollao revenue" });
+    }
+  });
+
   // Admin Categories (protected versions)
   app.post("/api/admin/categories", requireAdmin, async (req, res) => {
     try {

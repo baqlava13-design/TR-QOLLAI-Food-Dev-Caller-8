@@ -28,7 +28,7 @@ Preferred communication style: Simple, everyday language.
 ### Data Storage
 - **Database**: PostgreSQL (connection via `DATABASE_URL` environment variable)
 - **Schema Location**: `shared/schema.ts` contains all table definitions
-- **Key Entities**: Categories, MenuItems, Orders, OrderItems, Customers, Reviews, UpsellOptions, SiteSettings
+- **Key Entities**: Categories, MenuItems, Orders, OrderItems, Customers, Reviews, UpsellOptions, SiteSettings, ProfitChannels, DailyChannelRevenues
 - **Migrations**: Managed via Drizzle Kit (`drizzle-kit push`)
 
 ### Key Design Patterns
@@ -146,6 +146,21 @@ All admin tables support CSV and Excel (.xlsx) export/import with Turkish column
   - GET `/api/customers/phone/:phone` (admin-protected) - Lookup customer by phone with order history
   - GET `/api/customers/search?q=` (admin-protected) - Search customers by name or phone
   - PATCH `/api/customers/:id` (admin-protected) - Update customer info
+
+### Channel Profit Analysis (Kanal Karı)
+- **Admin Tab**: "Kanal Karı" tab in admin panel for daily profit comparison across delivery channels
+- **Features**:
+  - Add/edit/delete delivery channels (own platform + competitors like Yemeksepeti, Getir, etc.)
+  - Per-channel settings: commission rate, courier type (own/external), courier cost per order, VAT rate
+  - Own platform (Qollao) revenue auto-calculated from orders table
+  - Manual daily revenue entry for competitor channels
+  - Date-based profit comparison table showing: revenue, orders, commission, courier cost, VAT, profit before/after VAT
+  - Total daily profit across all channels
+- **Database Tables**: `profit_channels`, `daily_channel_revenues`
+- **API Endpoints**:
+  - GET/POST/PATCH/DELETE `/api/admin/profit-channels` - Channel CRUD
+  - GET/POST/DELETE `/api/admin/daily-revenues` - Daily revenue data
+  - GET `/api/admin/qollao-daily-revenue?date=YYYY-MM-DD` - Auto-calculated own platform revenue
 
 ### Admin Authentication
 - Default credentials: admin/admin123

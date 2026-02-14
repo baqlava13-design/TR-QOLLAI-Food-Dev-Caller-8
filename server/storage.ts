@@ -33,6 +33,12 @@ import {
   neighborhoods,
   type Neighborhood,
   type InsertNeighborhood,
+  profitChannels,
+  dailyChannelRevenues,
+  type ProfitChannel,
+  type InsertProfitChannel,
+  type DailyChannelRevenue,
+  type InsertDailyChannelRevenue,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, gte, and, sql, lt } from "drizzle-orm";
@@ -135,6 +141,19 @@ export interface IStorage {
   createNeighborhood(neighborhood: InsertNeighborhood): Promise<Neighborhood>;
   updateNeighborhood(id: string, neighborhood: Partial<InsertNeighborhood>): Promise<Neighborhood | undefined>;
   deleteNeighborhood(id: string): Promise<boolean>;
+
+  // Profit Channels
+  getProfitChannels(): Promise<ProfitChannel[]>;
+  getProfitChannelById(id: string): Promise<ProfitChannel | undefined>;
+  createProfitChannel(channel: InsertProfitChannel): Promise<ProfitChannel>;
+  updateProfitChannel(id: string, channel: Partial<InsertProfitChannel>): Promise<ProfitChannel | undefined>;
+  deleteProfitChannel(id: string): Promise<boolean>;
+
+  // Daily Channel Revenues
+  getDailyRevenues(date: string): Promise<DailyChannelRevenue[]>;
+  getDailyRevenuesByRange(startDate: string, endDate: string): Promise<DailyChannelRevenue[]>;
+  upsertDailyRevenue(data: InsertDailyChannelRevenue): Promise<DailyChannelRevenue>;
+  deleteDailyRevenue(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -542,6 +561,66 @@ export class DatabaseStorage implements IStorage {
 
   async deleteNeighborhood(id: string): Promise<boolean> {
     await db.delete(neighborhoods).where(eq(neighborhoods.id, id));
+    return true;
+  }
+
+  // Profit Channels
+  async getProfitChannels(): Promise<ProfitChannel[]> {
+    return db.select().from(profitChannels).orderBy(profitChannels.sortOrder);
+  }
+
+  async getProfitChannelById(id: string): Promise<ProfitChannel | undefined> {
+    const [channel] = await db.select().from(profitChannels).where(eq(profitChannels.id, id));
+    return channel || undefined;
+  }
+
+  async createProfitChannel(channel: InsertProfitChannel): Promise<ProfitChannel> {
+    const [created] = await db.insert(profitChannels).values(channel).returning();
+    return created;
+  }
+
+  async updateProfitChannel(id: string, channel: Partial<InsertProfitChannel>): Promise<ProfitChannel | undefined> {
+    const [updated] = await db.update(profitChannels).set(channel).where(eq(profitChannels.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteProfitChannel(id: string): Promise<boolean> {
+    await db.delete(profitChannels).where(eq(profitChannels.id, id));
+    return true;
+  }
+
+  // Daily Channel Revenues
+  async getDailyRevenues(date: string): Promise<DailyChannelRevenue[]> {
+    return db.select().from(dailyChannelRevenues).where(eq(dailyChannelRevenues.date, date));
+  }
+
+  async getDailyRevenuesByRange(startDate: string, endDate: string): Promise<DailyChannelRevenue[]> {
+    return db.select().from(dailyChannelRevenues)
+      .where(and(
+        gte(dailyChannelRevenues.date, startDate),
+        lt(dailyChannelRevenues.date, endDate)
+      ));
+  }
+
+  async upsertDailyRevenue(data: InsertDailyChannelRevenue): Promise<DailyChannelRevenue> {
+    const existing = await db.select().from(dailyChannelRevenues)
+      .where(and(
+        eq(dailyChannelRevenues.channelId, data.channelId),
+        eq(dailyChannelRevenues.date, data.date)
+      ));
+    if (existing.length > 0) {
+      const [updated] = await db.update(dailyChannelRevenues)
+        .set({ revenue: data.revenue, orderCount: data.orderCount })
+        .where(eq(dailyChannelRevenues.id, existing[0].id))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(dailyChannelRevenues).values(data).returning();
+    return created;
+  }
+
+  async deleteDailyRevenue(id: string): Promise<boolean> {
+    await db.delete(dailyChannelRevenues).where(eq(dailyChannelRevenues.id, id));
     return true;
   }
 }

@@ -67,13 +67,15 @@ import {
   BellOff,
   Shield,
   UserCog,
+  BarChart3,
+  CalendarDays,
 } from "lucide-react";
 import { SiWhatsapp, SiFacebook, SiInstagram } from "react-icons/si";
 import { useTheme } from "@/lib/theme";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
-import type { Order, OrderItem, Category, MenuItem, Review, Customer, Neighborhood } from "@shared/schema";
+import type { Order, OrderItem, Category, MenuItem, Review, Customer, Neighborhood, ProfitChannel, DailyChannelRevenue } from "@shared/schema";
 
 let sharedAudioCtx: AudioContext | null = null;
 
@@ -3431,6 +3433,500 @@ function UsersTab() {
   );
 }
 
+function ChannelProfitTab() {
+  const { toast } = useToast();
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [showChannelForm, setShowChannelForm] = useState(false);
+  const [editingChannel, setEditingChannel] = useState<ProfitChannel | null>(null);
+  const [channelForm, setChannelForm] = useState({
+    name: "",
+    commissionRate: "0",
+    courierType: "own" as "own" | "external",
+    courierCostPerOrder: "0",
+    vatRate: "0",
+    isOwnPlatform: false,
+    isActive: true,
+  });
+
+  const { data: channels = [], isLoading: channelsLoading } = useQuery<ProfitChannel[]>({
+    queryKey: ["/api/admin/profit-channels"],
+  });
+
+  const { data: dailyRevenues = [], isLoading: revenuesLoading } = useQuery<DailyChannelRevenue[]>({
+    queryKey: ["/api/admin/daily-revenues", selectedDate],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/daily-revenues?date=${selectedDate}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+  });
+
+  const { data: qollaoAuto } = useQuery<{ revenue: string; orderCount: number }>({
+    queryKey: ["/api/admin/qollao-daily-revenue", selectedDate],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/qollao-daily-revenue?date=${selectedDate}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+  });
+
+  const createChannelMutation = useMutation({
+    mutationFn: async (data: typeof channelForm) => {
+      const res = await apiRequest("POST", "/api/admin/profit-channels", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/profit-channels"] });
+      setShowChannelForm(false);
+      resetChannelForm();
+      toast({ title: "Kanal eklendi" });
+    },
+  });
+
+  const updateChannelMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<typeof channelForm> }) => {
+      const res = await apiRequest("PATCH", `/api/admin/profit-channels/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/profit-channels"] });
+      setShowChannelForm(false);
+      setEditingChannel(null);
+      resetChannelForm();
+      toast({ title: "Kanal guncellendi" });
+    },
+  });
+
+  const deleteChannelMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/admin/profit-channels/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/profit-channels"] });
+      toast({ title: "Kanal silindi" });
+    },
+  });
+
+  const saveRevenueMutation = useMutation({
+    mutationFn: async (data: { channelId: string; date: string; revenue: string; orderCount: number }) => {
+      const res = await apiRequest("POST", "/api/admin/daily-revenues", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/daily-revenues", selectedDate] });
+      toast({ title: "Gelir kaydedildi" });
+    },
+  });
+
+  function resetChannelForm() {
+    setChannelForm({
+      name: "",
+      commissionRate: "0",
+      courierType: "own",
+      courierCostPerOrder: "0",
+      vatRate: "0",
+      isOwnPlatform: false,
+      isActive: true,
+    });
+  }
+
+  function openEditChannel(ch: ProfitChannel) {
+    setEditingChannel(ch);
+    setChannelForm({
+      name: ch.name,
+      commissionRate: ch.commissionRate || "0",
+      courierType: (ch.courierType as "own" | "external") || "own",
+      courierCostPerOrder: ch.courierCostPerOrder || "0",
+      vatRate: ch.vatRate || "0",
+      isOwnPlatform: ch.isOwnPlatform || false,
+      isActive: ch.isActive !== false,
+    });
+    setShowChannelForm(true);
+  }
+
+  function handleSaveChannel() {
+    if (!channelForm.name.trim()) {
+      toast({ title: "Kanal adi gerekli", variant: "destructive" });
+      return;
+    }
+    if (editingChannel) {
+      updateChannelMutation.mutate({ id: editingChannel.id, data: channelForm });
+    } else {
+      createChannelMutation.mutate(channelForm);
+    }
+  }
+
+  function getRevenueForChannel(channelId: string): { revenue: number; orderCount: number } {
+    const ownChannel = channels.find(c => c.id === channelId);
+    if (ownChannel?.isOwnPlatform && qollaoAuto) {
+      return { revenue: parseFloat(qollaoAuto.revenue), orderCount: qollaoAuto.orderCount };
+    }
+    const entry = dailyRevenues.find(r => r.channelId === channelId);
+    if (entry) {
+      return { revenue: parseFloat(entry.revenue), orderCount: entry.orderCount || 0 };
+    }
+    return { revenue: 0, orderCount: 0 };
+  }
+
+  function calculateProfit(channel: ProfitChannel, revenue: number, orderCount: number) {
+    const commissionRate = parseFloat(channel.commissionRate || "0") / 100;
+    const courierCost = parseFloat(channel.courierCostPerOrder || "0") * orderCount;
+    const vatRate = parseFloat(channel.vatRate || "0") / 100;
+
+    const commission = revenue * commissionRate;
+    const vat = revenue * vatRate;
+    const profitBeforeVat = revenue - commission - courierCost;
+    const profitAfterVat = profitBeforeVat - vat;
+
+    return {
+      commission,
+      courierCost,
+      vat,
+      profitBeforeVat,
+      profitAfterVat,
+    };
+  }
+
+  const fmt = (n: number) => n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const [revenueInputs, setRevenueInputs] = useState<Record<string, { revenue: string; orderCount: string }>>({});
+
+  useEffect(() => {
+    const inputs: Record<string, { revenue: string; orderCount: string }> = {};
+    channels.forEach(ch => {
+      if (!ch.isOwnPlatform) {
+        const entry = dailyRevenues.find(r => r.channelId === ch.id);
+        inputs[ch.id] = {
+          revenue: entry ? entry.revenue : "",
+          orderCount: entry ? String(entry.orderCount || 0) : "",
+        };
+      }
+    });
+    setRevenueInputs(inputs);
+  }, [channels, dailyRevenues]);
+
+  const activeChannels = channels.filter(c => c.isActive !== false);
+  const totalProfit = activeChannels.reduce((sum, ch) => {
+    const { revenue, orderCount } = getRevenueForChannel(ch.id);
+    const calc = calculateProfit(ch, revenue, orderCount);
+    return sum + calc.profitAfterVat;
+  }, 0);
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Kanal Kar Analizi
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+              <Input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-44"
+                data-testid="input-profit-date"
+              />
+            </div>
+            <Button
+              onClick={() => { resetChannelForm(); setEditingChannel(null); setShowChannelForm(true); }}
+              data-testid="button-add-channel"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Kanal Ekle
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Channel Form Dialog */}
+          <Dialog open={showChannelForm} onOpenChange={(open) => { if (!open) { setShowChannelForm(false); setEditingChannel(null); resetChannelForm(); } }}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{editingChannel ? "Kanal Duzenle" : "Yeni Kanal Ekle"}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Kanal Adi</Label>
+                  <Input
+                    value={channelForm.name}
+                    onChange={(e) => setChannelForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="ornegin: Yemeksepeti, Getir Yemek"
+                    data-testid="input-channel-name"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Komisyon Orani (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={channelForm.commissionRate}
+                      onChange={(e) => setChannelForm(f => ({ ...f, commissionRate: e.target.value }))}
+                      data-testid="input-commission-rate"
+                    />
+                  </div>
+                  <div>
+                    <Label>KDV Orani (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={channelForm.vatRate}
+                      onChange={(e) => setChannelForm(f => ({ ...f, vatRate: e.target.value }))}
+                      data-testid="input-vat-rate"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Kurye Tipi</Label>
+                    <Select value={channelForm.courierType} onValueChange={(v) => setChannelForm(f => ({ ...f, courierType: v as "own" | "external" }))}>
+                      <SelectTrigger data-testid="select-courier-type">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="own">Kendi Kurye</SelectItem>
+                        <SelectItem value="external">Dis Kurye</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Kurye Maliyeti (siparis basi)</Label>
+                    <Input
+                      type="number"
+                      step="0.5"
+                      value={channelForm.courierCostPerOrder}
+                      onChange={(e) => setChannelForm(f => ({ ...f, courierCostPerOrder: e.target.value }))}
+                      data-testid="input-courier-cost"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={channelForm.isOwnPlatform}
+                    onCheckedChange={(v) => setChannelForm(f => ({ ...f, isOwnPlatform: v }))}
+                    data-testid="switch-own-platform"
+                  />
+                  <Label>Kendi Platformumuz (Qollao) - Gelir otomatik hesaplanir</Label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={channelForm.isActive}
+                    onCheckedChange={(v) => setChannelForm(f => ({ ...f, isActive: v }))}
+                    data-testid="switch-channel-active"
+                  />
+                  <Label>Aktif</Label>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => { setShowChannelForm(false); setEditingChannel(null); resetChannelForm(); }} data-testid="button-cancel-channel">
+                    Iptal
+                  </Button>
+                  <Button
+                    onClick={handleSaveChannel}
+                    disabled={createChannelMutation.isPending || updateChannelMutation.isPending}
+                    data-testid="button-save-channel"
+                  >
+                    <Save className="h-4 w-4 mr-1" />
+                    Kaydet
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Channel Settings Overview */}
+          {channels.length > 0 && (
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-3">Kanal Ayarlari</h3>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {channels.map(ch => (
+                  <Card key={ch.id} className={`${ch.isActive === false ? "opacity-50" : ""}`}>
+                    <CardContent className="p-4 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium" data-testid={`text-channel-name-${ch.id}`}>{ch.name}</span>
+                          {ch.isOwnPlatform && <Badge variant="secondary">Kendi</Badge>}
+                          {ch.isActive === false && <Badge variant="outline">Pasif</Badge>}
+                        </div>
+                        <div className="flex gap-1">
+                          <Button size="icon" variant="ghost" onClick={() => openEditChannel(ch)} data-testid={`button-edit-channel-${ch.id}`}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => { if (confirm("Bu kanali silmek istediginize emin misiniz?")) deleteChannelMutation.mutate(ch.id); }} data-testid={`button-delete-channel-${ch.id}`}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <div className="flex justify-between">
+                          <span>Komisyon:</span>
+                          <span>%{ch.commissionRate}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Kurye:</span>
+                          <span>{ch.courierType === "own" ? "Kendi" : "Dis"} - {fmt(parseFloat(ch.courierCostPerOrder || "0"))} TL</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>KDV:</span>
+                          <span>%{ch.vatRate}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Revenue Entry for non-own-platform channels */}
+          {activeChannels.filter(c => !c.isOwnPlatform).length > 0 && (
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-3">Gunluk Gelir Girisi ({selectedDate})</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Kanal</TableHead>
+                    <TableHead>Gelir (TL)</TableHead>
+                    <TableHead>Siparis Sayisi</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {activeChannels.filter(c => !c.isOwnPlatform).map(ch => (
+                    <TableRow key={ch.id}>
+                      <TableCell className="font-medium">{ch.name}</TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          className="w-32"
+                          placeholder="0.00"
+                          value={revenueInputs[ch.id]?.revenue || ""}
+                          onChange={(e) => setRevenueInputs(prev => ({
+                            ...prev,
+                            [ch.id]: { ...prev[ch.id], revenue: e.target.value }
+                          }))}
+                          data-testid={`input-revenue-${ch.id}`}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          className="w-24"
+                          placeholder="0"
+                          value={revenueInputs[ch.id]?.orderCount || ""}
+                          onChange={(e) => setRevenueInputs(prev => ({
+                            ...prev,
+                            [ch.id]: { ...prev[ch.id], orderCount: e.target.value }
+                          }))}
+                          data-testid={`input-order-count-${ch.id}`}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            const input = revenueInputs[ch.id];
+                            if (!input?.revenue) return;
+                            saveRevenueMutation.mutate({
+                              channelId: ch.id,
+                              date: selectedDate,
+                              revenue: input.revenue,
+                              orderCount: parseInt(input.orderCount || "0"),
+                            });
+                          }}
+                          disabled={saveRevenueMutation.isPending}
+                          data-testid={`button-save-revenue-${ch.id}`}
+                        >
+                          <Save className="h-3.5 w-3.5 mr-1" />
+                          Kaydet
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {/* Profit Comparison Table */}
+          {activeChannels.length > 0 && (
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-3">Kar Karsilastirmasi ({selectedDate})</h3>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Kanal</TableHead>
+                      <TableHead className="text-right">Gelir (TL)</TableHead>
+                      <TableHead className="text-right">Siparis</TableHead>
+                      <TableHead className="text-right">Komisyon (TL)</TableHead>
+                      <TableHead className="text-right">Kurye (TL)</TableHead>
+                      <TableHead className="text-right">KDV (TL)</TableHead>
+                      <TableHead className="text-right">Kar (KDV Oncesi)</TableHead>
+                      <TableHead className="text-right">Kar (KDV Sonrasi)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {activeChannels.map(ch => {
+                      const { revenue, orderCount } = getRevenueForChannel(ch.id);
+                      const calc = calculateProfit(ch, revenue, orderCount);
+                      return (
+                        <TableRow key={ch.id} data-testid={`row-channel-profit-${ch.id}`}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              {ch.name}
+                              {ch.isOwnPlatform && <Badge variant="secondary">Kendi</Badge>}
+                              {ch.courierType === "external" && <Badge variant="outline">Dis Kurye</Badge>}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">{fmt(revenue)}</TableCell>
+                          <TableCell className="text-right">{orderCount}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">-{fmt(calc.commission)}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">-{fmt(calc.courierCost)}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">-{fmt(calc.vat)}</TableCell>
+                          <TableCell className="text-right font-medium">{fmt(calc.profitBeforeVat)}</TableCell>
+                          <TableCell className={`text-right font-bold ${calc.profitAfterVat >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                            {fmt(calc.profitAfterVat)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    <TableRow className="border-t-2">
+                      <TableCell className="font-bold" colSpan={7}>Toplam</TableCell>
+                      <TableCell className={`text-right font-bold ${totalProfit >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`} data-testid="text-total-profit">
+                        {fmt(totalProfit)} TL
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+
+          {channelsLoading && (
+            <div className="text-center py-8 text-muted-foreground">Yukleniyor...</div>
+          )}
+
+          {channels.length === 0 && !channelsLoading && (
+            <div className="text-center py-12 text-muted-foreground">
+              <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg mb-2">Henuz kanal eklenmedi</p>
+              <p className="text-sm mb-4">Kar analizine baslamak icin kanallarinizi ekleyin</p>
+              <Button onClick={() => { resetChannelForm(); setShowChannelForm(true); }} data-testid="button-add-first-channel">
+                <Plus className="h-4 w-4 mr-1" />
+                Ilk Kanali Ekle
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function Admin() {
   const { theme, toggleTheme } = useTheme();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -3543,7 +4039,7 @@ export default function Admin() {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-9">
+          <TabsList className="grid w-full grid-cols-10">
             <TabsTrigger value="orders" className="gap-2">
               <ShoppingBag className="h-4 w-4" />
               <span className="hidden sm:inline">Siparişler</span>
@@ -3575,6 +4071,10 @@ export default function Admin() {
             <TabsTrigger value="users" className="gap-2">
               <UserCog className="h-4 w-4" />
               <span className="hidden sm:inline">Kullanıcılar</span>
+            </TabsTrigger>
+            <TabsTrigger value="channel-profit" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Kanal Karı</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="gap-2">
               <Settings className="h-4 w-4" />
@@ -3612,6 +4112,10 @@ export default function Admin() {
 
           <TabsContent value="users">
             <UsersTab />
+          </TabsContent>
+
+          <TabsContent value="channel-profit">
+            <ChannelProfitTab />
           </TabsContent>
 
           <TabsContent value="settings">

@@ -267,6 +267,47 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
+// Courier type enum
+export const courierTypeEnum = pgEnum("courier_type", ["own", "external"]);
+
+// Profit Channels table
+export const profitChannels = pgTable("profit_channels", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  commissionRate: decimal("commission_rate", { precision: 5, scale: 2 }).notNull().default("0"),
+  courierType: courierTypeEnum("courier_type").default("own"),
+  courierCostPerOrder: decimal("courier_cost_per_order", { precision: 10, scale: 2 }).default("0"),
+  vatRate: decimal("vat_rate", { precision: 5, scale: 2 }).default("0"),
+  isOwnPlatform: boolean("is_own_platform").default(false),
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+});
+
+export const insertProfitChannelSchema = createInsertSchema(profitChannels).omit({ id: true });
+export type ProfitChannel = typeof profitChannels.$inferSelect;
+export type InsertProfitChannel = z.infer<typeof insertProfitChannelSchema>;
+
+// Daily Channel Revenues table
+export const dailyChannelRevenues = pgTable("daily_channel_revenues", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  channelId: varchar("channel_id").references(() => profitChannels.id, { onDelete: "cascade" }).notNull(),
+  date: text("date").notNull(),
+  revenue: decimal("revenue", { precision: 12, scale: 2 }).notNull().default("0"),
+  orderCount: integer("order_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const dailyChannelRevenuesRelations = relations(dailyChannelRevenues, ({ one }) => ({
+  channel: one(profitChannels, {
+    fields: [dailyChannelRevenues.channelId],
+    references: [profitChannels.id],
+  }),
+}));
+
+export const insertDailyChannelRevenueSchema = createInsertSchema(dailyChannelRevenues).omit({ id: true, createdAt: true });
+export type DailyChannelRevenue = typeof dailyChannelRevenues.$inferSelect;
+export type InsertDailyChannelRevenue = z.infer<typeof insertDailyChannelRevenueSchema>;
+
 // Cart item type for frontend
 export interface CartItem {
   menuItem: MenuItem;
