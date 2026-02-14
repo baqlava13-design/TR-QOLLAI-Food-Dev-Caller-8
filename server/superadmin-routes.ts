@@ -27,7 +27,12 @@ export function registerSuperadminRoutes(app: Express) {
       }
       req.session.superadminId = admin.id;
       req.session.superadminUsername = admin.username;
-      res.json({ id: admin.id, username: admin.username });
+      req.session.save((err) => {
+        if (err) {
+          return res.status(500).json({ error: "Session save failed" });
+        }
+        res.json({ id: admin.id, username: admin.username });
+      });
     } catch (error) {
       res.status(500).json({ error: "Login failed" });
     }
@@ -78,18 +83,22 @@ export function registerSuperadminRoutes(app: Express) {
       }
       const tenant = await storage.createTenant({ name, slug, ...rest });
 
-      // Create default admin user for the tenant
-      const hashedPassword = await bcrypt.hash("admin123", 10);
-      await storage.createAdminUser({
-        username: "admin",
-        password: hashedPassword,
-        role: "admin",
-        isActive: true,
-        tenantId: tenant.id,
-      });
+      try {
+        const hashedPassword = await bcrypt.hash("admin123", 10);
+        await storage.createAdminUser({
+          username: `admin_${slug}`,
+          password: hashedPassword,
+          role: "admin",
+          isActive: true,
+          tenantId: tenant.id,
+        });
+      } catch (adminError) {
+        console.error("Failed to create admin user for tenant:", adminError);
+      }
 
       res.status(201).json(tenant);
     } catch (error) {
+      console.error("Failed to create tenant:", error);
       res.status(500).json({ error: "Failed to create tenant" });
     }
   });
