@@ -52,11 +52,17 @@ import {
   TrendingUp,
   ShoppingBag,
   KeyRound,
+  Upload,
+  Image,
+  ExternalLink,
+  Rocket,
+  Utensils,
+  X,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Tenant } from "@shared/schema";
+import type { Tenant, PilotMenuItem } from "@shared/schema";
 import { PITCH_CHECKLIST_LABELS, DEFAULT_PITCH_CHECKLIST } from "@shared/schema";
 
 const PIPELINE_STAGES = [
@@ -502,7 +508,322 @@ function TenantDetail({ tenant, onBack, onUpdate }: { tenant: Tenant; onBack: ()
           </CardContent>
         </Card>
       </div>
+
+      {/* Pilot Website Configuration */}
+      <PilotConfig tenant={tenant} onUpdate={onUpdate} />
     </div>
+  );
+}
+
+function PilotConfig({ tenant, onUpdate }: { tenant: Tenant; onUpdate: () => void }) {
+  const { toast } = useToast();
+  const [logoUrl, setLogoUrl] = useState(tenant.logoUrl || "");
+  const [heroUrl, setHeroUrl] = useState((tenant.heroImages as string[])?.[0] || "");
+  const [items, setItems] = useState<PilotMenuItem[]>(
+    (tenant.pilotMenuItems as PilotMenuItem[]) || []
+  );
+  const [uploading, setUploading] = useState<string | null>(null);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const res = await superadminRequest("PATCH", `/api/superadmin/tenants/${tenant.id}/pilot`, {
+        logoUrl: logoUrl || null,
+        heroImages: heroUrl ? [heroUrl] : [],
+        pilotMenuItems: items,
+        demoReady: items.length > 0 && !!logoUrl,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/superadmin/tenants"] });
+      onUpdate();
+      toast({ title: "Pilot configuration saved" });
+    },
+    onError: () => {
+      toast({ title: "Failed to save", variant: "destructive" });
+    },
+  });
+
+  const activateMutation = useMutation({
+    mutationFn: async () => {
+      const validItems = items.filter(it => it.name.trim() && it.price.trim());
+      if (validItems.length === 0) throw new Error("At least one item with name and price is required");
+      await superadminRequest("PATCH", `/api/superadmin/tenants/${tenant.id}/pilot`, {
+        logoUrl: logoUrl || null,
+        heroImages: heroUrl ? [heroUrl] : [],
+        pilotMenuItems: validItems,
+        demoReady: true,
+      });
+      const res = await superadminRequest("POST", `/api/superadmin/tenants/${tenant.id}/activate`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/superadmin/tenants"] });
+      onUpdate();
+      toast({ title: "Tenant activated as Customer!" });
+    },
+    onError: (e: any) => {
+      toast({ title: e.message || "Failed to activate", variant: "destructive" });
+    },
+  });
+
+  const uploadFile = async (file: File, target: string) => {
+    setUploading(target);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const token = localStorage.getItem("superadminToken");
+      const res = await fetch("/api/uploads/local", {
+        method: "POST",
+        body: formData,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      const url = data.url || data.path;
+      return url;
+    } catch {
+      toast({ title: "Upload failed", variant: "destructive" });
+      return null;
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadFile(file, "logo");
+    if (url) setLogoUrl(url);
+  };
+
+  const handleHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadFile(file, "hero");
+    if (url) setHeroUrl(url);
+  };
+
+  const handleItemImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadFile(file, `item-${index}`);
+    if (url) {
+      setItems(prev => prev.map((item, i) => i === index ? { ...item, image: url } : item));
+    }
+  };
+
+  const addItem = () => {
+    if (items.length >= 6) {
+      toast({ title: "Maximum 6 items allowed", variant: "destructive" });
+      return;
+    }
+    setItems(prev => [...prev, { name: "", description: "", price: "0", image: "" }]);
+  };
+
+  const removeItem = (index: number) => {
+    setItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateItem = (index: number, field: keyof PilotMenuItem, value: string) => {
+    setItems(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
+  };
+
+  const pilotUrl = `/p/${tenant.slug}`;
+  const canActivate = items.length > 0 && tenant.status !== "customer";
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center justify-between gap-2 flex-wrap">
+          <span className="flex items-center gap-2">
+            <Utensils className="h-4 w-4" />
+            Pilot Website
+          </span>
+          <div className="flex items-center gap-2">
+            {tenant.demoReady && (
+              <Button variant="outline" asChild>
+                <a href={pilotUrl} target="_blank" rel="noopener noreferrer" data-testid="link-preview-pilot">
+                  <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                  Preview
+                </a>
+              </Button>
+            )}
+            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} data-testid="button-save-pilot">
+              <Save className="h-3.5 w-3.5 mr-1" />
+              {saveMutation.isPending ? "Saving..." : "Save Pilot"}
+            </Button>
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Logo & Hero */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1"><Image className="h-3.5 w-3.5" /> Logo URL</Label>
+            <div className="flex gap-2">
+              <Input
+                value={logoUrl}
+                onChange={(e) => setLogoUrl(e.target.value)}
+                placeholder="https://... or upload"
+                data-testid="input-pilot-logo"
+              />
+              <label>
+                <Button variant="outline" asChild className="cursor-pointer">
+                  <span>
+                    <Upload className="h-3.5 w-3.5" />
+                    <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                  </span>
+                </Button>
+              </label>
+            </div>
+            {logoUrl && (
+              <div className="h-16 w-16 rounded-md border overflow-hidden">
+                <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
+              </div>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1"><Image className="h-3.5 w-3.5" /> Hero Image</Label>
+            <div className="flex gap-2">
+              <Input
+                value={heroUrl}
+                onChange={(e) => setHeroUrl(e.target.value)}
+                placeholder="https://... or upload"
+                data-testid="input-pilot-hero"
+              />
+              <label>
+                <Button variant="outline" asChild className="cursor-pointer">
+                  <span>
+                    <Upload className="h-3.5 w-3.5" />
+                    <input type="file" accept="image/*" className="hidden" onChange={handleHeroUpload} />
+                  </span>
+                </Button>
+              </label>
+            </div>
+            {heroUrl && (
+              <div className="h-20 w-full rounded-md border overflow-hidden">
+                <img src={heroUrl} alt="Hero" className="w-full h-full object-cover" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Menu Items */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-4">
+            <Label className="text-sm font-semibold">Pilot Menu Items ({items.length}/6)</Label>
+            <Button variant="outline" onClick={addItem} disabled={items.length >= 6} data-testid="button-add-pilot-item">
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add Item
+            </Button>
+          </div>
+
+          {items.length === 0 && (
+            <div className="text-center py-6 text-muted-foreground text-sm border rounded-md">
+              No menu items yet. Add up to 6 items for the pilot page.
+            </div>
+          )}
+
+          {items.map((item, i) => (
+            <Card key={i}>
+              <CardContent className="p-3 space-y-2">
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 grid grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-xs">Name</Label>
+                      <Input
+                        value={item.name}
+                        onChange={(e) => updateItem(i, "name", e.target.value)}
+                        placeholder="Item name"
+                        data-testid={`input-pilot-item-name-${i}`}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Price (TL)</Label>
+                      <Input
+                        value={item.price}
+                        onChange={(e) => updateItem(i, "price", e.target.value)}
+                        placeholder="0.00"
+                        data-testid={`input-pilot-item-price-${i}`}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Image</Label>
+                      <div className="flex gap-1">
+                        <Input
+                          value={item.image}
+                          onChange={(e) => updateItem(i, "image", e.target.value)}
+                          placeholder="URL"
+                          data-testid={`input-pilot-item-image-${i}`}
+                        />
+                        <label>
+                          <Button variant="outline" size="icon" asChild className="cursor-pointer flex-shrink-0">
+                            <span>
+                              <Upload className="h-3 w-3" />
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleItemImageUpload(e, i)} />
+                            </span>
+                          </Button>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <Button size="icon" variant="ghost" onClick={() => removeItem(i)} data-testid={`button-remove-pilot-item-${i}`}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <div>
+                  <Label className="text-xs">Description</Label>
+                  <Input
+                    value={item.description}
+                    onChange={(e) => updateItem(i, "description", e.target.value)}
+                    placeholder="Brief description"
+                    data-testid={`input-pilot-item-desc-${i}`}
+                  />
+                </div>
+                {item.image && (
+                  <div className="h-16 w-24 rounded-md border overflow-hidden">
+                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Activate Tenant */}
+        {canActivate && (
+          <>
+            <Separator />
+            <div className="flex items-center justify-between gap-4 p-3 rounded-md border">
+              <div>
+                <p className="font-medium text-sm">Activate as Customer</p>
+                <p className="text-xs text-muted-foreground">Convert this lead to a full customer. Menu items will be seeded from pilot data.</p>
+              </div>
+              <Button
+                variant="default"
+                onClick={() => {
+                  if (confirm("Activate this tenant as a customer? This will seed the menu and change status to 'customer'.")) {
+                    activateMutation.mutate();
+                  }
+                }}
+                disabled={activateMutation.isPending}
+                data-testid="button-activate-tenant"
+              >
+                <Rocket className="h-4 w-4 mr-1" />
+                {activateMutation.isPending ? "Activating..." : "Activate"}
+              </Button>
+            </div>
+          </>
+        )}
+
+        {uploading && (
+          <p className="text-xs text-muted-foreground text-center">Uploading {uploading}...</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
