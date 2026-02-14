@@ -13,6 +13,13 @@ export const leadSourceEnum = pgEnum("lead_source", ["walk-in", "instagram", "re
 
 // ==================== MULTI-TENANT ====================
 
+export interface PilotMenuItem {
+  name: string;
+  description: string;
+  price: string;
+  image: string;
+}
+
 // Tenants table (doubles as CRM leads)
 export const tenants = pgTable("tenants", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -32,6 +39,7 @@ export const tenants = pgTable("tenants", {
   heroImages: jsonb("hero_images").$type<string[]>().default([]),
   menuSeeded: boolean("menu_seeded").default(false),
   pitchChecklist: jsonb("pitch_checklist").$type<Record<string, boolean>>().default({}),
+  pilotMenuItems: jsonb("pilot_menu_items").$type<PilotMenuItem[]>().default([]),
   monthlyFee: decimal("monthly_fee", { precision: 10, scale: 2 }),
   trialEndsAt: timestamp("trial_ends_at"),
   isActive: boolean("is_active").default(true),

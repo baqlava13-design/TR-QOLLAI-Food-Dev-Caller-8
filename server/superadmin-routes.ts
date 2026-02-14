@@ -197,4 +197,85 @@ export function registerSuperadminRoutes(app: Express) {
       res.status(500).json({ error: "Failed to fetch stats" });
     }
   });
+
+  // ==================== PILOT CONFIGURATION ====================
+
+  app.patch("/api/superadmin/tenants/:id/pilot", requireSuperadmin, async (req, res) => {
+    try {
+      const { logoUrl, heroImages, pilotMenuItems, demoReady } = req.body;
+      const updateData: any = {};
+      if (logoUrl !== undefined) updateData.logoUrl = logoUrl;
+      if (heroImages !== undefined) updateData.heroImages = heroImages;
+      if (pilotMenuItems !== undefined) updateData.pilotMenuItems = pilotMenuItems;
+      if (demoReady !== undefined) updateData.demoReady = demoReady;
+      const tenant = await storage.updateTenant(req.params.id, updateData);
+      if (!tenant) return res.status(404).json({ error: "Tenant not found" });
+      res.json(tenant);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update pilot data" });
+    }
+  });
+
+  // ==================== ACTIVATE TENANT ====================
+
+  app.post("/api/superadmin/tenants/:id/activate", requireSuperadmin, async (req, res) => {
+    try {
+      const tenant = await storage.getTenantById(req.params.id);
+      if (!tenant) return res.status(404).json({ error: "Tenant not found" });
+
+      const pilotItems = (tenant.pilotMenuItems || []) as any[];
+      if (pilotItems.length > 0 && !tenant.menuSeeded) {
+        const cat = await storage.createCategory({ name: "Menu", tenantId: tenant.id, isActive: true, sortOrder: 0 });
+        for (let i = 0; i < pilotItems.length; i++) {
+          const item = pilotItems[i];
+          await storage.createMenuItem({
+            tenantId: tenant.id,
+            name: item.name,
+            description: item.description || "",
+            price: item.price || "0",
+            image: item.image || "",
+            categoryId: cat.id,
+            isAvailable: true,
+            isPopular: false,
+            sortOrder: i,
+          });
+        }
+      }
+
+      const updated = await storage.updateTenant(tenant.id, {
+        status: "customer",
+        isActive: true,
+        menuSeeded: true,
+        demoReady: true,
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Failed to activate tenant:", error);
+      res.status(500).json({ error: "Failed to activate tenant" });
+    }
+  });
+
+  // ==================== PUBLIC PILOT PAGE (no auth) ====================
+
+  app.get("/api/pilot/:slug", async (req, res) => {
+    try {
+      const tenant = await storage.getTenantBySlug(req.params.slug);
+      if (!tenant || !tenant.demoReady) {
+        return res.status(404).json({ error: "Pilot page not found" });
+      }
+      res.json({
+        name: tenant.name,
+        slug: tenant.slug,
+        logoUrl: tenant.logoUrl,
+        heroImages: tenant.heroImages,
+        pilotMenuItems: tenant.pilotMenuItems || [],
+        contactPhone: tenant.contactPhone,
+        city: tenant.city,
+        address: tenant.address,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to load pilot page" });
+    }
+  });
 }
