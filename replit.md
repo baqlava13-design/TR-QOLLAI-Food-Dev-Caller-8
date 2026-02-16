@@ -59,17 +59,28 @@ Preferred communication style: Simple, everyday language.
 - Cart contents, customer info, and delivery details included in message
 - Customer confirmation link generation for follow-up messaging
 
+### Configuration
+- All server environment variables are centralized in `server/config.ts`
+- `.env.example` provides a full template for Railway/production deployment
+
 ### Environment Variables
 - `DATABASE_URL`: PostgreSQL connection string (required)
 - `SESSION_SECRET`: Session encryption key (required in production)
+- `SESSION_NAME`: Session cookie name (default: `qollai.sid`)
+- `APP_ORIGIN`: Full origin URL for CORS/cookie scoping (e.g., `https://qollai.com`)
+- `TRUST_PROXY`: Number of proxy hops to trust (default: 1)
+- `COOKIE_DOMAIN`: Cookie domain for cross-subdomain sharing (optional)
 - `VITE_WHATSAPP_PHONE`: WhatsApp business number for order integration (optional, has default)
+- `S3_PROVIDER`: S3 provider hint — `aws`, `r2`, or `minio` (default: `aws`; `minio` auto-enables path style)
 - `S3_ENDPOINT`: S3-compatible endpoint URL (e.g., https://s3.amazonaws.com, https://<account>.r2.cloudflarestorage.com)
 - `S3_REGION`: S3 region (default: "auto")
 - `S3_BUCKET`: S3 bucket name
 - `S3_ACCESS_KEY_ID`: S3 access key
 - `S3_SECRET_ACCESS_KEY`: S3 secret key
-- `S3_PUBLIC_URL`: Public base URL for serving uploaded files (optional)
+- `S3_PUBLIC_BASE_URL`: Public base URL for serving uploaded files (optional; backward-compatible with `S3_PUBLIC_URL`)
 - `S3_FORCE_PATH_STYLE`: Set to "true" for MinIO or path-style S3 endpoints (optional)
+- `UPLOAD_MAX_MB`: Maximum upload file size in megabytes (default: 10)
+- `LOG_LEVEL`: Logging level — `debug`, `info`, `warn`, `error` (default: `info`)
 
 ### Portability & Stateless Architecture
 - **Database**: PostgreSQL with Drizzle ORM - fully portable, no vendor lock-in
