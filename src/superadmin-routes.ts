@@ -124,10 +124,31 @@ export function registerSuperadminRoutes(app: Express) {
 
   app.patch("/api/superadmin/tenants/:id", requireSuperadmin, async (req, res) => {
     try {
-      const tenant = await storage.updateTenant(req.params.id, req.body);
+      const data = { ...req.body };
+      if (data.nextFollowupAt === "" || data.nextFollowupAt === null) {
+        data.nextFollowupAt = null;
+      } else if (data.nextFollowupAt) {
+        data.nextFollowupAt = new Date(data.nextFollowupAt);
+      }
+      if (data.trialEndsAt === "" || data.trialEndsAt === null) {
+        data.trialEndsAt = null;
+      } else if (data.trialEndsAt) {
+        data.trialEndsAt = new Date(data.trialEndsAt);
+      }
+      if (data.monthlyFee === "" || data.monthlyFee === null) {
+        data.monthlyFee = null;
+      }
+      if (data.address === "") data.address = null;
+      if (data.notes === "") data.notes = null;
+      if (data.customDomain === "") data.customDomain = null;
+      if (data.contactName === "") data.contactName = null;
+      if (data.contactPhone === "") data.contactPhone = null;
+      if (data.contactEmail === "") data.contactEmail = null;
+      const tenant = await storage.updateTenant(req.params.id, data);
       if (!tenant) return res.status(404).json({ error: "Tenant not found" });
       res.json(tenant);
     } catch (error) {
+      console.error("Failed to update tenant:", error);
       res.status(500).json({ error: "Failed to update tenant" });
     }
   });
