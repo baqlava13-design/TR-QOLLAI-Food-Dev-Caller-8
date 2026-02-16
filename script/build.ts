@@ -7,6 +7,7 @@ import { rm, readFile } from "fs/promises";
 const allowlist = [
   "@google/generative-ai",
   "axios",
+  "compression",
   "connect-pg-simple",
   "cors",
   "date-fns",
@@ -14,6 +15,7 @@ const allowlist = [
   "drizzle-zod",
   "express",
   "express-rate-limit",
+  "helmet",
   "express-session",
   "jsonwebtoken",
   "memorystore",
@@ -47,7 +49,7 @@ async function buildAll() {
   const externals = allDeps.filter((dep) => !allowlist.includes(dep));
 
   await esbuild({
-    entryPoints: ["server/index.ts"],
+    entryPoints: ["src/server.ts"],
     platform: "node",
     bundle: true,
     format: "cjs",
@@ -56,7 +58,7 @@ async function buildAll() {
       "process.env.NODE_ENV": '"production"',
     },
     minify: true,
-    external: externals,
+    external: [...externals, "vite", "../vite.config"],
     logLevel: "info",
   });
 }
