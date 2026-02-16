@@ -41,7 +41,7 @@ app.use(
     saveUninitialized: false,
     store: new PgSession({
       pool,
-      tableName: "session",
+      tableName: "user_sessions",
       createTableIfMissing: true,
     }),
     cookie: {
