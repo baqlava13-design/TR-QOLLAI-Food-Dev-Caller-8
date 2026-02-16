@@ -1,19 +1,18 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "target": "ES2022",
     "outDir": "dist",
     "rootDir": ".",
+    "module": "CommonJS",
+    "target": "ES2020",
+    "moduleResolution": "Node",
     "esModuleInterop": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "declaration": false,
     "sourceMap": true,
-    "resolveJsonModule": true,
-    "lib": ["ES2022"],
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "declaration": false,
     "types": ["node"]
   },
-  "include": ["server.ts", "server/**/*.ts", "shared/**/*.ts"],
-  "exclude": ["node_modules", "server/vite.ts", "vite.config.ts"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/vite.ts"]
 }

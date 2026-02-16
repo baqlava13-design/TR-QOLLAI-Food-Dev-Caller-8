@@ -48,9 +48,9 @@ Preferred communication style: Simple, everyday language.
 - **Migrations**: Managed via Drizzle Kit (`drizzle-kit push`)
 
 ### Key Design Patterns
-- **Monorepo Structure**: Client code in `client/`, server in `server/`, shared types in `shared/`
+- **Monorepo Structure**: Client code in `client/`, server in `src/`, shared types in `shared/`
 - **Path Aliases**: `@/` maps to client source, `@shared/` maps to shared code
-- **Storage Layer**: Abstract `IStorage` interface in `server/storage.ts` for database operations
+- **Storage Layer**: Abstract `IStorage` interface in `src/storage.ts` for database operations
 - **Component Organization**: Feature components at `client/src/components/`, UI primitives in `client/src/components/ui/`
 
 ### WhatsApp Integration
@@ -60,7 +60,7 @@ Preferred communication style: Simple, everyday language.
 - Customer confirmation link generation for follow-up messaging
 
 ### Configuration
-- All server environment variables are centralized in `server/config.ts`
+- All server environment variables are centralized in `src/config.ts`
 - `.env.example` provides a full template for Railway/production deployment
 
 ### Environment Variables
@@ -92,7 +92,7 @@ Preferred communication style: Simple, everyday language.
 ### Portability & Stateless Architecture
 - **Database**: PostgreSQL with Drizzle ORM - fully portable, no vendor lock-in
 - **Sessions**: Stored in PostgreSQL via connect-pg-simple - stateless server
-- **File Uploads**: Dual-mode storage via `server/s3-storage.ts`:
+- **File Uploads**: Dual-mode storage via `src/s3-storage.ts`:
   - When S3 env vars are set: uploads go to S3-compatible storage (AWS S3, Cloudflare R2, MinIO, etc.)
   - When S3 not configured: falls back to local disk storage (`public/uploads/`)
   - Upload endpoint `/api/uploads/local` handles both modes transparently
@@ -100,9 +100,10 @@ Preferred communication style: Simple, everyday language.
 - **Secure Cookies**: Automatically enabled in production mode
 
 ### Build & Deployment
-- Development: `npm run dev` runs Vite dev server with Express backend
-- Production: `npm run build` creates optimized bundle, `npm start` serves static files
-- Build script in `script/build.ts` bundles server with esbuild, client with Vite
+- Development: `npm run dev` runs Vite dev server with Express backend via `tsx`
+- Production: `npm run build` compiles client with Vite and server with `tsc`, `npm start` serves from `dist/`
+- Server compiled to CJS via `tsconfig.server.json` (extends base tsconfig)
+- Server entry: `src/server.ts` → compiled to `dist/src/server.js`
 - Portable to Railway, Render, Fly.io, or any Node.js hosting with PostgreSQL
 
 ## External Dependencies
