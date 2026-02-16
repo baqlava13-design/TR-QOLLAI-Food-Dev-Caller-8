@@ -1,0 +1,101 @@
+import express from "express";
+import path from "path";
+import helmet from "helmet";
+import compression from "compression";
+import session from "express-session";
+import pg from "pg";
+import connectPgSimple from "connect-pg-simple";
+// import cors from "cors"; // only if needed later
+
+const PgSession = connectPgSimple(session);
+const { Pool } = pg;
+
+const app = express();
+
+// ----- Config helpers -----
+const isProd = process.env.NODE_ENV === "production";
+const PORT = Number(process.env.PORT || 3000);
+const TRUST_PROXY = process.env.TRUST_PROXY === "1";
+
+if (TRUST_PROXY) app.set("trust proxy", 1);
+
+// ----- Security & perf -----
+app.use(helmet({
+  // If you serve React from same server, keep CSP off unless you configure it carefully.
+  contentSecurityPolicy: false
+}));
+app.use(compression());
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true }));
+
+// ----- DB Pool (for session store + readiness checks) -----
+if (!process.env.DATABASE_URL) throw new Error("Missing DATABASE_URL");
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL.includes("sslmode=require") ? { rejectUnauthorized: false } : undefined
+});
+
+// ----- Sessions (Postgres store) -----
+if (!process.env.SESSION_SECRET) throw new Error("Missing SESSION_SECRET");
+
+app.use(session({
+  name: process.env.SESSION_NAME || "qollai.sid",
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  store: new PgSession({
+    pool,
+    tableName: "session",
+    createTableIfMissing: true
+  }),
+  cookie: {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: isProd,              // requires trust proxy when behind HTTPS proxy
+    maxAge: 1000 * 60 * 60 * 24 * 14, // 14 days
+    domain: process.env.COOKIE_DOMAIN || undefined
+  }
+}));
+
+// ----- Health endpoints -----
+app.get("/health", (_req, res) => res.status(200).json({ ok: true }));
+
+app.get("/ready", async (_req, res) => {
+  try {
+    const r = await pool.query("select 1 as ok");
+    res.status(200).json({ ok: true, db: r.rows?.[0]?.ok === 1 });
+  } catch (e: any) {
+    res.status(503).json({ ok: false, db: false, error: e?.message ?? "db_error" });
+  }
+});
+
+// ----- Your API routes -----
+// app.use("/api", apiRouter);
+
+// ----- Serve Vite build (single-server setup) -----
+// Adjust this path to your actual Vite output folder.
+// Common: client/dist or dist/client
+const staticDir = path.resolve(process.cwd(), "dist/client");
+app.use(express.static(staticDir, { maxAge: isProd ? "7d" : 0 }));
+
+// SPA fallback (must be AFTER API routes)
+app.get("*", (req, res, next) => {
+  // don’t hijack API
+  if (req.path.startsWith("/api")) return next();
+  res.sendFile(path.join(staticDir, "index.html"));
+});
+
+// ----- Crash-safe process handlers -----
+process.on("unhandledRejection", (err) => {
+  console.error("UnhandledRejection:", err);
+});
+process.on("uncaughtException", (err) => {
+  console.error("UncaughtException:", err);
+  // In prod, consider exiting so platform restarts cleanly:
+  // process.exit(1);
+});
+
+// ----- Start -----
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`[QOLLAI] listening on port ${PORT} (prod=${isProd})`);
+});
