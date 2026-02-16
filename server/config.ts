@@ -3,7 +3,7 @@ const env = process.env;
 export const config = {
   nodeEnv: env.NODE_ENV || "development",
   isProduction: env.NODE_ENV === "production",
-  port: parseInt(env.PORT || "5000", 10),
+  port: parseInt(env.PORT || "3000", 10),
   appOrigin: env.APP_ORIGIN || "",
 
   database: {
@@ -11,15 +11,16 @@ export const config = {
   },
 
   session: {
-    secret: env.SESSION_SECRET || "siparis-kolay-secret-key-2024",
+    secret: env.SESSION_SECRET || "",
     name: env.SESSION_NAME || "qollai.sid",
   },
 
   cookie: {
     domain: env.COOKIE_DOMAIN || undefined,
+    maxAge: 1000 * 60 * 60 * 24 * 14,
   },
 
-  trustProxy: env.TRUST_PROXY ? parseInt(env.TRUST_PROXY, 10) || 1 : 1,
+  trustProxy: env.TRUST_PROXY === "1",
 
   s3: {
     provider: (env.S3_PROVIDER || "aws") as "aws" | "r2" | "minio",

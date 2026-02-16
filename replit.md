@@ -68,7 +68,7 @@ Preferred communication style: Simple, everyday language.
 - `SESSION_SECRET`: Session encryption key (required in production)
 - `SESSION_NAME`: Session cookie name (default: `qollai.sid`)
 - `APP_ORIGIN`: Full origin URL for CORS/cookie scoping (e.g., `https://qollai.com`)
-- `TRUST_PROXY`: Number of proxy hops to trust (default: 1)
+- `TRUST_PROXY`: Set to `1` to enable trust proxy for reverse proxy setups (default: off)
 - `COOKIE_DOMAIN`: Cookie domain for cross-subdomain sharing (optional)
 - `VITE_WHATSAPP_PHONE`: WhatsApp business number for order integration (optional, has default)
 - `S3_PROVIDER`: S3 provider hint — `aws`, `r2`, or `minio` (default: `aws`; `minio` auto-enables path style)
@@ -81,6 +81,13 @@ Preferred communication style: Simple, everyday language.
 - `S3_FORCE_PATH_STYLE`: Set to "true" for MinIO or path-style S3 endpoints (optional)
 - `UPLOAD_MAX_MB`: Maximum upload file size in megabytes (default: 10)
 - `LOG_LEVEL`: Logging level — `debug`, `info`, `warn`, `error` (default: `info`)
+
+### Production Middleware
+- **Helmet**: HTTP security headers (CSP disabled for SPA compatibility)
+- **Compression**: gzip/brotli response compression
+- **Health endpoints**: `GET /health` (liveness), `GET /ready` (DB readiness check)
+- **Static caching**: 7-day max-age for production static assets
+- **Process handlers**: Crash-safe `unhandledRejection` and `uncaughtException` logging
 
 ### Portability & Stateless Architecture
 - **Database**: PostgreSQL with Drizzle ORM - fully portable, no vendor lock-in
