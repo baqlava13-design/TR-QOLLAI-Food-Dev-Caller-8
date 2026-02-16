@@ -29,7 +29,8 @@ import {
   deleteObject,
 } from "./s3-storage";
 
-const upload = multer({ storage: multer.memoryStorage() });
+const UPLOAD_MAX_MB = parseInt(process.env.UPLOAD_MAX_MB || "10", 10);
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: UPLOAD_MAX_MB * 1024 * 1024 } });
 
 ensureLocalUploadsDir();
 

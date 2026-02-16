@@ -4,17 +4,10 @@ import { randomUUID } from "crypto";
 import path from "path";
 import fs from "fs";
 import type { Request, Response } from "express";
-
-const S3_ENDPOINT = process.env.S3_ENDPOINT;
-const S3_REGION = process.env.S3_REGION || "auto";
-const S3_BUCKET = process.env.S3_BUCKET;
-const S3_ACCESS_KEY_ID = process.env.S3_ACCESS_KEY_ID;
-const S3_SECRET_ACCESS_KEY = process.env.S3_SECRET_ACCESS_KEY;
-const S3_PUBLIC_URL = process.env.S3_PUBLIC_URL;
-const S3_FORCE_PATH_STYLE = process.env.S3_FORCE_PATH_STYLE === "true";
+import { config, isS3Configured as checkS3 } from "./config";
 
 export function isS3Configured(): boolean {
-  return !!(S3_ENDPOINT && S3_BUCKET && S3_ACCESS_KEY_ID && S3_SECRET_ACCESS_KEY);
+  return checkS3();
 }
 
 let s3Client: S3Client | null = null;
@@ -22,13 +15,13 @@ let s3Client: S3Client | null = null;
 function getS3Client(): S3Client {
   if (!s3Client) {
     s3Client = new S3Client({
-      endpoint: S3_ENDPOINT,
-      region: S3_REGION,
+      endpoint: config.s3.endpoint,
+      region: config.s3.region,
       credentials: {
-        accessKeyId: S3_ACCESS_KEY_ID!,
-        secretAccessKey: S3_SECRET_ACCESS_KEY!,
+        accessKeyId: config.s3.accessKeyId,
+        secretAccessKey: config.s3.secretAccessKey,
       },
-      forcePathStyle: S3_FORCE_PATH_STYLE,
+      forcePathStyle: config.s3.forcePathStyle,
     });
   }
   return s3Client;
@@ -41,26 +34,26 @@ function generateObjectKey(originalName: string): string {
 }
 
 export function getPublicUrl(objectKey: string): string {
-  if (S3_PUBLIC_URL) {
-    return `${S3_PUBLIC_URL.replace(/\/$/, "")}/${objectKey}`;
+  if (config.s3.publicBaseUrl) {
+    return `${config.s3.publicBaseUrl.replace(/\/$/, "")}/${objectKey}`;
   }
-  const endpoint = S3_ENDPOINT?.replace(/\/$/, "") || "";
-  if (S3_FORCE_PATH_STYLE) {
-    return `${endpoint}/${S3_BUCKET}/${objectKey}`;
+  const endpoint = config.s3.endpoint.replace(/\/$/, "");
+  if (config.s3.forcePathStyle) {
+    return `${endpoint}/${config.s3.bucket}/${objectKey}`;
   }
   try {
     const url = new URL(endpoint);
-    url.hostname = `${S3_BUCKET}.${url.hostname}`;
+    url.hostname = `${config.s3.bucket}.${url.hostname}`;
     return `${url.origin}/${objectKey}`;
   } catch {
-    return `${endpoint}/${S3_BUCKET}/${objectKey}`;
+    return `${endpoint}/${config.s3.bucket}/${objectKey}`;
   }
 }
 
 export function extractObjectKeyFromUrl(url: string): string | null {
   if (!url || url.startsWith("/uploads/")) return null;
-  if (S3_PUBLIC_URL) {
-    const base = S3_PUBLIC_URL.replace(/\/$/, "") + "/";
+  if (config.s3.publicBaseUrl) {
+    const base = config.s3.publicBaseUrl.replace(/\/$/, "") + "/";
     if (url.startsWith(base)) return url.slice(base.length);
   }
   const match = url.match(/uploads\/[^?#]+/);
@@ -75,7 +68,7 @@ export async function getPresignedUploadUrl(
   const objectKey = generateObjectKey(fileName);
 
   const command = new PutObjectCommand({
-    Bucket: S3_BUCKET!,
+    Bucket: config.s3.bucket,
     Key: objectKey,
     ContentType: contentType,
   });
@@ -99,7 +92,7 @@ export async function uploadBuffer(
 
   await client.send(
     new PutObjectCommand({
-      Bucket: S3_BUCKET!,
+      Bucket: config.s3.bucket,
       Key: objectKey,
       Body: buffer,
       ContentType: contentType,
@@ -117,7 +110,7 @@ export async function deleteObject(objectKey: string): Promise<boolean> {
     const client = getS3Client();
     await client.send(
       new DeleteObjectCommand({
-        Bucket: S3_BUCKET!,
+        Bucket: config.s3.bucket,
         Key: objectKey,
       })
     );
@@ -131,7 +124,7 @@ export async function deleteObject(objectKey: string): Promise<boolean> {
 export async function getPresignedReadUrl(objectKey: string): Promise<string> {
   const client = getS3Client();
   const command = new GetObjectCommand({
-    Bucket: S3_BUCKET!,
+    Bucket: config.s3.bucket,
     Key: objectKey,
   });
   return getSignedUrl(client, command, { expiresIn: 3600 });
@@ -141,7 +134,7 @@ export async function proxyS3Object(objectKey: string, res: Response): Promise<v
   try {
     const client = getS3Client();
     const command = new GetObjectCommand({
-      Bucket: S3_BUCKET!,
+      Bucket: config.s3.bucket,
       Key: objectKey,
     });
     const result = await client.send(command);
