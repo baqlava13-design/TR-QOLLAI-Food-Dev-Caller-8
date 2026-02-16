@@ -135,11 +135,10 @@ app.get("/ready", async (_req, res) => {
     throw err;
   });
 
-  if (config.isProduction) {
+  if (process.env.NODE_ENV === "production") {
     serveStatic(app);
   } else {
-    const viteMod = "./vite";
-    const { setupVite } = await import(viteMod);
+    const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
   }
 
