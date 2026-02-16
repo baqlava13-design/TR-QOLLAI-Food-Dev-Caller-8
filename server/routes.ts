@@ -10,7 +10,7 @@ import {
   insertReviewSchema,
   insertCrossSellProductSchema,
   insertNeighborhoodSchema,
-} from "@shared/schema";
+} from "../shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import * as XLSX from "xlsx";

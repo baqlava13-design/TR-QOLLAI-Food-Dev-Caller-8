@@ -118,7 +118,8 @@ app.use((req, res, next) => {
   if (config.isProduction) {
     serveStatic(app);
   } else {
-    const { setupVite } = await import("./vite");
+    const viteMod = "./vite";
+    const { setupVite } = await import(viteMod);
     await setupVite(httpServer, app);
   }
 

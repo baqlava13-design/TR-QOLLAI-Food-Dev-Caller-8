@@ -259,7 +259,7 @@ export class ObjectStorageService {
 
   // Check if a path is a local object storage path
   isLocalObjectPath(path: string): boolean {
-    return path && path.startsWith("/objects/");
+    return !!(path && path.startsWith("/objects/"));
   }
 }
 
@@ -318,7 +318,7 @@ async function signObjectURL({
     );
   }
 
-  const { signed_url: signedURL } = await response.json();
-  return signedURL;
+  const data = (await response.json()) as { signed_url: string };
+  return data.signed_url;
 }
 

@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { categories, menuItems, reviews, customers, orders, orderItems, adminUsers, tenants, superadminUsers } from "@shared/schema";
+import { categories, menuItems, reviews, customers, orders, orderItems, adminUsers, tenants, superadminUsers } from "../shared/schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 
