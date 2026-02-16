@@ -246,6 +246,26 @@ function TenantDetail({ tenant, onBack, onUpdate }: { tenant: Tenant; onBack: ()
     nextFollowupAt: tenant.nextFollowupAt ? new Date(tenant.nextFollowupAt).toISOString().split("T")[0] : "",
   });
 
+  useEffect(() => {
+    setForm({
+      name: tenant.name,
+      slug: tenant.slug,
+      contactName: tenant.contactName || "",
+      contactPhone: tenant.contactPhone || "",
+      contactEmail: tenant.contactEmail || "",
+      city: tenant.city || "",
+      address: tenant.address || "",
+      customDomain: tenant.customDomain || "",
+      status: tenant.status || "lead",
+      source: tenant.source || "other",
+      notes: tenant.notes || "",
+      monthlyFee: tenant.monthlyFee || "",
+      demoReady: tenant.demoReady || false,
+      menuSeeded: tenant.menuSeeded || false,
+      nextFollowupAt: tenant.nextFollowupAt ? new Date(tenant.nextFollowupAt).toISOString().split("T")[0] : "",
+    });
+  }, [tenant]);
+
   const checklist = (tenant.pitchChecklist || DEFAULT_PITCH_CHECKLIST) as Record<string, boolean>;
 
   const { data: stats } = useQuery<{ todayOrders: number; todayRevenue: number; totalCustomers: number }>({
