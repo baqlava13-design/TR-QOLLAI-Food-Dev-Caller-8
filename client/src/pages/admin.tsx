@@ -2748,9 +2748,112 @@ interface CustomerWithStats extends Customer {
   lastOrderDate: Date | null;
 }
 
+interface OrderWithItems extends Order {
+  items: OrderItem[];
+}
+
+const ORDER_STATUS_LABELS: Record<string, string> = {
+  pending: "Bekliyor",
+  confirmed: "Onaylandı",
+  preparing: "Hazırlanıyor",
+  ready: "Hazır",
+  delivered: "Teslim Edildi",
+  cancelled: "İptal",
+};
+
+const ORDER_STATUS_COLORS: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  confirmed: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  preparing: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+  ready: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+  delivered: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  cancelled: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+};
+
+function CustomerOrdersDialog({ customer, onClose }: { customer: CustomerWithStats | null; onClose: () => void }) {
+  const { data: orders = [], isLoading } = useQuery<OrderWithItems[]>({
+    queryKey: ["/api/admin/customers", customer?.id, "orders"],
+    enabled: !!customer,
+  });
+
+  const totalSpent = orders.reduce((sum, o) => sum + parseFloat(o.total || "0"), 0);
+
+  return (
+    <Dialog open={!!customer} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShoppingBag className="h-5 w-5" />
+            {customer?.name} — Sipariş Geçmişi
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground">{customer?.phone}</p>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="py-8 text-center text-muted-foreground">Yükleniyor...</div>
+        ) : orders.length === 0 ? (
+          <div className="py-8 text-center text-muted-foreground">Bu müşteriye ait sipariş bulunamadı.</div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex gap-4 p-3 bg-muted rounded-lg text-sm">
+              <span><strong>{orders.length}</strong> sipariş</span>
+              <span>•</span>
+              <span>Toplam: <strong>₺{totalSpent.toFixed(2)}</strong></span>
+              <span>•</span>
+              <span>Ortalama: <strong>₺{(totalSpent / orders.length).toFixed(2)}</strong></span>
+            </div>
+
+            {orders.map((order) => (
+              <div key={order.id} className="border rounded-lg overflow-hidden" data-testid={`order-card-${order.id}`}>
+                <div className="flex items-center justify-between px-4 py-3 bg-muted/40">
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-xs text-muted-foreground">#{order.id.slice(-6).toUpperCase()}</span>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${ORDER_STATUS_COLORS[order.status || "pending"]}`}>
+                      {ORDER_STATUS_LABELS[order.status || "pending"]}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {order.deliveryType === "delivery" ? "Eve Teslim" : "Gel Al"}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {order.paymentMethod === "cash" ? "Nakit" : "POS"}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-sm">₺{parseFloat(order.total || "0").toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString("tr-TR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-"}
+                    </p>
+                  </div>
+                </div>
+                <div className="divide-y">
+                  {order.items.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between px-4 py-2 text-sm">
+                      <span className="flex items-center gap-2">
+                        <span className="text-muted-foreground w-5 text-center">{item.quantity}×</span>
+                        <span>{item.menuItemName}</span>
+                      </span>
+                      <span className="font-medium">₺{parseFloat(item.totalPrice || "0").toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+                {order.notes && (
+                  <div className="px-4 py-2 text-xs text-muted-foreground border-t bg-muted/20 italic">
+                    Not: {order.notes}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function CustomersTab() {
   const { toast } = useToast();
   const [editingCustomer, setEditingCustomer] = useState<CustomerWithStats | null>(null);
+  const [viewingCustomer, setViewingCustomer] = useState<CustomerWithStats | null>(null);
   const [editForm, setEditForm] = useState({
     name: "",
     phone: "",
@@ -2977,6 +3080,15 @@ function CustomersTab() {
                         <Button
                           size="icon"
                           variant="ghost"
+                          onClick={() => setViewingCustomer(customer)}
+                          title="Siparişleri Gör"
+                          data-testid={`button-orders-customer-${customer.id}`}
+                        >
+                          <ShoppingBag className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
                           onClick={() => handleEdit(customer)}
                           data-testid={`button-edit-customer-${customer.id}`}
                         >
@@ -3007,6 +3119,8 @@ function CustomersTab() {
           </div>
         </CardContent>
       </Card>
+
+      <CustomerOrdersDialog customer={viewingCustomer} onClose={() => setViewingCustomer(null)} />
 
       <Dialog open={!!editingCustomer} onOpenChange={(open) => !open && setEditingCustomer(null)}>
         <DialogContent className="max-w-lg">

@@ -311,6 +311,21 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/customers/:id/orders", requireAdmin, async (req, res) => {
+    try {
+      const customerOrders = await storage.getOrdersByCustomer(req.params.id, getTenantId(req));
+      const ordersWithItems = await Promise.all(
+        customerOrders.map(async (order) => {
+          const items = await storage.getOrderItems(order.id);
+          return { ...order, items };
+        })
+      );
+      res.json(ordersWithItems);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch customer orders" });
+    }
+  });
+
   app.patch("/api/admin/customers/:id", requireAdmin, async (req, res) => {
     try {
       const partialSchema = insertCustomerSchema.partial();
