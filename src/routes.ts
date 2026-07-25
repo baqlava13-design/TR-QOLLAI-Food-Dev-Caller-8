@@ -232,7 +232,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/customers", async (req, res) => {
+  app.post("/api/customers", requireAdmin, async (req, res) => {
     try {
       const data = insertCustomerSchema.parse(req.body);
       const customer = await storage.createCustomer({ ...data, tenantId: getTenantId(req) });
