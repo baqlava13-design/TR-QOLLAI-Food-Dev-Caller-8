@@ -3056,7 +3056,7 @@ function CustomersTab() {
                   <TableHead>Adres</TableHead>
                   <SortableTableHead column="orderCount" label="Sipariş Sayısı" sortConfig={sortConfig} onSort={handleSort} />
                   <SortableTableHead column="lastOrderDate" label="Son Sipariş" sortConfig={sortConfig} onSort={handleSort} />
-                  <TableHead>İşlemler</TableHead>
+                  <TableHead className="w-32">İşlemler</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
