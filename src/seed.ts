@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { categories, menuItems, reviews, customers, orders, orderItems, adminUsers, tenants, superadminUsers } from "../shared/schema";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 
 async function ensureSuperadmin() {
   const existing = await db.select().from(superadminUsers).where(eq(superadminUsers.username, "superadmin"));
@@ -71,7 +71,7 @@ async function backfillTenantId(tenantId: string) {
 
   for (const { table, col } of tables) {
     try {
-      await db.update(table as any).set({ tenantId } as any).where(eq(col as any, null as any));
+      await db.update(table as any).set({ tenantId } as any).where(isNull(col as any));
     } catch (e) {
       // Column might not exist yet during initial migration
     }
