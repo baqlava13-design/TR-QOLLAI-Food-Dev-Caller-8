@@ -59,11 +59,9 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     try {
       const tokenData = await storage.getAdminToken(token);
       if (tokenData && new Date(tokenData.expiresAt) > new Date()) {
-        if (!req.session.adminId) {
-          req.session.adminId = tokenData.adminId;
-          req.session.adminUsername = tokenData.username;
-          req.session.tenantId = tokenData.tenantId || undefined;
-        }
+        req.session.adminId = tokenData.adminId;
+        req.session.adminUsername = tokenData.username;
+        req.session.tenantId = tokenData.tenantId || undefined;
         return next();
       }
     } catch (error) {
@@ -235,7 +233,9 @@ export async function registerRoutes(
   app.post("/api/customers", requireAdmin, async (req, res) => {
     try {
       const data = insertCustomerSchema.parse(req.body);
-      const customer = await storage.createCustomer({ ...data, tenantId: getTenantId(req) });
+      const tenantId = getTenantId(req);
+      console.log("[createCustomer] tenantId from session:", tenantId, "sessionId:", req.session.id);
+      const customer = await storage.createCustomer({ ...data, tenantId });
       res.status(201).json(customer);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -302,7 +302,9 @@ export async function registerRoutes(
   // Admin Customer Management
   app.get("/api/admin/customers", requireAdmin, async (req, res) => {
     try {
-      const customers = await storage.getCustomersWithStats(getTenantId(req));
+      const tenantId = getTenantId(req);
+      console.log("[getCustomers] tenantId from session:", tenantId);
+      const customers = await storage.getCustomersWithStats(tenantId);
       res.json(customers);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch customers" });
