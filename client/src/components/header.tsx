@@ -24,6 +24,7 @@ export function Header() {
     queryKey: ["/api/settings"],
     staleTime: 0,
     refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const scrollToSection = (href: string) => {

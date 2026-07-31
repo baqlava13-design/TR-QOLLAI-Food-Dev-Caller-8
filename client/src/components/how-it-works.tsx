@@ -34,6 +34,7 @@ export function HowItWorks() {
     queryKey: ["/api/settings"],
     staleTime: 0,
     refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const title = settings.how_it_works_title || "Sipariş Vermek Çok Kolay";

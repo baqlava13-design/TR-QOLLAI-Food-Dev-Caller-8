@@ -191,6 +191,7 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
     queryKey: ["/api/settings"],
     staleTime: 0,
     refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const filteredMenuItems = menuItems.filter((item) => {

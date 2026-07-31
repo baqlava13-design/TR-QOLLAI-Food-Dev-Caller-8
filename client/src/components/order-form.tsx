@@ -27,6 +27,7 @@ export function OrderForm() {
     queryKey: ["/api/settings"],
     staleTime: 0,
     refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: crossSellProducts = [] } = useQuery<any[]>({

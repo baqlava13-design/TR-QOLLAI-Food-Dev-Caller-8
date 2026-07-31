@@ -17,6 +17,7 @@ export function Footer() {
     queryKey: ["/api/settings"],
     staleTime: 0,
     refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const logoName = settings.footer_logo_name || "Kolay Sipariş";

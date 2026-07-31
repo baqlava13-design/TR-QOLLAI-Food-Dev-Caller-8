@@ -74,6 +74,7 @@ export function Reviews({ reviews = defaultReviews, isLoading = false }: Reviews
     queryKey: ["/api/settings"],
     staleTime: 0,
     refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const title = settings.reviews_section_title || "Müşterilerimiz Ne Diyor?";

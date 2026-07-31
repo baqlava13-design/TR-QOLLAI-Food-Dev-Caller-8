@@ -7,6 +7,7 @@ export function Hero() {
     queryKey: ["/api/settings"],
     staleTime: 0,
     refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Use hero_image from settings if available, otherwise use default
