@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { categories, menuItems, reviews, customers, orders, orderItems, adminUsers, tenants, superadminUsers } from "../shared/schema";
+import { categories, menuItems, reviews, customers, orders, orderItems, adminUsers, tenants, superadminUsers, siteSettings } from "../shared/schema";
 import bcrypt from "bcryptjs";
 import { eq, isNull } from "drizzle-orm";
 
@@ -75,6 +75,31 @@ async function backfillTenantId(tenantId: string) {
     } catch (e) {
       // Column might not exist yet during initial migration
     }
+  }
+
+  // Migrate null-tenant site_settings: assign tenantId to unowned rows, then
+  // fill empty default-tenant values from those null-tenant rows.
+  try {
+    const { pool } = await import("./db");
+    // 1. Copy null-tenant settings that default tenant doesn't have at all
+    await pool.query(`
+      INSERT INTO site_settings (key, value, tenant_id)
+      SELECT key, value, $1
+      FROM site_settings
+      WHERE tenant_id IS NULL AND value IS NOT NULL AND value != ''
+        AND key NOT IN (SELECT key FROM site_settings WHERE tenant_id = $1)
+      ON CONFLICT DO NOTHING
+    `, [tenantId]);
+
+    // 2. Fill empty default-tenant settings from null-tenant rows
+    await pool.query(`
+      UPDATE site_settings s
+      SET value = ns.value
+      FROM (SELECT key, value FROM site_settings WHERE tenant_id IS NULL AND value IS NOT NULL AND value != '') ns
+      WHERE s.key = ns.key AND s.tenant_id = $1 AND (s.value IS NULL OR s.value = '')
+    `, [tenantId]);
+  } catch (e) {
+    // site_settings table may not exist yet
   }
 }
 
