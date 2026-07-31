@@ -48,6 +48,8 @@ export function MenuSection({ categories = defaultCategories, menuItems = defaul
   
   const { data: settings = {} } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   const menuTitle = settings.menu_section_title || "Lezzetli Seçenekler";

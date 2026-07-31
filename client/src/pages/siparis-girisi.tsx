@@ -189,6 +189,8 @@ function SiparisPanel({ onLogout }: { onLogout: () => void }) {
 
   const { data: siteSettings } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   const filteredMenuItems = menuItems.filter((item) => {

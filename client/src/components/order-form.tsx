@@ -25,6 +25,8 @@ export function OrderForm() {
   
   const { data: settingsData = {} } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   const { data: crossSellProducts = [] } = useQuery<any[]>({

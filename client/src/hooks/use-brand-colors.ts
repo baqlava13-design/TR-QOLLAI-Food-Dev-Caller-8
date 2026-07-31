@@ -98,6 +98,8 @@ function applyColors(primaryHex: string | undefined, accentHex: string | undefin
 export function useBrandColors() {
   const { data: settings } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   useEffect(() => {

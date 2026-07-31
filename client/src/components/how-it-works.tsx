@@ -32,6 +32,8 @@ const steps = [
 export function HowItWorks() {
   const { data: settings = {} } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   const title = settings.how_it_works_title || "Sipariş Vermek Çok Kolay";

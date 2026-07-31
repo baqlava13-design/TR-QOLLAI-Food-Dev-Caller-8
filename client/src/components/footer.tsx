@@ -15,6 +15,8 @@ const quickLinks = [
 export function Footer() {
   const { data: settings = {} } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   const logoName = settings.footer_logo_name || "Kolay Sipariş";

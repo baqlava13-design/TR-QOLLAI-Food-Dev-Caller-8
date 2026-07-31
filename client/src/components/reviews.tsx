@@ -72,6 +72,8 @@ export function Reviews({ reviews = defaultReviews, isLoading = false }: Reviews
   
   const { data: settings = {} } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   const title = settings.reviews_section_title || "Müşterilerimiz Ne Diyor?";
