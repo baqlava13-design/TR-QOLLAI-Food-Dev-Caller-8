@@ -927,7 +927,12 @@ export async function registerRoutes(
   // Site Settings (public)
   app.get("/api/settings", async (req, res) => {
     try {
-      const settings = await storage.getAllSettings(getTenantId(req));
+      let tenantId = getTenantId(req);
+      if (!tenantId) {
+        const defaultTenant = await storage.getTenantBySlug("default");
+        tenantId = defaultTenant?.id;
+      }
+      const settings = await storage.getAllSettings(tenantId);
       const settingsMap: Record<string, string> = {};
       settings.forEach(s => {
         if (s.value) settingsMap[s.key] = s.value;
