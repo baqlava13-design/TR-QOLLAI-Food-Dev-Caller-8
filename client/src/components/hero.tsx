@@ -5,6 +5,8 @@ import defaultHeroImage from "@assets/20260114_132921_1768406108369.jpg";
 export function Hero() {
   const { data: settings = {} } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   // Use hero_image from settings if available, otherwise use default
