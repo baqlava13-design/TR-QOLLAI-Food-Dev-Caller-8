@@ -1,0 +1,1 @@
+- [Upload asset persistence](upload-asset-persistence.md) — image settings must not depend on database paths whose local files can disappear; keep a visible fallback.

@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useUpload } from "@/hooks/use-upload";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -2183,11 +2182,10 @@ function SettingsTab() {
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/uploads/local", { method: "POST", body: formData });
-      
+
       if (!res.ok) {
         throw new Error("Dosya yüklenemedi");
       }
-      
       const { path } = await res.json();
       
       setSettings(prev => ({ ...prev, [settingKey]: path }));

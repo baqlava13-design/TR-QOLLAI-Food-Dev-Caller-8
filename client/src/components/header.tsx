@@ -16,6 +16,7 @@ const navItems = [
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
   const { getItemCount } = useCart();
   const { theme, toggleTheme } = useTheme();
   const itemCount = getItemCount();
@@ -50,11 +51,12 @@ export function Header() {
           }}
           data-testid="link-logo"
         >
-          {settings.company_logo ? (
+          {settings.company_logo && !logoFailed ? (
             <img 
               src={settings.company_logo} 
               alt={settings.footer_logo_name || "Kolay Sipariş"} 
               className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover flex-shrink-0"
+              onError={() => setLogoFailed(true)}
             />
           ) : (
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">

@@ -1,8 +1,10 @@
 import { SiWhatsapp } from "react-icons/si";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import defaultHeroImage from "@assets/20260114_132921_1768406108369.jpg";
 
 export function Hero() {
+  const [imageFailed, setImageFailed] = useState(false);
   const { data: settings = {} } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
     staleTime: 0,
@@ -11,7 +13,7 @@ export function Hero() {
   });
 
   // Use hero_image from settings if available, otherwise use default
-  const heroImage = settings.hero_image || defaultHeroImage;
+  const heroImage = !imageFailed && settings.hero_image ? settings.hero_image : defaultHeroImage;
 
   return (
     <section
@@ -23,6 +25,14 @@ export function Hero() {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${heroImage})` }}
       />
+      {settings.hero_image && !imageFailed && (
+        <img
+          src={settings.hero_image}
+          alt=""
+          className="hidden"
+          onError={() => setImageFailed(true)}
+        />
+      )}
       <div className="absolute inset-0 bg-black/60" />
 
       <div className="relative z-10 w-full max-w-4xl mx-auto px-4 py-12 sm:py-16 text-center">
