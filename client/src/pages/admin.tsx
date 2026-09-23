@@ -2180,16 +2180,28 @@ function SettingsTab() {
   const handleImageUpload = async (file: File, settingKey: string) => {
     try {
       const formData = new FormData();
+      formData.append("key", settingKey);
       formData.append("file", file);
-      const res = await fetch("/api/uploads/local", { method: "POST", body: formData });
+      const token = localStorage.getItem("adminToken");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch("/api/admin/settings/image", {
+        method: "POST",
+        headers,
+        body: formData,
+        credentials: "include",
+      });
 
       if (!res.ok) {
-        throw new Error("Dosya yüklenemedi");
+        const error = await res.json().catch(() => ({ error: "Dosya yüklenemedi" }));
+        throw new Error(error.error || "Dosya yüklenemedi");
       }
-      const { path } = await res.json();
+      const setting = await res.json();
+      const path = setting.value;
       
       setSettings(prev => ({ ...prev, [settingKey]: path }));
-      saveMutation.mutate({ key: settingKey, value: path });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       
       toast({ title: "Resim başarıyla yüklendi" });
     } catch (error) {
@@ -2268,7 +2280,7 @@ function SettingsTab() {
                 <div>
                   <Label>veya URL girin</Label>
                   <Input
-                    value={settings.company_logo}
+                    value={settings.company_logo.startsWith("data:") ? "" : settings.company_logo}
                     onChange={(e) => setSettings({ ...settings, company_logo: e.target.value })}
                     placeholder="https://..."
                     data-testid="input-company-logo"
@@ -2305,7 +2317,7 @@ function SettingsTab() {
                 <div>
                   <Label>veya URL girin</Label>
                   <Input
-                    value={settings.hero_image}
+                    value={settings.hero_image.startsWith("data:") ? "" : settings.hero_image}
                     onChange={(e) => setSettings({ ...settings, hero_image: e.target.value })}
                     placeholder="https://..."
                   />

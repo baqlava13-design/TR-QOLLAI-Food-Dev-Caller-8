@@ -1151,6 +1151,33 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/settings/image", requireAdmin, upload.single("file"), async (req, res) => {
+    try {
+      const { key } = req.body;
+      if (key !== "hero_image" && key !== "company_logo") {
+        return res.status(400).json({ error: "Invalid image setting key" });
+      }
+      if (!req.file) {
+        return res.status(400).json({ error: "No image uploaded" });
+      }
+      if (!req.file.mimetype.startsWith("image/")) {
+        return res.status(400).json({ error: "Only image files are allowed" });
+      }
+      if (req.file.size > 8 * 1024 * 1024) {
+        return res.status(413).json({ error: "Image must be smaller than 8 MB" });
+      }
+
+      // Store the uploaded image with the tenant's settings so it survives
+      // workflow restarts and cannot become detached from its database path.
+      const value = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+      const setting = await storage.setSetting(key, value, getTenantId(req));
+      res.json(setting);
+    } catch (error) {
+      console.error("Image setting upload error:", error);
+      res.status(500).json({ error: "Failed to save image" });
+    }
+  });
+
   // Admin Reviews
   app.get("/api/admin/reviews", requireAdmin, async (req, res) => {
     try {
